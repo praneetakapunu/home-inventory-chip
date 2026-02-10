@@ -11,8 +11,11 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 3) Stand up verification skeleton (`verify/`) with a smoke test
 4) Stand up PD skeleton (`pd/`) with toolchain notes + placeholder config
 
+## Blockers (must be explicit)
+- None currently.
+
 ## Pending from Praneet
-- Nothing pending right now.
+- None.
 
 ## Risks (watchlist)
 - 5 g effective resolution may be dominated by mechanical + drift; spec must define realistic acceptance criteria.
