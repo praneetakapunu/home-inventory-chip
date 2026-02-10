@@ -1,5 +1,8 @@
 # Generated artifacts
 reports/
 
+# Private info (do not commit)
+private/
+
 # Local secrets / creds (keep out of git)
 **/*_creds.json
