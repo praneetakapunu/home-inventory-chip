@@ -1,0 +1,5 @@
+# Generated artifacts
+reports/
+
+# Local secrets / creds (keep out of git)
+**/*_creds.json
