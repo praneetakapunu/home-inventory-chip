@@ -8,7 +8,7 @@ Deliver a taped-out **digital** chip (open-source tools only) + a demo board/sys
 **v1 approach (default):** weight-sensor based inventory (load cells + off-chip ADC), controlled by a small RISC‑V SoC on the chip.
 
 ## Current status
-- Phase: **Kickoff / spec freeze**
+- Phase: **Tapeout path lock / OpenMPW harness integration**
 - Budget: **$5k**
 - Daily reports: **Email at 06:00 IST** → praneetkbhatia@gmail.com
 

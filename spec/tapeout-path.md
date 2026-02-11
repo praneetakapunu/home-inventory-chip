@@ -18,9 +18,17 @@ Goal: pick an MPW/tapeout path that fits **< $5k** and is compatible with a digi
 - Allowed IO count and padframe constraints
 - Any restrictions on CPU cores / SRAM macros (if needed)
 
-## Recommendation (draft)
-Start with **SKY130 MPW** unless schedule/cost conflicts appear, because it is the lowest friction for open-source digital tapeouts.
+## Recommendation (v1)
+**Target SKY130A via an OpenMPW-style shuttle using the Caravel user-project flow.**
 
-## Next actions
-- Collect current shuttle program details (cost/schedule/package).
-- Decide whether we use hardened SRAM macros vs small synthesized memories.
+This is the lowest-friction path for a first open-source digital tapeout because the ecosystem (OpenLane + mpw-precheck + known harness) is well-traveled.
+
+## Integration plan (concrete)
+- Use `efabless/caravel_user_project` as the submission harness.
+- Keep *this* repo as the product/spec/RTL source of truth.
+- Create a separate submission repo (derived from the template) that pulls our hardened macro/IP (submodule or vendored snapshot).
+
+## What I will do next
+1) Turn `docs/OPENMPW_SUBMISSION.md` into a step-by-step checklist we can follow repeatedly.
+2) Identify the exact shuttle + deadline and copy it into `docs/DASHBOARD.md` + checklist.
+3) Add an initial RTL “user project” wrapper skeleton and OpenLane config to start running prechecks early.

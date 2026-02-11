@@ -6,12 +6,13 @@ This is the end-to-end record of what must happen to reach tapeout. Keep it upda
 - [x] Demo form factor: pads
 - [x] Channels: 8
 - [x] Target resolution: 5 g (effective, after calibration)
-- [x] Repo visibility: private now → public later
+- [x] Repo visibility: public + open source (now)
 - [ ] Define success metrics precisely (latency, false-positive rate, drift tolerance)
 - [ ] Finalize v1 feature list + explicit non-goals
 
 ## 1) Tapeout path selection
-- [ ] Choose PDK + shuttle (e.g., Sky130/180 + MPW)
+- [ ] Choose PDK + shuttle (Sky130A OpenMPW is default)
+- [ ] Choose harness/integration approach (Caravel user project flow)
 - [ ] Confirm budget fit (< $5k) including packaging + PCB
 - [ ] Confirm IO constraints, package options, and shuttle schedule
 - [ ] Decide target clock + perf class (conservative)

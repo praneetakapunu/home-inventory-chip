@@ -3,13 +3,13 @@
 This file is the actionable plan to finish ASAP. Keep it short and current.
 
 ## Current phase
-**Spec freeze → tapeout path selection → RTL/verify/PD skeletons**
+**OpenMPW tapeout path lock → harness/repo integration → RTL baseline**
 
 ## Next 48 hours (Madhuri)
-1) Write `spec/tapeout-path.md` (PDK+shuttle candidates, cost, schedule, recommendation)
-2) Create repo hygiene files: `CONTRIBUTING.md`, decision template
-3) Stand up verification skeleton (`verify/`) with a smoke test
-4) Stand up PD skeleton (`pd/`) with toolchain notes + placeholder config
+1) Lock tapeout path doc (`spec/tapeout-path.md`) with a concrete choice (PDK + harness + submission steps)
+2) Add `docs/OPENMPW_SUBMISSION.md` and map our repo to `caravel_user_project` expectations
+3) Update checklist with what’s done vs pending + turn “Risks” into tracked items
+4) Start RTL baseline: define top-level + register map + ADC interface peripheral skeleton
 
 ## Blockers (must be explicit)
 - None currently.
