@@ -30,3 +30,7 @@ It reduces tapeout friction:
 
 ## Open questions
 - Which specific shuttle (name/deadline) are we targeting? (Needed to lock schedule.)
+
+## Submission harness repo
+- Harness repo (Caravel user project): https://github.com/praneetakapunu/home-inventory-chip-openmpw
+- Source-of-truth repo: https://github.com/praneetakapunu/home-inventory-chip
