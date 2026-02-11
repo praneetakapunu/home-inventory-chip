@@ -21,6 +21,7 @@ This is the end-to-end record of what must happen to reach tapeout. Keep it upda
 - [x] External multi-channel ADC topology (digital-only chip)
 - [ ] Select specific ADC part + interface (SPI vs I2C) + sampling plan
 - [ ] Define SoC architecture: core, memory map, peripherals
+- [ ] Define register map (draft) + bus choice inside harness
 - [ ] Define host interface for demo (UART is minimum)
 
 ## 3) RTL implementation

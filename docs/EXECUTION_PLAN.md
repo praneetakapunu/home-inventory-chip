@@ -6,10 +6,12 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 **OpenMPW tapeout path lock → harness/repo integration → RTL baseline**
 
 ## Next 48 hours (Madhuri)
-1) Lock tapeout path doc (`spec/tapeout-path.md`) with a concrete choice (PDK + harness + submission steps)
-2) Add `docs/OPENMPW_SUBMISSION.md` and map our repo to `caravel_user_project` expectations
-3) Update checklist with what’s done vs pending + turn “Risks” into tracked items
-4) Start RTL baseline: define top-level + register map + ADC interface peripheral skeleton
+1) Submission mechanics: get harness repo to a state where `make setup` + precheck can run with our stub
+2) Land RTL baseline in source-of-truth:
+   - `rtl/home_inventory_top.v` skeleton
+   - `spec/regmap.md` draft
+3) Tighten v1 acceptance criteria: define what “5 g effective” means (noise/drift/latency)
+4) Choose a specific external 8ch load-cell ADC part and lock SPI vs I2C
 
 ## Blockers (must be explicit)
 - None currently.
