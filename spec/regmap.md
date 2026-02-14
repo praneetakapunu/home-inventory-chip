@@ -1,34 +1,58 @@
-# Register Map (draft)
+# Register Map (v1)
 
-This is the draft register map for the digital chip block that will live in the OpenMPW harness.
+This is the **v1** register map for the digital block that will live in the OpenMPW (Caravel) harness.
+
+- Bus: **Wishbone slave**, 32-bit data, **byte-addressed** (WB `wbs_adr_i` is a byte address).
+- All registers are 32-bit.
+- Byte-enables (`wbs_sel_i`) must be respected on writes.
 
 ## Goals
-- Minimal set to support 8-channel sampling, calibration, and event reporting.
+- Provide a stable bring-up surface early (ID/VERSION + basic control/status).
+- Leave clean address space for ADC + calibration + event reporting.
 
-## Proposed blocks
+## 0x0000_0000 — ID / version
 
-### 0x0000_0000: ID / version
-- `ID` (RO)
-- `VERSION` (RO)
+| Address | Name | Access | Reset | Description |
+|---:|---|---|---:|---|
+| 0x0000_0000 | `ID` | RO | — | Fixed ASCII tag. Current RTL returns `0x4849_4348` (`"HICH"`). |
+| 0x0000_0004 | `VERSION` | RO | — | Register map / RTL interface version. Current RTL returns `0x0000_0001`. |
 
-### 0x0000_0100: Control
-- `CTRL` (RW): enable, start/stop
-- `IRQ_EN` (RW)
-- `STATUS` (RO)
+## 0x0000_0100 — Control / status
 
-### 0x0000_0200: ADC interface
-- `ADC_CFG` (RW): mode, rate
-- `ADC_CMD` (WO)
-- `ADC_RAW_CH0..CH7` (RO)
+| Address | Name | Access | Reset | Description |
+|---:|---|---|---:|---|
+| 0x0000_0100 | `CTRL` | RW | 0x0 | Control bits (see below). |
+| 0x0000_0104 | `IRQ_EN` | RW | 0x0 | Enable bits for `user_irq[2:0]` (future). |
+| 0x0000_0108 | `STATUS` | RO | — | Status from core. Current RTL exposes `core_status[7:0]` in bits `[7:0]`. |
 
-### 0x0000_0300: Calibration
-- `TARE_CH0..CH7` (RW)
-- `SCALE_CH0..CH7` (RW)
+### `CTRL` bitfields
 
-### 0x0000_0400: Events
-- `EVT_COUNT_CH0..CH7` (RO)
-- `EVT_LAST_DELTA_CH0..CH7` (RO)
-- `EVT_LAST_TS` (RO)
+| Bit | Name | Meaning |
+|---:|---|---|
+| 0 | `ENABLE` | 1 = enable core. |
+| 1 | `START` | 1 = start operation (exact semantics TBD; currently latched). |
+
+### `IRQ_EN` bitfields
+
+| Bit | Name | Meaning |
+|---:|---|---|
+| 2:0 | `IRQ_EN` | Per-interrupt enable (future). |
+
+## 0x0000_0200 — ADC interface (reserved)
+
+Reserved for:
+- `ADC_CFG`, `ADC_CMD`, `ADC_RAW_CH0..CH7`
+
+## 0x0000_0300 — Calibration (reserved)
+
+Reserved for:
+- `TARE_CH0..CH7`, `SCALE_CH0..CH7`
+
+## 0x0000_0400 — Events (reserved)
+
+Reserved for:
+- `EVT_COUNT_CH0..CH7`, `EVT_LAST_DELTA_CH0..CH7`, `EVT_LAST_TS`
 
 ## Notes
-- Exact fixed-point formats TBD after ADC part selection.
+- Fixed-point formats will be specified once ADC sampling resolution/rate is locked.
+- Unknown/unused addresses must read as 0.
