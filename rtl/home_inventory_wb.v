@@ -76,11 +76,16 @@ module home_inventory_wb (
         end
     endfunction
 
+    // Align address to 32-bit word boundary for decode.
+    // Caravel/Wishbone masters sometimes present byte addresses; we treat
+    // registers as 32-bit word-aligned and ignore adr[1:0] for decode.
+    wire [31:0] wb_adr_aligned = {wbs_adr_i[31:2], 2'b00};
+
     // Read mux (combinational)
     reg [31:0] rd_data;
     always @(*) begin
         rd_data = 32'h0;
-        case (wbs_adr_i)
+        case (wb_adr_aligned)
             ADR_ID:      rd_data = 32'h4849_4348; // 'HICH' (Home Inventory CHip)
             ADR_VERSION: rd_data = 32'h0000_0001;
 
@@ -112,7 +117,7 @@ module home_inventory_wb (
 
             // Writes
             if (wb_fire && wbs_we_i) begin
-                case (wbs_adr_i)
+                case (wb_adr_aligned)
                     ADR_CTRL: begin
                         // ENABLE is a sticky RW bit.
                         if (wbs_sel_i[0]) r_enable <= wbs_dat_i[0];
