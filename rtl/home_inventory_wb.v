@@ -45,12 +45,14 @@ module home_inventory_wb (
     // ---------------------------------------------------------------------
     // Registers
     // ---------------------------------------------------------------------
-    reg [31:0] r_ctrl;
+    reg        r_enable;
+    reg        r_start_pulse;
     reg [31:0] r_irq_en;
 
     // Decode fields
-    assign ctrl_enable = r_ctrl[0];
-    assign ctrl_start  = r_ctrl[1];
+    assign ctrl_enable = r_enable;
+    // START is a 1-cycle pulse generated on a write of CTRL.START=1.
+    assign ctrl_start  = r_start_pulse;
     assign irq_en      = r_irq_en[2:0];
 
     // ---------------------------------------------------------------------
@@ -82,7 +84,7 @@ module home_inventory_wb (
             ADR_ID:      rd_data = 32'h4849_4348; // 'HICH' (Home Inventory CHip)
             ADR_VERSION: rd_data = 32'h0000_0001;
 
-            ADR_CTRL:    rd_data = r_ctrl;
+            ADR_CTRL:    rd_data = {30'h0, 1'b0, r_enable};
             ADR_IRQ_EN:  rd_data = r_irq_en;
             ADR_STATUS:  rd_data = {24'h0, core_status};
             default:     rd_data = 32'h0;
@@ -91,11 +93,15 @@ module home_inventory_wb (
 
     always @(posedge wb_clk_i) begin
         if (wb_rst_i) begin
-            wbs_ack_o <= 1'b0;
-            wbs_dat_o <= 32'h0;
-            r_ctrl    <= 32'h0;
-            r_irq_en  <= 32'h0;
+            wbs_ack_o       <= 1'b0;
+            wbs_dat_o       <= 32'h0;
+            r_enable        <= 1'b0;
+            r_start_pulse   <= 1'b0;
+            r_irq_en        <= 32'h0;
         end else begin
+            // Default: clear 1-cycle pulse outputs.
+            r_start_pulse <= 1'b0;
+
             // ACK pulse for each accepted request.
             wbs_ack_o <= wb_valid & ~wbs_ack_o;
 
@@ -107,7 +113,12 @@ module home_inventory_wb (
             // Writes
             if (wb_fire && wbs_we_i) begin
                 case (wbs_adr_i)
-                    ADR_CTRL:   r_ctrl   <= apply_wstrb(r_ctrl,   wbs_dat_i, wbs_sel_i);
+                    ADR_CTRL: begin
+                        // ENABLE is a sticky RW bit.
+                        if (wbs_sel_i[0]) r_enable <= wbs_dat_i[0];
+                        // START is write-1-to-pulse (not sticky, not readable).
+                        if (wbs_sel_i[0] && wbs_dat_i[1]) r_start_pulse <= 1'b1;
+                    end
                     ADR_IRQ_EN: r_irq_en <= apply_wstrb(r_irq_en, wbs_dat_i, wbs_sel_i);
                     default: ;
                 endcase

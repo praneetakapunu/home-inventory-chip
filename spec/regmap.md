@@ -21,7 +21,7 @@ This is the **v1** register map for the digital block that will live in the Open
 
 | Address | Name | Access | Reset | Description |
 |---:|---|---|---:|---|
-| 0x0000_0100 | `CTRL` | RW | 0x0 | Control bits (see below). |
+| 0x0000_0100 | `CTRL` | RW | 0x0 | Control bits (see below). `START` is write-1-to-pulse. |
 | 0x0000_0104 | `IRQ_EN` | RW | 0x0 | Enable bits for `user_irq[2:0]` (future). |
 | 0x0000_0108 | `STATUS` | RO | — | Status from core. Current RTL exposes `core_status[7:0]` in bits `[7:0]`. |
 
@@ -30,7 +30,7 @@ This is the **v1** register map for the digital block that will live in the Open
 | Bit | Name | Meaning |
 |---:|---|---|
 | 0 | `ENABLE` | 1 = enable core. |
-| 1 | `START` | 1 = start operation (exact semantics TBD; currently latched). |
+| 1 | `START` | Write 1 to request a start pulse (1 cycle). Reads return 0. |
 
 ### `IRQ_EN` bitfields
 
