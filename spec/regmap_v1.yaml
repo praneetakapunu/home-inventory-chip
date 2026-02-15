@@ -1,0 +1,324 @@
+# Machine-readable register map (v1)
+# Intended as the single source-of-truth for:
+# - RTL decode constants
+# - DV smoke tests
+# - firmware header generation
+#
+# Notes:
+# - All addresses are byte addresses (Wishbone wbs_adr_i).
+# - Registers are 32-bit, word-aligned; wbs_sel_i byte-enables must be honored on writes.
+# - Reserved bits must read as 0 and ignore writes.
+#
+# This file is deliberately minimal and stable; prefer adding new registers over
+# redefining existing ones.
+
+version: 1
+bus:
+  type: wishbone
+  data_width: 32
+  addr_unit: byte
+  word_align: 4
+
+blocks:
+  - name: id_version
+    base: 0x00000000
+    registers:
+      - name: ID
+        offset: 0x000
+        access: ro
+        reset: null
+        desc: Fixed ASCII tag. Current RTL returns 0x4849_4348 ("HICH").
+
+      - name: VERSION
+        offset: 0x004
+        access: ro
+        reset: null
+        desc: Register map / RTL interface version. Current RTL returns 0x0000_0001.
+
+  - name: ctrl_status
+    base: 0x00000100
+    registers:
+      - name: CTRL
+        offset: 0x000
+        access: rw
+        reset: 0x00000000
+        desc: Control bits. START is write-1-to-pulse; reads return 0.
+        fields:
+          - name: ENABLE
+            bits: [0, 0]
+            access: rw
+            reset: 0
+            desc: 1 = enable core.
+          - name: START
+            bits: [1, 1]
+            access: w1p
+            reset: 0
+            desc: Write 1 to request a start pulse (1 cycle). Reads return 0.
+
+      - name: IRQ_EN
+        offset: 0x004
+        access: rw
+        reset: 0x00000000
+        desc: Enable bits for user_irq[2:0] (future).
+        fields:
+          - name: IRQ_EN
+            bits: [2, 0]
+            access: rw
+            reset: 0
+            desc: Per-interrupt enable (future).
+
+      - name: STATUS
+        offset: 0x008
+        access: ro
+        reset: null
+        desc: Status from core. Current RTL exposes core_status[7:0] in bits [7:0].
+        fields:
+          - name: CORE_STATUS
+            bits: [7, 0]
+            access: ro
+            reset: null
+            desc: Core status bits.
+
+  - name: adc
+    base: 0x00000200
+    registers:
+      - name: ADC_CFG
+        offset: 0x000
+        access: rw
+        reset: 0x00000000
+        desc: ADC config. For v1 bring-up, only NUM_CH is normative.
+        fields:
+          - name: NUM_CH
+            bits: [3, 0]
+            access: rw
+            reset: 0
+            desc: Number of channels populated (1–8). Firmware enumerates channels using this.
+
+      - name: ADC_CMD
+        offset: 0x004
+        access: rw
+        reset: 0x00000000
+        desc: ADC command. SNAPSHOT is write-1-to-pulse; reads return 0.
+        fields:
+          - name: SNAPSHOT
+            bits: [0, 0]
+            access: w1p
+            reset: 0
+            desc: Write 1 to latch raw regs into ADC_RAW_CHx.
+
+      - name: ADC_RAW_CH0
+        offset: 0x010
+        access: ro
+        reset: null
+        desc: Latest raw sample CH0 (format per spec/fixed_point.md).
+      - name: ADC_RAW_CH1
+        offset: 0x014
+        access: ro
+        reset: null
+        desc: Latest raw sample CH1 (format per spec/fixed_point.md).
+      - name: ADC_RAW_CH2
+        offset: 0x018
+        access: ro
+        reset: null
+        desc: Latest raw sample CH2 (format per spec/fixed_point.md).
+      - name: ADC_RAW_CH3
+        offset: 0x01C
+        access: ro
+        reset: null
+        desc: Latest raw sample CH3 (format per spec/fixed_point.md).
+      - name: ADC_RAW_CH4
+        offset: 0x020
+        access: ro
+        reset: null
+        desc: Latest raw sample CH4 (format per spec/fixed_point.md).
+      - name: ADC_RAW_CH5
+        offset: 0x024
+        access: ro
+        reset: null
+        desc: Latest raw sample CH5 (format per spec/fixed_point.md).
+      - name: ADC_RAW_CH6
+        offset: 0x028
+        access: ro
+        reset: null
+        desc: Latest raw sample CH6 (format per spec/fixed_point.md).
+      - name: ADC_RAW_CH7
+        offset: 0x02C
+        access: ro
+        reset: null
+        desc: Latest raw sample CH7 (format per spec/fixed_point.md).
+
+  - name: calibration
+    base: 0x00000300
+    registers:
+      - name: TARE_CH0
+        offset: 0x000
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit tare/offset for CH0 (raw ADC LSBs).
+      - name: TARE_CH1
+        offset: 0x004
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit tare/offset for CH1.
+      - name: TARE_CH2
+        offset: 0x008
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit tare/offset for CH2.
+      - name: TARE_CH3
+        offset: 0x00C
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit tare/offset for CH3.
+      - name: TARE_CH4
+        offset: 0x010
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit tare/offset for CH4.
+      - name: TARE_CH5
+        offset: 0x014
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit tare/offset for CH5.
+      - name: TARE_CH6
+        offset: 0x018
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit tare/offset for CH6.
+      - name: TARE_CH7
+        offset: 0x01C
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit tare/offset for CH7.
+
+      - name: SCALE_CH0
+        offset: 0x020
+        access: rw
+        reset: 0x00010000
+        desc: Unsigned Q16.16 scale for CH0 (1.0 = 0x0001_0000).
+      - name: SCALE_CH1
+        offset: 0x024
+        access: rw
+        reset: 0x00010000
+        desc: Unsigned Q16.16 scale for CH1.
+      - name: SCALE_CH2
+        offset: 0x028
+        access: rw
+        reset: 0x00010000
+        desc: Unsigned Q16.16 scale for CH2.
+      - name: SCALE_CH3
+        offset: 0x02C
+        access: rw
+        reset: 0x00010000
+        desc: Unsigned Q16.16 scale for CH3.
+      - name: SCALE_CH4
+        offset: 0x030
+        access: rw
+        reset: 0x00010000
+        desc: Unsigned Q16.16 scale for CH4.
+      - name: SCALE_CH5
+        offset: 0x034
+        access: rw
+        reset: 0x00010000
+        desc: Unsigned Q16.16 scale for CH5.
+      - name: SCALE_CH6
+        offset: 0x038
+        access: rw
+        reset: 0x00010000
+        desc: Unsigned Q16.16 scale for CH6.
+      - name: SCALE_CH7
+        offset: 0x03C
+        access: rw
+        reset: 0x00010000
+        desc: Unsigned Q16.16 scale for CH7.
+
+  - name: events
+    base: 0x00000400
+    registers:
+      - name: EVT_COUNT_CH0
+        offset: 0x000
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit saturating event count CH0.
+      - name: EVT_COUNT_CH1
+        offset: 0x004
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit saturating event count CH1.
+      - name: EVT_COUNT_CH2
+        offset: 0x008
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit saturating event count CH2.
+      - name: EVT_COUNT_CH3
+        offset: 0x00C
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit saturating event count CH3.
+      - name: EVT_COUNT_CH4
+        offset: 0x010
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit saturating event count CH4.
+      - name: EVT_COUNT_CH5
+        offset: 0x014
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit saturating event count CH5.
+      - name: EVT_COUNT_CH6
+        offset: 0x018
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit saturating event count CH6.
+      - name: EVT_COUNT_CH7
+        offset: 0x01C
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit saturating event count CH7.
+
+      - name: EVT_LAST_DELTA_CH0
+        offset: 0x020
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit delta (sample ticks) for CH0.
+      - name: EVT_LAST_DELTA_CH1
+        offset: 0x024
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit delta (sample ticks) for CH1.
+      - name: EVT_LAST_DELTA_CH2
+        offset: 0x028
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit delta (sample ticks) for CH2.
+      - name: EVT_LAST_DELTA_CH3
+        offset: 0x02C
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit delta (sample ticks) for CH3.
+      - name: EVT_LAST_DELTA_CH4
+        offset: 0x030
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit delta (sample ticks) for CH4.
+      - name: EVT_LAST_DELTA_CH5
+        offset: 0x034
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit delta (sample ticks) for CH5.
+      - name: EVT_LAST_DELTA_CH6
+        offset: 0x038
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit delta (sample ticks) for CH6.
+      - name: EVT_LAST_DELTA_CH7
+        offset: 0x03C
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit delta (sample ticks) for CH7.
+
+      - name: EVT_LAST_TS
+        offset: 0x040
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit timestamp (sample ticks) of most recent event.

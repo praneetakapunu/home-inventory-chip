@@ -2,6 +2,8 @@
 
 This is the **v1** register map for the digital block that will live in the OpenMPW (Caravel) harness.
 
+Source-of-truth (machine-readable): `spec/regmap_v1.yaml`
+
 - Bus: **Wishbone slave**, 32-bit data.
 - Addressing: Caravel presents a **byte address** on `wbs_adr_i`, but this block decodes registers as **32-bit word-aligned** (i.e. it ignores `wbs_adr_i[1:0]`).
 - All registers are 32-bit.
