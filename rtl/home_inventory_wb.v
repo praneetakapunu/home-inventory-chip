@@ -6,6 +6,7 @@
 // Current scope:
 // - Provide a stable Wishbone register file for bring-up
 // - Expose a minimal control plane (CTRL/IRQ_EN) and status readback
+// - Provide stubbed ADC + calibration register file for firmware bring-up
 //
 // NOTE: Addressing is byte-addressed (Wishbone). See spec/regmap.md.
 
@@ -42,12 +43,52 @@ module home_inventory_wb (
     localparam [31:0] ADR_IRQ_EN  = 32'h0000_0104;
     localparam [31:0] ADR_STATUS  = 32'h0000_0108;
 
+    // ADC block (see spec/regmap_v1.yaml)
+    localparam [31:0] ADR_ADC_CFG     = 32'h0000_0200;
+    localparam [31:0] ADR_ADC_CMD     = 32'h0000_0204;
+    localparam [31:0] ADR_ADC_RAW_CH0 = 32'h0000_0210;
+    localparam [31:0] ADR_ADC_RAW_CH1 = 32'h0000_0214;
+    localparam [31:0] ADR_ADC_RAW_CH2 = 32'h0000_0218;
+    localparam [31:0] ADR_ADC_RAW_CH3 = 32'h0000_021C;
+    localparam [31:0] ADR_ADC_RAW_CH4 = 32'h0000_0220;
+    localparam [31:0] ADR_ADC_RAW_CH5 = 32'h0000_0224;
+    localparam [31:0] ADR_ADC_RAW_CH6 = 32'h0000_0228;
+    localparam [31:0] ADR_ADC_RAW_CH7 = 32'h0000_022C;
+
+    // Calibration block (see spec/regmap_v1.yaml)
+    localparam [31:0] ADR_TARE_CH0  = 32'h0000_0300;
+    localparam [31:0] ADR_TARE_CH1  = 32'h0000_0304;
+    localparam [31:0] ADR_TARE_CH2  = 32'h0000_0308;
+    localparam [31:0] ADR_TARE_CH3  = 32'h0000_030C;
+    localparam [31:0] ADR_TARE_CH4  = 32'h0000_0310;
+    localparam [31:0] ADR_TARE_CH5  = 32'h0000_0314;
+    localparam [31:0] ADR_TARE_CH6  = 32'h0000_0318;
+    localparam [31:0] ADR_TARE_CH7  = 32'h0000_031C;
+
+    localparam [31:0] ADR_SCALE_CH0 = 32'h0000_0320;
+    localparam [31:0] ADR_SCALE_CH1 = 32'h0000_0324;
+    localparam [31:0] ADR_SCALE_CH2 = 32'h0000_0328;
+    localparam [31:0] ADR_SCALE_CH3 = 32'h0000_032C;
+    localparam [31:0] ADR_SCALE_CH4 = 32'h0000_0330;
+    localparam [31:0] ADR_SCALE_CH5 = 32'h0000_0334;
+    localparam [31:0] ADR_SCALE_CH6 = 32'h0000_0338;
+    localparam [31:0] ADR_SCALE_CH7 = 32'h0000_033C;
+
     // ---------------------------------------------------------------------
     // Registers
     // ---------------------------------------------------------------------
     reg        r_enable;
     reg        r_start_pulse;
     reg [31:0] r_irq_en;
+
+    // ADC regs (stubbed for now; enough for firmware to enumerate + latch)
+    reg [3:0]  r_adc_num_ch;
+    reg        r_adc_snapshot_pulse;
+    reg [31:0] r_adc_raw [0:7];
+
+    // Calibration regs
+    reg [31:0] r_tare  [0:7];
+    reg [31:0] r_scale [0:7];
 
     // Decode fields
     assign ctrl_enable = r_enable;
@@ -92,10 +133,43 @@ module home_inventory_wb (
             ADR_CTRL:    rd_data = {30'h0, 1'b0, r_enable};
             ADR_IRQ_EN:  rd_data = r_irq_en;
             ADR_STATUS:  rd_data = {24'h0, core_status};
+
+            // ADC
+            ADR_ADC_CFG:     rd_data = {28'h0, r_adc_num_ch};
+            ADR_ADC_CMD:     rd_data = 32'h0; // write-only pulse bits
+            ADR_ADC_RAW_CH0: rd_data = r_adc_raw[0];
+            ADR_ADC_RAW_CH1: rd_data = r_adc_raw[1];
+            ADR_ADC_RAW_CH2: rd_data = r_adc_raw[2];
+            ADR_ADC_RAW_CH3: rd_data = r_adc_raw[3];
+            ADR_ADC_RAW_CH4: rd_data = r_adc_raw[4];
+            ADR_ADC_RAW_CH5: rd_data = r_adc_raw[5];
+            ADR_ADC_RAW_CH6: rd_data = r_adc_raw[6];
+            ADR_ADC_RAW_CH7: rd_data = r_adc_raw[7];
+
+            // Calibration
+            ADR_TARE_CH0:  rd_data = r_tare[0];
+            ADR_TARE_CH1:  rd_data = r_tare[1];
+            ADR_TARE_CH2:  rd_data = r_tare[2];
+            ADR_TARE_CH3:  rd_data = r_tare[3];
+            ADR_TARE_CH4:  rd_data = r_tare[4];
+            ADR_TARE_CH5:  rd_data = r_tare[5];
+            ADR_TARE_CH6:  rd_data = r_tare[6];
+            ADR_TARE_CH7:  rd_data = r_tare[7];
+
+            ADR_SCALE_CH0: rd_data = r_scale[0];
+            ADR_SCALE_CH1: rd_data = r_scale[1];
+            ADR_SCALE_CH2: rd_data = r_scale[2];
+            ADR_SCALE_CH3: rd_data = r_scale[3];
+            ADR_SCALE_CH4: rd_data = r_scale[4];
+            ADR_SCALE_CH5: rd_data = r_scale[5];
+            ADR_SCALE_CH6: rd_data = r_scale[6];
+            ADR_SCALE_CH7: rd_data = r_scale[7];
+
             default:     rd_data = 32'h0;
         endcase
     end
 
+    integer i;
     always @(posedge wb_clk_i) begin
         if (wb_rst_i) begin
             wbs_ack_o       <= 1'b0;
@@ -103,9 +177,19 @@ module home_inventory_wb (
             r_enable        <= 1'b0;
             r_start_pulse   <= 1'b0;
             r_irq_en        <= 32'h0;
+
+            r_adc_num_ch    <= 4'h0;
+            r_adc_snapshot_pulse <= 1'b0;
+
+            for (i = 0; i < 8; i = i + 1) begin
+                r_adc_raw[i] <= 32'h0;
+                r_tare[i]    <= 32'h0;
+                r_scale[i]   <= 32'h0001_0000; // Q16.16 1.0
+            end
         end else begin
             // Default: clear 1-cycle pulse outputs.
             r_start_pulse <= 1'b0;
+            r_adc_snapshot_pulse <= 1'b0;
 
             // ACK pulse for each accepted request.
             wbs_ack_o <= wb_valid & ~wbs_ack_o;
@@ -125,6 +209,35 @@ module home_inventory_wb (
                         if (wbs_sel_i[0] && wbs_dat_i[1]) r_start_pulse <= 1'b1;
                     end
                     ADR_IRQ_EN: r_irq_en <= apply_wstrb(r_irq_en, wbs_dat_i, wbs_sel_i);
+
+                    // ADC
+                    ADR_ADC_CFG: begin
+                        if (wbs_sel_i[0]) r_adc_num_ch <= wbs_dat_i[3:0];
+                    end
+                    ADR_ADC_CMD: begin
+                        // SNAPSHOT is write-1-to-pulse on bit[0]
+                        if (wbs_sel_i[0] && wbs_dat_i[0]) r_adc_snapshot_pulse <= 1'b1;
+                    end
+
+                    // Calibration
+                    ADR_TARE_CH0:  r_tare[0]  <= apply_wstrb(r_tare[0],  wbs_dat_i, wbs_sel_i);
+                    ADR_TARE_CH1:  r_tare[1]  <= apply_wstrb(r_tare[1],  wbs_dat_i, wbs_sel_i);
+                    ADR_TARE_CH2:  r_tare[2]  <= apply_wstrb(r_tare[2],  wbs_dat_i, wbs_sel_i);
+                    ADR_TARE_CH3:  r_tare[3]  <= apply_wstrb(r_tare[3],  wbs_dat_i, wbs_sel_i);
+                    ADR_TARE_CH4:  r_tare[4]  <= apply_wstrb(r_tare[4],  wbs_dat_i, wbs_sel_i);
+                    ADR_TARE_CH5:  r_tare[5]  <= apply_wstrb(r_tare[5],  wbs_dat_i, wbs_sel_i);
+                    ADR_TARE_CH6:  r_tare[6]  <= apply_wstrb(r_tare[6],  wbs_dat_i, wbs_sel_i);
+                    ADR_TARE_CH7:  r_tare[7]  <= apply_wstrb(r_tare[7],  wbs_dat_i, wbs_sel_i);
+
+                    ADR_SCALE_CH0: r_scale[0] <= apply_wstrb(r_scale[0], wbs_dat_i, wbs_sel_i);
+                    ADR_SCALE_CH1: r_scale[1] <= apply_wstrb(r_scale[1], wbs_dat_i, wbs_sel_i);
+                    ADR_SCALE_CH2: r_scale[2] <= apply_wstrb(r_scale[2], wbs_dat_i, wbs_sel_i);
+                    ADR_SCALE_CH3: r_scale[3] <= apply_wstrb(r_scale[3], wbs_dat_i, wbs_sel_i);
+                    ADR_SCALE_CH4: r_scale[4] <= apply_wstrb(r_scale[4], wbs_dat_i, wbs_sel_i);
+                    ADR_SCALE_CH5: r_scale[5] <= apply_wstrb(r_scale[5], wbs_dat_i, wbs_sel_i);
+                    ADR_SCALE_CH6: r_scale[6] <= apply_wstrb(r_scale[6], wbs_dat_i, wbs_sel_i);
+                    ADR_SCALE_CH7: r_scale[7] <= apply_wstrb(r_scale[7], wbs_dat_i, wbs_sel_i);
+
                     default: ;
                 endcase
             end
