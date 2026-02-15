@@ -74,6 +74,27 @@ module home_inventory_wb (
     localparam [31:0] ADR_SCALE_CH6 = 32'h0000_0338;
     localparam [31:0] ADR_SCALE_CH7 = 32'h0000_033C;
 
+    // Events block (see spec/regmap_v1.yaml)
+    localparam [31:0] ADR_EVT_COUNT_CH0      = 32'h0000_0400;
+    localparam [31:0] ADR_EVT_COUNT_CH1      = 32'h0000_0404;
+    localparam [31:0] ADR_EVT_COUNT_CH2      = 32'h0000_0408;
+    localparam [31:0] ADR_EVT_COUNT_CH3      = 32'h0000_040C;
+    localparam [31:0] ADR_EVT_COUNT_CH4      = 32'h0000_0410;
+    localparam [31:0] ADR_EVT_COUNT_CH5      = 32'h0000_0414;
+    localparam [31:0] ADR_EVT_COUNT_CH6      = 32'h0000_0418;
+    localparam [31:0] ADR_EVT_COUNT_CH7      = 32'h0000_041C;
+
+    localparam [31:0] ADR_EVT_LAST_DELTA_CH0 = 32'h0000_0420;
+    localparam [31:0] ADR_EVT_LAST_DELTA_CH1 = 32'h0000_0424;
+    localparam [31:0] ADR_EVT_LAST_DELTA_CH2 = 32'h0000_0428;
+    localparam [31:0] ADR_EVT_LAST_DELTA_CH3 = 32'h0000_042C;
+    localparam [31:0] ADR_EVT_LAST_DELTA_CH4 = 32'h0000_0430;
+    localparam [31:0] ADR_EVT_LAST_DELTA_CH5 = 32'h0000_0434;
+    localparam [31:0] ADR_EVT_LAST_DELTA_CH6 = 32'h0000_0438;
+    localparam [31:0] ADR_EVT_LAST_DELTA_CH7 = 32'h0000_043C;
+
+    localparam [31:0] ADR_EVT_LAST_TS        = 32'h0000_0440;
+
     // ---------------------------------------------------------------------
     // Registers
     // ---------------------------------------------------------------------
@@ -89,6 +110,11 @@ module home_inventory_wb (
     // Calibration regs
     reg [31:0] r_tare  [0:7];
     reg [31:0] r_scale [0:7];
+
+    // Events regs (read-only for now; will be driven by the core later)
+    reg [31:0] r_evt_count      [0:7];
+    reg [31:0] r_evt_last_delta [0:7];
+    reg [31:0] r_evt_last_ts;
 
     // Decode fields
     assign ctrl_enable = r_enable;
@@ -165,6 +191,27 @@ module home_inventory_wb (
             ADR_SCALE_CH6: rd_data = r_scale[6];
             ADR_SCALE_CH7: rd_data = r_scale[7];
 
+            // Events (read-only)
+            ADR_EVT_COUNT_CH0:      rd_data = r_evt_count[0];
+            ADR_EVT_COUNT_CH1:      rd_data = r_evt_count[1];
+            ADR_EVT_COUNT_CH2:      rd_data = r_evt_count[2];
+            ADR_EVT_COUNT_CH3:      rd_data = r_evt_count[3];
+            ADR_EVT_COUNT_CH4:      rd_data = r_evt_count[4];
+            ADR_EVT_COUNT_CH5:      rd_data = r_evt_count[5];
+            ADR_EVT_COUNT_CH6:      rd_data = r_evt_count[6];
+            ADR_EVT_COUNT_CH7:      rd_data = r_evt_count[7];
+
+            ADR_EVT_LAST_DELTA_CH0: rd_data = r_evt_last_delta[0];
+            ADR_EVT_LAST_DELTA_CH1: rd_data = r_evt_last_delta[1];
+            ADR_EVT_LAST_DELTA_CH2: rd_data = r_evt_last_delta[2];
+            ADR_EVT_LAST_DELTA_CH3: rd_data = r_evt_last_delta[3];
+            ADR_EVT_LAST_DELTA_CH4: rd_data = r_evt_last_delta[4];
+            ADR_EVT_LAST_DELTA_CH5: rd_data = r_evt_last_delta[5];
+            ADR_EVT_LAST_DELTA_CH6: rd_data = r_evt_last_delta[6];
+            ADR_EVT_LAST_DELTA_CH7: rd_data = r_evt_last_delta[7];
+
+            ADR_EVT_LAST_TS:        rd_data = r_evt_last_ts;
+
             default:     rd_data = 32'h0;
         endcase
     end
@@ -181,10 +228,15 @@ module home_inventory_wb (
             r_adc_num_ch    <= 4'h0;
             r_adc_snapshot_pulse <= 1'b0;
 
+            r_evt_last_ts <= 32'h0;
+
             for (i = 0; i < 8; i = i + 1) begin
                 r_adc_raw[i] <= 32'h0;
                 r_tare[i]    <= 32'h0;
                 r_scale[i]   <= 32'h0001_0000; // Q16.16 1.0
+
+                r_evt_count[i]      <= 32'h0;
+                r_evt_last_delta[i] <= 32'h0;
             end
         end else begin
             // Default: clear 1-cycle pulse outputs.
