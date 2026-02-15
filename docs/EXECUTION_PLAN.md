@@ -15,16 +15,14 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
    - `docs/VERIFICATION_PLAN.md` (spec-level smoke list) ✅
    - Harness repo: cocotb tests for the Wishbone reg block (next)
 4) Tighten v1 acceptance criteria (so we can pick ADC + filtering intentionally):
-   - Draft created: `spec/acceptance_metrics.md`
-   - Proposed decision: `decisions/007-effective-resolution-definition.md`
-   - Pending: Praneet sign-off (or relax target to 20 g for v1)
+   - Decided: v1 effective target is **20 g** (`spec/acceptance_metrics.md` + `decisions/007-effective-resolution-definition.md`)
 5) Choose a specific external 8ch load-cell ADC part and lock SPI vs I2C
 
 ## Blockers (must be explicit)
 - None currently.
 
 ## Pending from Praneet
-- Sign off: `spec/acceptance_metrics.md` + `decisions/007-effective-resolution-definition.md` (or decide to relax v1 target to 20 g)
+- None.
 
 ## Risks (watchlist)
 - 5 g effective resolution may be dominated by mechanical + drift; spec must define realistic acceptance criteria.

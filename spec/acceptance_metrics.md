@@ -1,8 +1,8 @@
 # Acceptance metrics (v1 draft)
 
-This document defines what **“5 g effective resolution”** means for the v1 demo, so RTL/firmware/verification don’t drift.
+This document defines what **“20 g effective resolution”** means for the v1 demo, so RTL/firmware/verification don’t drift.
 
-> Status: **draft** (needs Praneet sign-off)
+> Status: **decided** (Praneet chose 20 g for v1)
 
 ## Definitions
 
@@ -10,10 +10,10 @@ This document defines what **“5 g effective resolution”** means for the v1 d
 - **Sample rate (host-visible):** the rate at which firmware reports weight estimates to the host (or logs internally). Draft: **50 Hz**.
 - **Effective resolution:** the smallest step change that can be *reliably detected* (not the ADC LSB), under a defined observation window and false-alarm constraint.
 
-## Draft success criteria
+## Success criteria (v1)
 
 ### A) Step-change detectability
-A step change of **±5 g** on any channel shall be detected within **≤ 500 ms**.
+A step change of **±20 g** on any channel shall be detected within **≤ 2 s**.
 
 - Detection is defined as: firmware asserts an event flag / increments an event counter and reports a signed delta.
 - Observation conditions:
@@ -28,14 +28,14 @@ With no intentional weight change:
 
 ### C) Drift after tare
 After a tare operation and with no intentional weight change:
-- Reported weight estimate shall remain within **±10 g** for **30 minutes**.
+- Reported weight estimate shall remain within **±20 g** for **30 minutes**.
 
 Notes:
 - This explicitly acknowledges low-frequency drift (temperature, creep).
 - v2 can target tighter drift or periodic auto-re-tare.
 
 ### D) Cross-channel coupling (crosstalk)
-A step change of **+200 g** on one channel should not create a spurious **> 10 g** apparent change on any other channel (after filtering).
+A step change of **+200 g** on one channel should not create a spurious **> 20 g** apparent change on any other channel (after filtering).
 
 ## Non-goals (v1)
 - Absolute accuracy in grams across temperature and long time horizons.
@@ -44,13 +44,12 @@ A step change of **+200 g** on one channel should not create a spurious **> 10 g
 
 ## What this implies for design
 
-- ADC choice + sampling plan must support enough ENOB and bandwidth margin for 5 g steps.
+- ADC choice + sampling plan must support enough ENOB and bandwidth margin for 20 g steps.
 - Filtering must be explicitly parameterized (window length / IIR constants) and testable.
 - Verification needs directed tests for:
-  - detect ±5 g steps
+  - detect ±20 g steps
   - no-change false event rate (simulated noise)
   - drift envelope
 
 ## Open questions
-- Is the demo requirement better expressed as **20 g** steps (easier) vs **5 g** (harder)?
 - What is the expected maximum per-pad weight (range) and typical bin mass?
