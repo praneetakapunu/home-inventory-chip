@@ -24,7 +24,7 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 - None currently.
 
 ## Pending from Praneet
-- None.
+- Sign off: `spec/acceptance_metrics.md` + `decisions/007-effective-resolution-definition.md` (or decide to relax v1 target to 20 g)
 
 ## Risks (watchlist)
 - 5 g effective resolution may be dominated by mechanical + drift; spec must define realistic acceptance criteria.
