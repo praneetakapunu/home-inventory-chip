@@ -33,7 +33,8 @@ This is the end-to-end record of what must happen to reach tapeout. Keep it upda
 
 ## 4) Verification
 - [ ] Choose simulator flow (iverilog/verilator/etc.) + CI
-- [ ] Create testbench harness + basic smoke tests
+- [x] Define v1 bring-up smoke tests (Wishbone reg block) — see `docs/VERIFICATION_PLAN.md`
+- [ ] Create testbench harness + implement smoke tests (cocotb in harness repo)
 - [ ] Add multi-channel ADC stimulus models
 - [ ] Add regression tests: crosstalk, calibration, event detection
 
