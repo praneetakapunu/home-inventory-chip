@@ -12,8 +12,8 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
    - `rtl/home_inventory_wb.v` Wishbone reg block
    - `spec/regmap.md` v1 register map
 3) Add a minimal verification surface:
-   - `docs/VERIFICATION_PLAN.md` (spec-level smoke list)
-   - Harness repo: cocotb tests for the Wishbone reg block
+   - `docs/VERIFICATION_PLAN.md` (spec-level smoke list) ✅
+   - Harness repo: cocotb tests for the Wishbone reg block (next)
 4) Tighten v1 acceptance criteria: define what “5 g effective” means (noise/drift/latency)
 5) Choose a specific external 8ch load-cell ADC part and lock SPI vs I2C
 

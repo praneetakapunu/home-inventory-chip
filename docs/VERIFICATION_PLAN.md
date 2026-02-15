@@ -1,84 +1,62 @@
 # Verification Plan (v1)
 
-Goal: keep verification lightweight but real, so we can iterate fast and still have confidence before OpenMPW submission.
+This is the **minimum** verification surface needed to de-risk the first MPW submission.
 
-This plan is intentionally scoped to **bring-up confidence** first:
-- Wishbone register interface correctness
-- Reset behavior
-- Byte-enable correctness
-- No-bus-hang behavior (ACK discipline)
+## Scope (v1)
+- Wishbone register block (`rtl/home_inventory_wb.v`)
+- Top-level integration sanity (`rtl/home_inventory_top.v`)
+- No real ADC model yet (that comes after we pick the part + bus).
 
-## Scope (this phase)
+## Principles
+- Start with **spec-level smoke tests** that can run fast in CI.
+- Prefer deterministic checks: reset defaults, bus protocol, address decode.
+- Keep tests small and additive; one failure should point to one bug.
 
-### DUT(s)
-- `rtl/home_inventory_wb.v` (Wishbone register block)
-- `rtl/home_inventory_top.v` (top wrapper, once it wires core signals)
+## Test matrix
 
-### Non-goals (this phase)
-- Full ADC stimulus / event-detection modeling
-- Firmware-driven system tests
-- Gate-level / SDF simulations
+### 1) Wishbone register block — protocol + decode
+**Goal:** prove basic Wishbone correctness and that the regmap matches `spec/regmap.md`.
 
-## Smoke test list (must-have)
+Checks:
+1. **Reset behavior**
+   - On reset deassertion, all readable registers return documented reset values.
+   - Any write-only/side-effect regs read back as specified (or are unmapped).
+2. **Read path**
+   - Single-cycle read returns stable `dat_o` with proper `ack` behavior.
+3. **Write path**
+   - Writes update only documented fields.
+   - Writes to RO fields have no effect.
+4. **Addressing**
+   - Word addressing: verify that `adr` increments by 1 per 32-bit word.
+   - Out-of-range addresses return a safe value (0) and still ACK (or match chosen behavior).
+5. **Byte enables (`sel`)**
+   - If supported: verify partial writes update only selected bytes.
+   - If not supported: document behavior and assert `sel == 4'hF` in sim.
+6. **Side effects**
+   - `CTRL.START` is **write-1-to-pulse (W1P)**: writing 1 produces a 1-cycle pulse; writing 0 does nothing.
+   - Confirm pulse does not persist across cycles.
 
-### 1) Reset defaults
-- Apply reset
-- Read `ID` and `VERSION`
-- Read `CTRL`, `IRQ_EN`, `STATUS`
-- Expect:
-  - `CTRL.ENABLE` = 0
-  - `IRQ_EN` = 0
-  - `STATUS[7:0]` reflects `core_status` input (tie 0 for now)
+### 2) Register map conformance
+**Goal:** keep the RTL and spec from drifting.
 
-### 2) RO registers are stable
-- Write random data to `ID` / `VERSION`
-- Re-read
-- Expect values unchanged
+Approach:
+- Maintain a single source of truth in `spec/regmap.md`.
+- The cocotb test enumerates expected addresses/reset values from a small python dict.
 
-### 3) CTRL.ENABLE sticky RW
-- Write `CTRL.ENABLE=1`
-- Re-read `CTRL`
-- Expect `ENABLE=1`
-- Write `CTRL.ENABLE=0`
-- Re-read `CTRL`
-- Expect `ENABLE=0`
+### 3) Top-level integration sanity
+**Goal:** ensure the top can elaborate and basic signals are wired.
 
-### 4) CTRL.START is write-1-to-pulse
-- Hold `ENABLE` constant
-- Write `CTRL.START=1` (bit[1])
-- Expect `ctrl_start` asserted for exactly 1 `wb_clk` cycle
-- Re-read `CTRL` and expect `START` reads back as 0
+Checks:
+- Instantiate `home_inventory_top` with a clock/reset and stub pads.
+- Drive a minimal Wishbone bus sequence through the top into the reg block.
 
-### 5) Byte enables on IRQ_EN
-- For each `wbs_sel_i` combination (at least 0x1, 0x2, 0x4, 0x8, 0xF):
-  - Write to `IRQ_EN`
-  - Read back
-  - Expect only selected bytes changed
+## Deliverables (what to implement next)
+1. **chip-inventory**: keep this plan current + align regmap/spec.
+2. **home-inventory-chip-openmpw**: add cocotb tests:
+   - `test_wb_reset_defaults.py`
+   - `test_wb_rw_and_decode.py`
+   - `test_wb_ctrl_start_w1p.py`
 
-### 6) ACK discipline (no stalls)
-- For back-to-back valid Wishbone cycles:
-  - Ensure `wbs_ack_o` pulses exactly once per request
-  - Ensure no double-acks for a single request
-
-## Nice-to-have (next)
-- Add a tiny *digital filter + event detector* reference model and unit-test it at the spec level (even before the real RTL exists).
-  - Inputs: signed fixed-point sample stream (scaled in grams in the model)
-  - Outputs: filtered weight + event pulses
-  - Properties to check:
-    - hysteresis prevents chatter around threshold
-    - minimum-duration qualification works
-    - no event when |delta| < threshold
-  - Align thresholds/latency expectations with `spec/v1.md` ("~5 g effective resolution" definition).
-
-- Randomized Wishbone sequences (reads/writes/byte-enables) with a simple reference model
-- Assertions:
-  - `wbs_ack_o` is never high for two consecutive cycles when `wb_valid` stays high
-  - `ctrl_start` pulses only on a write of `CTRL` with bit[1]=1
-
-## Implementation notes
-
-Primary implementation should live in the **harness repo** (OpenMPW user project) using the existing cocotb infrastructure:
-- repo: `home-inventory-chip-openmpw`
-- tests: `verilog/dv/cocotb/`
-
-The source-of-truth repo (this repo) should keep the *spec-level* test list + any tiny reference models that are reusable.
+## Definition of Done (v1 smoke)
+- Tests above pass on a clean checkout in CI.
+- Any future regmap change requires updating the test dict + spec in the same PR.
