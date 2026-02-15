@@ -61,6 +61,15 @@ This plan is intentionally scoped to **bring-up confidence** first:
   - Ensure no double-acks for a single request
 
 ## Nice-to-have (next)
+- Add a tiny *digital filter + event detector* reference model and unit-test it at the spec level (even before the real RTL exists).
+  - Inputs: signed fixed-point sample stream (scaled in grams in the model)
+  - Outputs: filtered weight + event pulses
+  - Properties to check:
+    - hysteresis prevents chatter around threshold
+    - minimum-duration qualification works
+    - no event when |delta| < threshold
+  - Align thresholds/latency expectations with `spec/v1.md` ("~5 g effective resolution" definition).
+
 - Randomized Wishbone sequences (reads/writes/byte-enables) with a simple reference model
 - Assertions:
   - `wbs_ack_o` is never high for two consecutive cycles when `wb_valid` stays high
