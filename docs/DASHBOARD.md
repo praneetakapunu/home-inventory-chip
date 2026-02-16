@@ -31,12 +31,11 @@ Deliver a taped-out **digital** chip (open-source tools only) + a demo board/sys
 1) **Shipping address + phone** (for fab/packaging/board houses) — needed before ordering anything.
 2) **Name to print on silkscreen / chip demo branding** (optional).
 3) **Preferred demo form factor**: one “smart shelf scale”, or 4–8 small pads (under bins), or a full kitchen shelf?
-4) **Success metrics** (pick one set):
-   - A) Detect add/remove events ≥ **20 g**; per-bin totals; calibration flow.
-   - B) Detect ≥ **5 g** changes (harder: noise + drift).
+4) **Success metrics** — **decided: 20 g effective** (see `spec/acceptance_metrics.md`).
+   - Remaining detail needed: expected max per-pad weight (range) + typical bin mass.
 5) **GitHub visibility**: keep repo **private** or make **public** later?
 
-When you answer #3–#4, I can freeze the v1 spec without waiting.
+When you answer #3, I can freeze the v1 spec without waiting.
 
 ## Key decisions log
 - See: `decisions/` (one file per decision)

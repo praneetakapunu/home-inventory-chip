@@ -10,7 +10,7 @@
 ## Inputs needed from Praneet (soon)
 - **[Praneet]** Shipping address + phone (for ordering chips/PCB) — **received** (stored privately)
 - **[Praneet]** Demo form factor choice — **decided: pads (8 channels)**
-- **[Praneet]** Target weight-change resolution — **decided: 5 g**
+- **[Praneet]** Target weight-change resolution — **decided: 20 g (effective)**
 - **[Praneet]** Repo visibility — **decided: private now, public later**
 
 ## Later

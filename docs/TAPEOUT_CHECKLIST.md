@@ -5,7 +5,7 @@ This is the end-to-end record of what must happen to reach tapeout. Keep it upda
 ## 0) Product/spec freeze
 - [x] Demo form factor: pads
 - [x] Channels: 8
-- [x] Target resolution: 5 g (effective, after calibration)
+- [x] Target resolution: 20 g (effective, after calibration)
 - [x] Repo visibility: public + open source (now)
 - [ ] Define success metrics precisely (latency, false-positive rate, drift tolerance)
   - Drafted: `spec/acceptance_metrics.md` (needs Praneet sign-off)

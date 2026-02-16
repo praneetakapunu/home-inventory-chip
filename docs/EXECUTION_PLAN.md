@@ -26,5 +26,5 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 - None.
 
 ## Risks (watchlist)
-- 5 g effective resolution may be dominated by mechanical + drift; spec must define realistic acceptance criteria.
+- Even 20 g effective resolution may be dominated by mechanical + drift; acceptance criteria must stay realistic.
 - ADC part selection is a dependency for interface details + firmware formats.
