@@ -15,6 +15,10 @@ sudo apt-get update && sudo apt-get install -y iverilog
 Run:
 
 ```sh
+# RTL-vs-spec address-map consistency check (no simulator needed)
+make -C verify regmap-check
+
+# Wishbone smoke test (requires iverilog)
 make -C verify sim
 ```
 
