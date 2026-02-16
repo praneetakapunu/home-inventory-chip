@@ -5,7 +5,7 @@ This folder contains firmware-facing artifacts for the **home-inventory** OpenMP
 Goal: keep the RTL/spec **register map** usable from C early, even before full firmware exists.
 
 ## What lives here
-- `include/home_inventory_regmap.h`: C header with Wishbone register offsets + bitfields.
+- `include/home_inventory_regmap.h`: **generated** C header with Wishbone register offsets + bitfields.
 
 ## Conventions
 - Base address is platform-specific (Caravel / management SoC map). Use offsets from `HOMEINV_*`.
@@ -15,3 +15,10 @@ Goal: keep the RTL/spec **register map** usable from C early, even before full f
 ## Source of truth
 - Human-readable spec: `../spec/regmap.md`
 - Machine-readable: `../spec/regmap_v1.yaml`
+
+## How to regenerate the header
+
+```bash
+python3 ../ops/regmap_validate.py --yaml ../spec/regmap_v1.yaml
+python3 ../ops/gen_regmap_header.py --yaml ../spec/regmap_v1.yaml --out include/home_inventory_regmap.h
+```
