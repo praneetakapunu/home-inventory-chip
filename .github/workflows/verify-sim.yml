@@ -1,0 +1,20 @@
+name: verify-sim
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  wb_regfile_smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install iverilog
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+
+      - name: Run Wishbone regfile smoke test
+        run: make -C verify sim
