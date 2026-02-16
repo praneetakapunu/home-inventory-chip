@@ -105,6 +105,7 @@ module home_inventory_wb (
     // ADC regs (stubbed for now; enough for firmware to enumerate + latch)
     reg [3:0]  r_adc_num_ch;
     reg        r_adc_snapshot_pulse;
+    reg [31:0] r_adc_snapshot_count;
     reg [31:0] r_adc_raw [0:7];
 
     // Calibration regs
@@ -147,6 +148,9 @@ module home_inventory_wb (
     // Caravel/Wishbone masters sometimes present byte addresses; we treat
     // registers as 32-bit word-aligned and ignore adr[1:0] for decode.
     wire [31:0] wb_adr_aligned = {wbs_adr_i[31:2], 2'b00};
+
+    // Snapshot command (write-1-to-pulse) detection on the accepted write beat.
+    wire adc_snapshot_fire = (wb_fire && wbs_we_i && (wb_adr_aligned == ADR_ADC_CMD) && wbs_sel_i[0] && wbs_dat_i[0]);
 
     // Read mux (combinational)
     reg [31:0] rd_data;
@@ -227,6 +231,7 @@ module home_inventory_wb (
 
             r_adc_num_ch    <= 4'h0;
             r_adc_snapshot_pulse <= 1'b0;
+            r_adc_snapshot_count <= 32'h0;
 
             r_evt_last_ts <= 32'h0;
 
@@ -242,6 +247,7 @@ module home_inventory_wb (
             // Default: clear 1-cycle pulse outputs.
             r_start_pulse <= 1'b0;
             r_adc_snapshot_pulse <= 1'b0;
+            r_adc_snapshot_count <= 32'h0;
 
             // ACK pulse for each accepted request.
             wbs_ack_o <= wb_valid & ~wbs_ack_o;
@@ -292,6 +298,16 @@ module home_inventory_wb (
 
                     default: ;
                 endcase
+            end
+
+            // ADC snapshot behavior (stub): on SNAPSHOT pulse, update raw regs so
+            // firmware can observe changing values even before ADC integration.
+            if (adc_snapshot_fire) begin
+                r_adc_snapshot_count <= r_adc_snapshot_count + 32'h1;
+                for (i = 0; i < 8; i = i + 1) begin
+                    // Deterministic pattern: base + snapshot_count + channel index
+                    r_adc_raw[i] <= 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + i[31:0];
+                end
             end
         end
     end

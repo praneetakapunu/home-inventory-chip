@@ -225,10 +225,18 @@ module wb_tb;
             $fatal(1);
         end
 
-        // ADC_RAW defaults to 0 in stubbed RTL.
+        // ADC_RAW defaults to 0 after reset.
         wb_read32(ADR_ADC_RAW_CH0, rdata);
         if (rdata !== 32'h0000_0000) begin
             $display("[tb] ERROR: ADC_RAW_CH0 reset mismatch: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // SNAPSHOT should update raw regs with a deterministic stub pattern.
+        wb_write32(ADR_ADC_CMD, 32'h0000_0001);
+        wb_read32(ADR_ADC_RAW_CH0, rdata);
+        if (rdata !== 32'h0000_1001) begin
+            $display("[tb] ERROR: ADC_RAW_CH0 snapshot pattern mismatch: got 0x%08x", rdata);
             $fatal(1);
         end
 
