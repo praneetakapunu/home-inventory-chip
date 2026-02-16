@@ -20,7 +20,7 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
    - Started shortlist + rubric: `spec/adc_selection.md`
 
 ## Blockers (must be explicit)
-- None currently.
+- `iverilog` not installed on this VM, so `make -C verify sim` currently fails (Error 127). Need install via apt (or vendor a container/toolchain) to keep Wishbone regblock smoke tests runnable.
 
 ## Pending from Praneet
 - None.

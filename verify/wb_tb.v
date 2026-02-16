@@ -233,10 +233,18 @@ module wb_tb;
         end
 
         // SNAPSHOT should update raw regs with a deterministic stub pattern.
+        // Pattern increments each snapshot so firmware can observe changing values.
         wb_write32(ADR_ADC_CMD, 32'h0000_0001);
         wb_read32(ADR_ADC_RAW_CH0, rdata);
         if (rdata !== 32'h0000_1001) begin
-            $display("[tb] ERROR: ADC_RAW_CH0 snapshot pattern mismatch: got 0x%08x", rdata);
+            $display("[tb] ERROR: ADC_RAW_CH0 snapshot[1] pattern mismatch: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        wb_write32(ADR_ADC_CMD, 32'h0000_0001);
+        wb_read32(ADR_ADC_RAW_CH0, rdata);
+        if (rdata !== 32'h0000_1002) begin
+            $display("[tb] ERROR: ADC_RAW_CH0 snapshot[2] pattern mismatch: got 0x%08x", rdata);
             $fatal(1);
         end
 
