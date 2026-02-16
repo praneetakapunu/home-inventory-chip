@@ -100,6 +100,7 @@ module home_inventory_wb (
     // ---------------------------------------------------------------------
     reg        r_enable;
     reg        r_start_pulse;
+    reg        r_start_pending;
     reg [31:0] r_irq_en;
 
     // ADC regs (stubbed for now; enough for firmware to enumerate + latch)
@@ -148,7 +149,8 @@ module home_inventory_wb (
     // registers as 32-bit word-aligned and ignore adr[1:0] for decode.
     wire [31:0] wb_adr_aligned = {wbs_adr_i[31:2], 2'b00};
 
-    // Snapshot command (write-1-to-pulse) detection on the accepted write beat.
+    // Write-1-to-pulse detections on the accepted write beat.
+    wire ctrl_start_fire   = (wb_fire && wbs_we_i && (wb_adr_aligned == ADR_CTRL)    && wbs_sel_i[0] && wbs_dat_i[1]);
     wire adc_snapshot_fire = (wb_fire && wbs_we_i && (wb_adr_aligned == ADR_ADC_CMD) && wbs_sel_i[0] && wbs_dat_i[0]);
 
     // Read mux (combinational)
@@ -226,6 +228,7 @@ module home_inventory_wb (
             wbs_dat_o       <= 32'h0;
             r_enable        <= 1'b0;
             r_start_pulse   <= 1'b0;
+            r_start_pending <= 1'b0;
             r_irq_en        <= 32'h0;
 
             r_adc_num_ch    <= 4'h0;
@@ -242,8 +245,11 @@ module home_inventory_wb (
                 r_evt_last_delta[i] <= 32'h0;
             end
         end else begin
-            // Default: clear 1-cycle pulse outputs.
-            r_start_pulse <= 1'b0;
+            // Pulse generation: delay write-1-to-pulse requests by 1 cycle so
+            // downstream logic can observe a clean full-cycle pulse *after* the
+            // Wishbone write has been accepted.
+            r_start_pulse   <= r_start_pending;
+            r_start_pending <= ctrl_start_fire;
 
             // ACK pulse for each accepted request.
             wbs_ack_o <= wb_valid & ~wbs_ack_o;
@@ -260,7 +266,7 @@ module home_inventory_wb (
                         // ENABLE is a sticky RW bit.
                         if (wbs_sel_i[0]) r_enable <= wbs_dat_i[0];
                         // START is write-1-to-pulse (not sticky, not readable).
-                        if (wbs_sel_i[0] && wbs_dat_i[1]) r_start_pulse <= 1'b1;
+                        // Pulse timing is handled by ctrl_start_fire + r_start_pending.
                     end
                     ADR_IRQ_EN: r_irq_en <= apply_wstrb(r_irq_en, wbs_dat_i, wbs_sel_i);
 
