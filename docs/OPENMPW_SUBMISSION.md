@@ -53,7 +53,12 @@ That way OpenLane / Yosys gets stable inputs without duplicating source.
 If CI/submodules become painful, use `git subtree` to vendor the RTL snapshot into the harness repo. This trades clean separation for simplicity.
 
 ## Minimal submission readiness checklist
-These are “gate” items we should be able to do on demand:
+These are “gate” items we should be able to do on demand.
+
+Canonical checklist (kept as a separate doc so it can be copy/pasted into issues/PRs):
+- `docs/HARNESS_INTEGRATION_CHECKLIST.md`
+
+High-level gates:
 
 1) **Harness repo boots:** `make setup` completes (downloads deps, builds env)
 2) **Wrapper compiles:** `user_project_wrapper.v` and filelists resolve all RTL
