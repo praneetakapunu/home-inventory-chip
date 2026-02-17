@@ -107,7 +107,8 @@ module home_inventory_wb (
             ADR_VERSION: rd_data = 32'h0000_0001;
 
             ADR_CTRL:    rd_data = {30'h0, 1'b0, r_enable};
-            ADR_IRQ_EN:  rd_data = r_irq_en;
+            // Only bits [2:0] are defined; reserved bits read as 0.
+            ADR_IRQ_EN:  rd_data = {29'h0, r_irq_en[2:0]};
             ADR_STATUS:  rd_data = {24'h0, core_status};
 
             // ADC
@@ -213,7 +214,10 @@ module home_inventory_wb (
                         // START is write-1-to-pulse (not sticky, not readable).
                         // Pulse timing is handled by ctrl_start_fire + r_start_pending.
                     end
-                    ADR_IRQ_EN: r_irq_en <= apply_wstrb(r_irq_en, wbs_dat_i, wbs_sel_i);
+                    ADR_IRQ_EN: begin
+                        // Only bits [2:0] are defined; reserved bits must ignore writes.
+                        r_irq_en <= apply_wstrb(r_irq_en, wbs_dat_i, wbs_sel_i) & 32'h0000_0007;
+                    end
 
                     // ADC
                     ADR_ADC_CFG: begin

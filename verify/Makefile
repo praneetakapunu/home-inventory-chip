@@ -66,7 +66,7 @@ regmap-vh-gen-check:
 	echo "OK: generated Verilog params include matches spec/regmap_v1.yaml"'
 
 $(OUT): $(TB) $(RTL_DIR)/home_inventory_wb.v
-	$(IVERILOG) -g2012 -Wall -o $@ $^
+	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 clean:
 	rm -f $(OUT)

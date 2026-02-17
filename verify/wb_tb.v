@@ -199,13 +199,19 @@ module wb_tb;
             $fatal(1);
         end
 
-        // IRQ_EN write, then partial-byte overwrite
-        wb_write32(ADR_IRQ_EN, 32'h0000_0007);
+        // IRQ_EN reserved bits must read as 0 / ignore writes.
+        wb_write32(ADR_IRQ_EN, 32'hFFFF_FFFF);
+        wb_read32(ADR_IRQ_EN, rdata);
+        if (rdata !== 32'h0000_0007) begin
+            $display("[tb] ERROR: IRQ_EN reserved-bit mask mismatch: got 0x%08x", rdata);
+            $fatal(1);
+        end
         if (irq_en !== 3'b111) begin
             $display("[tb] ERROR: irq_en mismatch: got %b", irq_en);
             $fatal(1);
         end
-        // Write only low byte to 0x05; other bytes must remain unchanged.
+
+        // Partial-byte overwrite: write only low byte to 0x05.
         wb_write32_sel(ADR_IRQ_EN, 32'h0000_0005, 4'b0001);
         wb_read32(ADR_IRQ_EN, rdata);
         if (rdata !== 32'h0000_0005) begin
