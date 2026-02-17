@@ -20,6 +20,8 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 5) Choose a specific external 8ch load-cell ADC part and lock SPI vs I2C ✅
    - Locked: **TI ADS131M08** (`decisions/008-adc-part-selection.md`)
    - Shortlist + rubric: `spec/adc_selection.md`
+6) Define ADC interface contract for RTL/FW (new, draft):
+   - `spec/ads131m08_interface.md` (signals, framing assumptions, FIFO + regmap hooks)
 
 ## Blockers (must be explicit)
 - None.
