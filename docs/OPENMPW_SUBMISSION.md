@@ -61,6 +61,36 @@ These are “gate” items we should be able to do on demand:
 4) **OpenLane config exists:** `openlane/user_project_wrapper/config.tcl` (or equivalent) points at the correct filelists and constraints
 5) **Precheck runnable:** mpw-precheck can be invoked and produces a report artifact
 
+## Fast local loop (no PDK/OpenLane) — do this *first*
+Before downloading big toolchains, keep a tiny “does it compile?” loop that exercises the wrapper + filelists.
+
+Suggested pattern in the harness repo:
+
+```bash
+# from home-inventory-chip-openmpw/
+# 1) ensure submodules are present
+git submodule update --init --recursive
+
+# 2) compile the wrapper + included IP RTL using a lightweight sim
+# (choose one tool you have installed)
+iverilog -g2012 -o /tmp/wrapper.out \
+  -f verilog/rtl/ip_home_inventory.f \
+  verilog/rtl/user_project_wrapper.v
+
+# or, Verilator syntax-check / lint-style compile
+verilator -Wall --cc \
+  -f verilog/rtl/ip_home_inventory.f \
+  verilog/rtl/user_project_wrapper.v \
+  --top-module user_project_wrapper
+```
+
+This catches:
+- missing/incorrect filelist paths
+- module name mismatches (`home_inventory_top` vs wrapper instantiation)
+- accidental SystemVerilog features not supported by the chosen tool
+
+Once this passes, *then* it’s worth spending disk/time on OpenLane + precheck.
+
 ## Precheck quickstart (harness repo)
 Exact commands can vary per shuttle. This is the typical sequence:
 
