@@ -35,6 +35,21 @@ python3 ops/gen_regmap_header.py \
 - **Do not** hand-edit `fw/include/home_inventory_regmap.h`.
 - If you need a new constant/macro, add it to the YAML (preferred) or add a small post-generation section in the generator.
 
+## SystemVerilog package generation
+For RTL/DV, we also generate a small SV package with addresses + bitfield masks.
+
+Run:
+
+```bash
+python3 ops/gen_regmap_sv_pkg.py \
+  --yaml spec/regmap_v1.yaml \
+  --out  rtl/include/home_inventory_regmap_pkg.sv
+```
+
+### Policy
+- **Do not** hand-edit `rtl/include/home_inventory_regmap_pkg.sv`.
+- Prefer importing this package in RTL/DV instead of duplicating address constants.
+
 ## DV expectations
 In the harness repo, the Wishbone regblock smoke tests should enumerate expected addresses / resets from `spec/regmap_v1.yaml`.
 
