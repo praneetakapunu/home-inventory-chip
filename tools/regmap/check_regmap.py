@@ -85,11 +85,52 @@ def load_yaml_regs(yaml_path: Path) -> Dict[str, int]:
     return regs
 
 
+def _read_rtl_with_includes(path: Path, *, _seen: set[Path] | None = None) -> str:
+    """Return RTL text with simple `include expansion.
+
+    We expand `include "..." directives so ADR_* localparams can live in a
+    generated include file.
+
+    Rules:
+      - Only quote-form includes are supported.
+      - Include paths are resolved relative to the including file.
+      - Cycles are detected and rejected.
+    """
+
+    if _seen is None:
+        _seen = set()
+    path = path.resolve()
+    if path in _seen:
+        raise ValueError(f"include cycle detected at {path}")
+    _seen.add(path)
+
+    out_lines: list[str] = []
+    inc_re = re.compile(r"^\s*`include\s+\"([^\"]+)\"\s*$")
+
+    for line in path.read_text().splitlines():
+        m = inc_re.match(line)
+        if not m:
+            out_lines.append(line)
+            continue
+        inc_path = (path.parent / m.group(1)).resolve()
+        out_lines.append(f"// BEGIN_INCLUDE {inc_path}")
+        out_lines.append(_read_rtl_with_includes(inc_path, _seen=_seen))
+        out_lines.append(f"// END_INCLUDE {inc_path}")
+
+    return "\n".join(out_lines) + "\n"
+
+
 def load_rtl_adrs(rtl_path: Path) -> Dict[str, int]:
     regs: Dict[str, int] = {}
     problems: List[Problem] = []
 
-    for ln, line in enumerate(rtl_path.read_text().splitlines(), start=1):
+    try:
+        rtl_text = _read_rtl_with_includes(rtl_path)
+    except Exception as e:
+        problems.append(Problem("rtl", f"failed to read RTL/includes: {e}"))
+        rtl_text = ""
+
+    for ln, line in enumerate(rtl_text.splitlines(), start=1):
         m = ADR_RE.match(line)
         if not m:
             continue
@@ -97,12 +138,12 @@ def load_rtl_adrs(rtl_path: Path) -> Dict[str, int]:
         hexv = hexv.replace("_", "")
         addr = int(hexv, 16)
         if name in regs:
-            problems.append(Problem("rtl", f"duplicate localparam {name} at {rtl_path}:{ln}"))
+            problems.append(Problem("rtl", f"duplicate localparam {name} (expanded) at {rtl_path}:{ln}"))
             continue
         regs[name] = addr
 
     if not regs:
-        problems.append(Problem("rtl", f"no ADR_* localparams found in {rtl_path}"))
+        problems.append(Problem("rtl", f"no ADR_* localparams found in {rtl_path} (after include expansion)"))
 
     if problems:
         for p in problems:

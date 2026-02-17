@@ -36,64 +36,9 @@ module home_inventory_wb (
     // ---------------------------------------------------------------------
     // Address map (byte addresses)
     // ---------------------------------------------------------------------
-    localparam [31:0] ADR_ID      = 32'h0000_0000;
-    localparam [31:0] ADR_VERSION = 32'h0000_0004;
-
-    localparam [31:0] ADR_CTRL    = 32'h0000_0100;
-    localparam [31:0] ADR_IRQ_EN  = 32'h0000_0104;
-    localparam [31:0] ADR_STATUS  = 32'h0000_0108;
-
-    // ADC block (see spec/regmap_v1.yaml)
-    localparam [31:0] ADR_ADC_CFG     = 32'h0000_0200;
-    localparam [31:0] ADR_ADC_CMD     = 32'h0000_0204;
-    localparam [31:0] ADR_ADC_RAW_CH0 = 32'h0000_0210;
-    localparam [31:0] ADR_ADC_RAW_CH1 = 32'h0000_0214;
-    localparam [31:0] ADR_ADC_RAW_CH2 = 32'h0000_0218;
-    localparam [31:0] ADR_ADC_RAW_CH3 = 32'h0000_021C;
-    localparam [31:0] ADR_ADC_RAW_CH4 = 32'h0000_0220;
-    localparam [31:0] ADR_ADC_RAW_CH5 = 32'h0000_0224;
-    localparam [31:0] ADR_ADC_RAW_CH6 = 32'h0000_0228;
-    localparam [31:0] ADR_ADC_RAW_CH7 = 32'h0000_022C;
-
-    // Calibration block (see spec/regmap_v1.yaml)
-    localparam [31:0] ADR_TARE_CH0  = 32'h0000_0300;
-    localparam [31:0] ADR_TARE_CH1  = 32'h0000_0304;
-    localparam [31:0] ADR_TARE_CH2  = 32'h0000_0308;
-    localparam [31:0] ADR_TARE_CH3  = 32'h0000_030C;
-    localparam [31:0] ADR_TARE_CH4  = 32'h0000_0310;
-    localparam [31:0] ADR_TARE_CH5  = 32'h0000_0314;
-    localparam [31:0] ADR_TARE_CH6  = 32'h0000_0318;
-    localparam [31:0] ADR_TARE_CH7  = 32'h0000_031C;
-
-    localparam [31:0] ADR_SCALE_CH0 = 32'h0000_0320;
-    localparam [31:0] ADR_SCALE_CH1 = 32'h0000_0324;
-    localparam [31:0] ADR_SCALE_CH2 = 32'h0000_0328;
-    localparam [31:0] ADR_SCALE_CH3 = 32'h0000_032C;
-    localparam [31:0] ADR_SCALE_CH4 = 32'h0000_0330;
-    localparam [31:0] ADR_SCALE_CH5 = 32'h0000_0334;
-    localparam [31:0] ADR_SCALE_CH6 = 32'h0000_0338;
-    localparam [31:0] ADR_SCALE_CH7 = 32'h0000_033C;
-
-    // Events block (see spec/regmap_v1.yaml)
-    localparam [31:0] ADR_EVT_COUNT_CH0      = 32'h0000_0400;
-    localparam [31:0] ADR_EVT_COUNT_CH1      = 32'h0000_0404;
-    localparam [31:0] ADR_EVT_COUNT_CH2      = 32'h0000_0408;
-    localparam [31:0] ADR_EVT_COUNT_CH3      = 32'h0000_040C;
-    localparam [31:0] ADR_EVT_COUNT_CH4      = 32'h0000_0410;
-    localparam [31:0] ADR_EVT_COUNT_CH5      = 32'h0000_0414;
-    localparam [31:0] ADR_EVT_COUNT_CH6      = 32'h0000_0418;
-    localparam [31:0] ADR_EVT_COUNT_CH7      = 32'h0000_041C;
-
-    localparam [31:0] ADR_EVT_LAST_DELTA_CH0 = 32'h0000_0420;
-    localparam [31:0] ADR_EVT_LAST_DELTA_CH1 = 32'h0000_0424;
-    localparam [31:0] ADR_EVT_LAST_DELTA_CH2 = 32'h0000_0428;
-    localparam [31:0] ADR_EVT_LAST_DELTA_CH3 = 32'h0000_042C;
-    localparam [31:0] ADR_EVT_LAST_DELTA_CH4 = 32'h0000_0430;
-    localparam [31:0] ADR_EVT_LAST_DELTA_CH5 = 32'h0000_0434;
-    localparam [31:0] ADR_EVT_LAST_DELTA_CH6 = 32'h0000_0438;
-    localparam [31:0] ADR_EVT_LAST_DELTA_CH7 = 32'h0000_043C;
-
-    localparam [31:0] ADR_EVT_LAST_TS        = 32'h0000_0440;
+    // Single source-of-truth is spec/regmap_v1.yaml.
+    // The localparams below are generated into rtl/include/regmap_params.vh.
+`include "include/regmap_params.vh"
 
     // ---------------------------------------------------------------------
     // Registers
