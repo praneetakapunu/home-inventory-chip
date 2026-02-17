@@ -17,8 +17,9 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
    - Harness repo: cocotb tests for the Wishbone reg block (next)
 4) Tighten v1 acceptance criteria (so we can pick ADC + filtering intentionally):
    - Decided: v1 effective target is **20 g** (`spec/acceptance_metrics.md` + `decisions/007-effective-resolution-definition.md`)
-5) Choose a specific external 8ch load-cell ADC part and lock SPI vs I2C
-   - Started shortlist + rubric: `spec/adc_selection.md`
+5) Choose a specific external 8ch load-cell ADC part and lock SPI vs I2C ✅
+   - Locked: **TI ADS131M08** (`decisions/008-adc-part-selection.md`)
+   - Shortlist + rubric: `spec/adc_selection.md`
 
 ## Blockers (must be explicit)
 - None.

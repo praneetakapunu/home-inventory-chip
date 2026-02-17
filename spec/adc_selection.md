@@ -11,79 +11,78 @@ This is a working document. **All numerical specs must be verified against the l
 
 ## What we actually need (requirements)
 ### Electrical / sensing
-- 8x load-cell / strain-gauge inputs (likely bridge → instrumentation front-end assumptions TBD)
+- 8x load-cell / strain-gauge inputs (bridge → analog front-end details TBD)
 - Differential inputs (preferred)
 - Programmable gain (nice-to-have; depends on analog front-end architecture)
-- Input common-mode range compatible with our front-end plan
 
 ### Data quality
-- Noise / ENOB adequate to support **20 g effective** after filtering and realistic drift
-- Stable sampling mode (continuous conversion) suitable for slow-moving weight signals
-- Sample rate: enough for multi-channel scanning + digital filtering (exact number TBD; weight is low bandwidth, but we need headroom)
+- Noise / ENOB adequate to support **20 g effective** after filtering + drift budget
+- Continuous conversion mode suitable for slow-moving weight signals
+- Sample rate: enough headroom for 8-channel scan + digital filtering (weight is low bandwidth)
 
 ### Digital interface & integration
-- Interface: **SPI strongly preferred** for predictable timing + multi-device scalability
-- 3.3V / 1.8V digital IO compatibility (depends on harness / caravel IO constraints)
-- Simple command/response model (for a minimal bring-up)
+- Interface: **SPI strongly preferred** (predictable timing + simple harness wiring)
+- Digital IO compatibility with our harness/caravel IO plan
+- Bring-up surface should be small (basic init + read frames/regs)
 
 ### Packaging / availability
-- Package that is realistic for assembly in the v1 proto flow
-- Reasonable availability (avoid unobtainium)
+- Package realistic for assembly in the v1 proto flow
+- Availability (avoid unobtainium)
 
-## Shortlist (candidates to evaluate)
+## Shortlist (candidates)
 
-### Candidate A: TI ADS131M08 (SPI, 8ch delta-sigma)
+### Candidate A: TI ADS131M08 (SPI, 8ch delta-sigma, simultaneous)
+- TI product page: https://www.ti.com/product/ADS131M08
+- Datasheet (TI /lit): https://www.ti.com/lit/gpn/ads131m08
+- Key facts (from TI product page; verify in datasheet):
+  - 8 channels, **simultaneous sampling**
+  - 24-bit ΔΣ
+  - SPI interface
+  - PGA (gain up to 128)
+  - Digital supply range includes **1.65 V to 3.6 V** (check exact DVDD and IO levels)
+- Primary integration risk:
+  - Framed SPI readout / command model can be more involved than a simple I2C ADC
+
+### Candidate B: Analog Devices AD7124-8 (SPI, precision sigma-delta, muxed)
+- Product page: https://www.analog.com/en/products/ad7124-8.html
 - Why it’s attractive:
-  - Native 8-channel part; avoids muxing
-  - SPI interface with a “streaming” style readout is common on this family
-  - Delta-sigma ADC family is generally a good fit for low-bandwidth, high-resolution sensing
-- Integration questions (must confirm from datasheet):
-  - Digital IO voltage levels (1.8V/3.3V?)
-  - Exact framing for multi-channel reads (word length / status / CRC)
-  - Clocking (external crystal/clk in?) and power rails
-- Risk:
-  - Framing/command model can be more involved than a simple register-based I2C ADC
-
-### Candidate B: Analog Devices AD7124-8 (SPI, 8ch sigma-delta)
-- Why it’s attractive:
-  - 8 analog inputs with flexible muxing + programmable digital filter options
-  - Strong ecosystem + common in precision sensor designs
-  - SPI + register map (often easier to bring up than pure “streaming frames”)
-- Integration questions (must confirm from datasheet):
-  - Per-channel throughput at our chosen resolution/OSR
-  - Input type/range constraints and whether we need an external instrumentation amp
-  - Digital IO voltage + clocking
-- Risk:
-  - Muxed architecture means “simultaneous 8ch” isn’t guaranteed; need to budget per-channel sample rate
+  - Precision sensor ADC ecosystem; flexible digital filtering
+  - SPI + register-map style control is often easy to bring up
+- Primary integration risk:
+  - Input muxing means 8 channels are not truly simultaneous; per-channel throughput budget must be confirmed
 
 ### Candidate C: TI ADS124S08 (SPI, precision ADC with mux/PGA)
-- Why it’s attractive:
-  - Known in precision sensor space; PGA options in some variants
-  - SPI + register map style control
-- Integration questions:
-  - Can it meet the **8-channel** requirement without throughput collapse or awkward external muxing?
-  - Total noise / ENOB at the sample rates we want
-
-### Candidate D: Backup/availability-driven alternate vendor part
-- Keep a slot open for a second-source if availability or packaging becomes the gating factor.
+- TI product page: https://www.ti.com/product/ADS124S08
+- Datasheet (TI /lit): https://www.ti.com/lit/gpn/ads124s08
+- Key facts (from TI product page; verify in datasheet):
+  - 24-bit ΔΣ, **multiplexed**, up to 12 inputs
+  - SPI interface with optional CRC
+  - PGA (gain 1 to 128)
+  - Data rate up to 4 kSPS
+- Primary integration risk:
+  - Throughput/cycle time for 8 channels may be tight depending on OSR/filter settings
 
 ## Comparison table (fill from datasheets; do not “memory-spec” this)
 
-| Part | Vendor | Channels (simultaneous vs muxed) | Interface | PGA? | Digital filter / decimation | IO voltage | Clocking | Key risk | Datasheet link |
-|---|---|---:|---|---|---|---|---|---|---|
-| ADS131M08 | TI | 8 (simultaneous?) | SPI (framed) | TBD | TBD | TBD | TBD | framing complexity | TBD |
-| AD7124-8 | ADI | 8 (muxed) | SPI (register) | TBD | TBD | TBD | TBD | per-ch throughput | TBD |
-| ADS124S08 | TI | muxed | SPI (register) | TBD | TBD | TBD | TBD | 8ch requirement | TBD |
+| Part | Vendor | Channels (simultaneous vs muxed) | Interface | PGA | Max SPS (headline) | IO / supply notes | Key risk | Links |
+|---|---|---:|---|---:|---:|---|---|---|
+| ADS131M08 | TI | 8 (simultaneous) | SPI | up to 128 | 32 kSPS | DVDD down to 1.65 V (verify IO) | framed SPI complexity | https://www.ti.com/product/ADS131M08 ; https://www.ti.com/lit/gpn/ads131m08 |
+| AD7124-8 | ADI | muxed | SPI | TBD | TBD | TBD | per-ch throughput | https://www.analog.com/en/products/ad7124-8.html |
+| ADS124S08 | TI | muxed (12 inputs) | SPI | 1..128 | 4 kSPS | DVDD 2.7..3.6 V (verify IO) | 8ch cycle time | https://www.ti.com/product/ADS124S08 ; https://www.ti.com/lit/gpn/ads124s08 |
 
 ## Decision rubric (what we compare)
-1) **Can it practically yield 20 g effective** with reasonable digital filtering and drift budget?
+1) **Can it practically yield 20 g effective** with reasonable filtering and drift budget?
 2) Channel count without ugly muxing / throughput collapse
 3) Interface simplicity for our bring-up + harness tests
 4) Power/clock requirements compatible with the rest of the system
 5) Availability + package
 
 ## Next actions (to close this)
-- [ ] Confirm whether we need an instrumentation amplifier / dedicated bridge front-end before the ADC decision.
-- [ ] Pull 2–3 datasheets and fill the table above (noise @ SPS, input type, PGA, framing, IO levels, clocks).
-- [ ] Pick 1 part and create a decision record: `decisions/008-adc-part-selection.md`.
-- [ ] Update `spec/regmap.md` with any ADC-interface-visible controls (e.g., channel enables, decimation, CRC enable) as needed.
+- [ ] Decide whether we require a dedicated instrumentation amplifier / bridge front-end before locking the ADC.
+- [ ] For each candidate, extract *from datasheet*:
+  - input type/range + common-mode constraints
+  - noise / RMS noise at chosen data rate (per-channel)
+  - true per-channel sample rate achievable for 8 channels
+  - IO levels, clocking, and SPI framing
+- [ ] Pick 1 part and create/land the decision record: `decisions/008-adc-part-selection.md`.
+- [ ] Update `spec/regmap.md` with any ADC-interface-visible controls (channel enables, decimation/filter config, CRC enable, etc.).
