@@ -1,6 +1,9 @@
 # Generated artifacts
 reports/
 
+# Verification build outputs
+verify/wb_tb.out
+
 # Private info (do not commit)
 private/
 
