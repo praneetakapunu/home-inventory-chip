@@ -20,7 +20,9 @@ This is the end-to-end record of what must happen to reach tapeout. Keep it upda
 
 ## 2) Architecture
 - [x] External multi-channel ADC topology (digital-only chip)
-- [ ] Select specific ADC part + interface (SPI vs I2C) + sampling plan
+- [x] Select specific ADC part + interface (SPI vs I2C)
+  - Locked: **TI ADS131M08** (SPI) — see `decisions/008-adc-part-selection.md`
+- [ ] Define sampling plan (rates, decimation, latency budget)
 - [ ] Define SoC architecture: core, memory map, peripherals
 - [ ] Define register map (draft) + bus choice inside harness
 - [ ] Define host interface for demo (UART is minimum)
