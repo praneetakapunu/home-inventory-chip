@@ -2,7 +2,7 @@
 //
 // AUTO-GENERATED FILE. DO NOT EDIT BY HAND.
 // Generated from: spec/regmap_v1.yaml
-// Generated at:   2026-02-16 18:32:01Z
+// Generated at:   (omitted for deterministic builds)
 //
 // Notes:
 //   - Offsets are byte offsets (Wishbone byte addresses).

@@ -11,6 +11,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate regmap YAML
+        run: |
+          python3 ops/regmap_validate.py --yaml spec/regmap_v1.yaml
+
+      - name: Check generated firmware regmap header is up-to-date
+        run: |
+          tmp_hdr="$(mktemp)"
+          python3 ops/gen_regmap_header.py --yaml spec/regmap_v1.yaml --out "$tmp_hdr"
+          diff -u fw/include/home_inventory_regmap.h "$tmp_hdr"
+
       - name: Install iverilog
         run: |
           sudo apt-get update

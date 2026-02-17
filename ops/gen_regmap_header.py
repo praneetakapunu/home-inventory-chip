@@ -57,14 +57,15 @@ def _emit(spec_path: Path, spec: Dict[str, Any]) -> str:
 
     # Header prelude
     lines: List[str] = []
-    now = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
+    # NOTE: keep output deterministic so CI can diff the generated header
+    # against the committed version without timestamp churn.
 
     lines += [
         "// home_inventory_regmap.h",
         "//",
         "// AUTO-GENERATED FILE. DO NOT EDIT BY HAND.",
         f"// Generated from: {spec_path.as_posix()}",
-        f"// Generated at:   {now}",
+        "// Generated at:   (omitted for deterministic builds)",
         "//",
         "// Notes:",
         "//   - Offsets are byte offsets (Wishbone byte addresses).",
