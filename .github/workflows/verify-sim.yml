@@ -21,6 +21,18 @@ jobs:
           python3 ops/gen_regmap_header.py --yaml spec/regmap_v1.yaml --out "$tmp_hdr"
           diff -u fw/include/home_inventory_regmap.h "$tmp_hdr"
 
+      - name: Check generated SV regmap package is up-to-date
+        run: |
+          tmp_pkg="$(mktemp)"
+          python3 ops/gen_regmap_sv_pkg.py --yaml spec/regmap_v1.yaml --out "$tmp_pkg"
+          diff -u rtl/include/home_inventory_regmap_pkg.sv "$tmp_pkg"
+
+      - name: Check generated Verilog ADR_* params include is up-to-date
+        run: |
+          tmp_vh="$(mktemp)"
+          python3 tools/regmap/gen_verilog_params.py --yaml spec/regmap_v1.yaml --out "$tmp_vh"
+          diff -u rtl/include/regmap_params.vh "$tmp_vh"
+
       - name: Install iverilog
         run: |
           sudo apt-get update
