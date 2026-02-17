@@ -60,11 +60,13 @@ def _emit(spec_path: Path, spec: Dict[str, Any]) -> str:
     # NOTE: keep output deterministic so CI can diff the generated header
     # against the committed version without timestamp churn.
 
+    gen_from = "spec/regmap_v1.yaml" if spec_path.name == "regmap_v1.yaml" else spec_path.as_posix()
+
     lines += [
         "// home_inventory_regmap.h",
         "//",
         "// AUTO-GENERATED FILE. DO NOT EDIT BY HAND.",
-        f"// Generated from: {spec_path.as_posix()}",
+        f"// Generated from: {gen_from}",
         "// Generated at:   (omitted for deterministic builds)",
         "//",
         "// Notes:",

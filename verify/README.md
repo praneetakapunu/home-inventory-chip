@@ -15,10 +15,13 @@ sudo apt-get update && sudo apt-get install -y iverilog
 Run:
 
 ```sh
-# RTL-vs-spec address-map consistency check (no simulator needed)
+# 1) Regmap drift checks (no simulator needed)
 make -C verify regmap-check
 
-# Wishbone smoke test (requires iverilog)
+# 2) Assert generated FW header matches the YAML
+make -C verify regmap-gen-check
+
+# 3) Wishbone smoke test (requires iverilog)
 make -C verify sim
 ```
 
