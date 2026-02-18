@@ -23,6 +23,9 @@ make -C verify regmap-gen-check
 
 # 3) Wishbone smoke test (requires iverilog)
 make -C verify sim
+
+# 4) ADC stream FIFO directed test (requires iverilog)
+make -C verify fifo-sim
 ```
 
 This checks:

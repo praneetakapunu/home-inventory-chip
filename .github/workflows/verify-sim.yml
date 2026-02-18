@@ -43,3 +43,6 @@ jobs:
 
       - name: Run Wishbone regfile smoke test
         run: make -C verify sim
+
+      - name: Run ADC stream FIFO directed test
+        run: make -C verify fifo-sim
