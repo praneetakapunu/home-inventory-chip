@@ -106,6 +106,29 @@ blocks:
             reset: 0
             desc: Write 1 to latch raw regs into ADC_RAW_CHx.
 
+      - name: ADC_FIFO_STATUS
+        offset: 0x008
+        access: ro_w1c
+        reset: null
+        desc: Streaming FIFO status. LEVEL_WORDS reports fill level; OVERRUN is sticky and clears on write-1.
+        fields:
+          - name: LEVEL_WORDS
+            bits: [15, 0]
+            access: ro
+            reset: null
+            desc: Current FIFO fill level in 32-bit words.
+          - name: OVERRUN
+            bits: [16, 16]
+            access: w1c
+            reset: null
+            desc: Sticky FIFO overrun (FIFO full when a new word arrived). Write 1 to clear.
+
+      - name: ADC_FIFO_DATA
+        offset: 0x00C
+        access: ro
+        reset: null
+        desc: FIFO data pop. Each read pops one 32-bit word.
+
       - name: ADC_RAW_CH0
         offset: 0x010
         access: ro

@@ -42,27 +42,44 @@ This keeps RTL useful even if a later datasheet check changes exact framing.
 ## Data model (what we want in firmware)
 ### Sample payload
 Define a "sample" as:
-- `timestamp` (from SoC timer) — optional for v1; if omitted, use sample index
 - `status` (raw ADC status word) — if available
 - `ch[0..7]` signed sample values
 
+(Adding a timestamp is optional for v1; firmware can annotate samples with a SoC timer or a sample index.)
+
 ### Bit width
-- Store raw samples at their native width (likely 24-bit) and sign-extend to 32-bit in firmware.
+- Store raw samples at their native width (expected 24-bit) and **sign-extend to 32-bit** for the Wishbone register interface.
+
+## Streaming FIFO contract (normative for v1)
+When streaming is enabled, the hardware pushes one ADC "frame" into a FIFO which firmware drains via Wishbone.
+
+### FIFO word packing
+Per captured frame, push **9 words** in this exact order:
+1) `STATUS_WORD` (32-bit; raw ADC STATUS if present, else 0)
+2) `CH0`
+3) `CH1`
+4) `CH2`
+5) `CH3`
+6) `CH4`
+7) `CH5`
+8) `CH6`
+9) `CH7`
+
+Each channel word is:
+- right-justified native sample bits (expected 24)
+- sign-extended to 32-bit
+
+### Register interface
+See `spec/regmap.md` / `spec/regmap_v1.yaml` for the firmware-visible interface:
+- `ADC_FIFO_STATUS.LEVEL_WORDS`
+- `ADC_FIFO_STATUS.OVERRUN` (sticky, W1C)
+- `ADC_FIFO_DATA` (RO pop)
 
 ## Throughput targets (sanity)
 We should support at least:
 - 8 channels, ≥ 1 kS/s effective per channel (v1), with headroom.
 
 RTL should be able to sustain burst transfers into a small FIFO so Wishbone reads are decoupled from DRDY timing.
-
-## Register/firmware contract (placeholder)
-Create/extend regmap to expose:
-- FIFO level + overrun flag
-- FIFO pop (returns one word / one sample)
-- status: last STATUS word + sticky error bits
-- control: enable/disable capture, soft reset, CRC enable (if we use it)
-
-> NOTE: We already have `spec/regmap.md`; this doc is meant to inform the next regmap increment.
 
 ## Verification hooks
 - A synthesizable "ADC model" for DV is *not* required for baseline.
@@ -76,6 +93,5 @@ Minimum tests:
 
 ## TODOs (must close before tapeout)
 - [ ] Verify SPI mode, word ordering, presence of STATUS and CRC with datasheet
-- [ ] Decide exact FIFO word packing (status + channels)
-- [ ] Decide if we include CRC in v1 (DV + silicon debug tradeoff)
+- [ ] Decide whether CRC is included in v1 (DV + silicon debug tradeoff)
 - [ ] Confirm clocking plan for ADC on the OpenMPW harness/PCB

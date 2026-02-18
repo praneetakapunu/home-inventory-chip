@@ -46,10 +46,23 @@ Source-of-truth (machine-readable): `spec/regmap_v1.yaml`
 These registers define the firmware-visible ADC interface.
 Numeric conventions (raw sample width, sign-extension, etc.) are defined in `spec/fixed_point.md`.
 
+Two usage models exist:
+1) **Snapshot (bring-up)**: firmware triggers `ADC_CMD.SNAPSHOT` and then reads `ADC_RAW_CHx`.
+2) **Streaming (preferred)**: hardware pushes per-frame words into a small FIFO which firmware drains via `ADC_FIFO_DATA`.
+
+### Streaming FIFO packing (normative)
+When streaming is enabled, each captured ADC frame is pushed to the FIFO as:
+- Word 0: `ADC_STATUS_WORD` (raw ADC status if available; otherwise 0)
+- Word 1..8: `ADC_CH0..ADC_CH7` raw samples
+
+Each channel word is a sign-extended 32-bit value with the **native ADC sample width** right-justified (expected 24-bit).
+
 | Address | Name | Access | Reset | Description |
 |---:|---|---|---:|---|
 | 0x0000_0200 | `ADC_CFG` | RW | 0x0 | ADC config. For v1 bring-up, only `NUM_CH` is normative; other fields are reserved and must read as 0. |
 | 0x0000_0204 | `ADC_CMD` | RW | 0x0 | ADC command. For v1 bring-up, `SNAPSHOT` is write-1-to-pulse (latch raw regs). Other fields reserved. |
+| 0x0000_0208 | `ADC_FIFO_STATUS` | RO/W1C | — | Streaming FIFO status (level + sticky overrun). |
+| 0x0000_020C | `ADC_FIFO_DATA` | RO | — | Streaming FIFO data pop. Each read pops one 32-bit word. |
 | 0x0000_0210 | `ADC_RAW_CH0` | RO | — | Latest raw sample CH0. Format per `spec/fixed_point.md` (24-bit right-justified with sign/zero extension). |
 | 0x0000_0214 | `ADC_RAW_CH1` | RO | — | Latest raw sample CH1. Format per `spec/fixed_point.md`. |
 | 0x0000_0218 | `ADC_RAW_CH2` | RO | — | Latest raw sample CH2. Format per `spec/fixed_point.md`. |
@@ -72,6 +85,14 @@ Numeric conventions (raw sample width, sign-extension, etc.) are defined in `spe
 |---:|---|---|
 | 0 | `SNAPSHOT` | Write 1 to request a snapshot/latch of all `ADC_RAW_CHx` registers. Reads return 0. |
 | 31:1 | — | Reserved. |
+
+### `ADC_FIFO_STATUS` bitfields (v1)
+
+| Bit(s) | Name | Meaning |
+|---:|---|---|
+| 15:0 | `LEVEL_WORDS` | Current FIFO fill level in 32-bit words. |
+| 16 | `OVERRUN` | Sticky FIFO overrun. Write 1 to clear. |
+| 31:17 | — | Reserved (read as 0). |
 
 ## 0x0000_0300 — Calibration
 
