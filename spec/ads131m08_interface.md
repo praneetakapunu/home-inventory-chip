@@ -1,61 +1,99 @@
-# ADS131M08 Interface Notes (v1 draft)
+# ADS131M08 Interface Notes (v1)
 
-> Source of truth: TI ADS131M08 datasheet. This doc captures the *chip-level* assumptions we want for v1.
+> Source of truth: TI ADS131M08 datasheet (SBAS950B – Feb 2021). This doc captures the **chip-level** assumptions we want for v1.
 > If anything here conflicts with the datasheet, the datasheet wins.
 
 ## Goal
 Define the minimum interface contract between:
 - the **ADC** (ADS131M08),
-- our **RTL** (SPI/serial capture + buffering), and
+- our **RTL** (SPI capture + buffering), and
 - our **firmware** (registers + packet format),
 
-so we can implement a testable baseline without re-litigating basics.
+so we can implement + verify a baseline without re-litigating fundamentals.
 
-## Top-level signals (proposed)
-- `adc_sclk`  : SPI clock from SoC → ADC
+## Top-level signals (board ↔ SoC)
+- `adc_sclk`  : serial clock from SoC → ADC
 - `adc_cs_n`  : chip select (active-low) from SoC → ADC
-- `adc_mosi`  : serial data from SoC → ADC
-- `adc_miso`  : serial data from ADC → SoC
-- `adc_drdy_n`: data-ready (active-low) from ADC → SoC (preferred interrupt-style pacing)
-- `adc_rst_n` : reset (active-low) from SoC → ADC (optional but recommended)
+- `adc_mosi`  : serial data from SoC → ADC (DIN)
+- `adc_miso`  : serial data from ADC → SoC (DOUT)
+- `adc_drdy` / `adc_drdy_n`: data-ready from ADC → SoC (polarity depends on pad naming; functionally **DRDY asserts low**)
+- `adc_rst_n` : reset (active-low) from SoC → ADC (recommended)
 
 Optional / board-dependent:
-- `adc_clk` or crystal input depending on board (defer to PCB);
-- `adc_pwdn_n` if we want explicit powerdown control.
+- `adc_clkin` : external clock into ADC (preferred for best performance; see datasheet note about modulator clock sync)
+- `adc_sync_reset` (if we decide to drive SYNC/RESET as a function rather than hard reset)
 
-## SPI mode + framing (TO VERIFY)
-Open items that must be verified against the datasheet before tapeout:
-- SPI mode (CPOL/CPHA)
-- Exact word length and alignment
-- Whether the device always emits a STATUS word before channel data
-- CRC enable/disable behavior and polynomial
+## SPI electrical/clocking (datasheet-verified)
+### SPI mode
+- **CPOL = 0, CPHA = 1**
+- **CS transitions must occur while SCLK is low**
 
-### Working assumption for RTL baseline
-Implement a **generic framed-SPI capture** block that can handle:
-- a fixed number of 16/24/32-bit words per frame, parameterized;
-- optional leading STATUS word;
-- optional trailing CRC word;
-- framing driven by `adc_drdy_n` (capture one frame per DRDY edge while `cs_n` asserted).
+(From datasheet timing diagram.)
 
-This keeps RTL useful even if a later datasheet check changes exact framing.
+### Word length
+The ADS131M08 SPI **word size** is programmable:
+- 16 / 24 / 32 bits via `MODE.WLENGTH[1:0]`
 
-## Data model (what we want in firmware)
-### Sample payload
-Define a "sample" as:
-- `status` (raw ADC status word) — if available
-- `ch[0..7]` signed sample values
+Important nuance:
+- Commands/responses/register words are **16 bits of real data**, MSB-aligned and padded with zeros to 24/32-bit word sizes.
+- Conversion data are nominally **24-bit two’s complement**.
+- In 32-bit mode, conversion words can be either **zero-padded** or **MSB sign-extended** depending on WLENGTH setting.
 
-(Adding a timestamp is optional for v1; firmware can annotate samples with a SoC timer or a sample index.)
+**v1 baseline preference:** use a 32-bit word mode that yields **sign-extended** samples, so the digital path stays 32-bit-clean.
 
-### Bit width
-- Store raw samples at their native width (expected 24-bit) and **sign-extend to 32-bit** for the Wishbone register interface.
+## SPI framing (datasheet-verified)
+SPI communication is performed in **frames** consisting of several words.
+
+### Full-duplex pipeline behavior
+- The **first input word** on DIN is always a **command**.
+- The **first output word** on DOUT is always the **response to the command from the *previous* frame**.
+
+Practical consequence:
+- To continuously read data, firmware typically issues a **NULL command** each frame; the response word then contains the **STATUS register**.
+
+### Typical “data collection” frame structure
+For “most commands”, the datasheet describes a **10-word** frame:
+- **DIN (host → ADC)**:
+  1) `COMMAND`
+  2) `INPUT_CRC` if enabled, else `0`
+  3..10) eight words of `0`
+
+- **DOUT (ADC → host)**:
+  1) `RESPONSE` (for previous frame’s command; for NULL it is STATUS)
+  2..9) `CH0..CH7` conversion data
+  10) `OUTPUT_CRC` (**always present at end of output frame**) — host may ignore
+
+CRC details:
+- **Input CRC** is optional via `MODE.RX_CRC_EN`.
+- **Output CRC cannot be disabled**; it always appears at end of output frame.
+
+## DRDY behavior (datasheet-verified + v1 guidance)
+- DRDY indicates “new data” and is tied to conversion timing.
+- `MODE.DRDY_FMT` controls whether DRDY is a level-style signal or a short negative pulse.
+
+**Strong v1 recommendation:** keep `DRDY_FMT = 0` (level-style), because when `DRDY_FMT = 1` (pulse), **missed reads can cause skipped conversion results and suppressed DRDY pulses**.
+
+Also (important):
+- “The DRDY pulse is blocked when new conversions complete while conversion data are read.”
+  - So: avoid reading exactly at the moment new conversions complete if you need consistent DRDY behavior.
+
+## What we expose to firmware (chip-inventory contract)
+### “Frame” definition for our SoC
+We define one captured ADC frame as:
+- `status` (the response word when issuing NULL commands; effectively STATUS)
+- `ch[0..7]` signed samples
+
+We **do not** currently expose the output CRC to firmware in v1. (We may optionally verify CRC in RTL later, but it is not required to get first silicon bring-up.)
+
+### Sample bit width
+- Store raw samples at their native width (24-bit) but present them to firmware as **signed 32-bit**.
 
 ## Streaming FIFO contract (normative for v1)
-When streaming is enabled, the hardware pushes one ADC "frame" into a FIFO which firmware drains via Wishbone.
+When streaming is enabled, hardware pushes words into a FIFO which firmware drains via Wishbone.
 
-### FIFO word packing
-Per captured frame, push **9 words** in this exact order:
-1) `STATUS_WORD` (32-bit; raw ADC STATUS if present, else 0)
+### FIFO word packing (per captured conversion)
+Per conversion event, push **9 words** in this exact order:
+1) `STATUS_WORD` (32-bit; the DOUT response word when issuing NULL commands)
 2) `CH0`
 3) `CH1`
 4) `CH2`
@@ -65,9 +103,9 @@ Per captured frame, push **9 words** in this exact order:
 8) `CH6`
 9) `CH7`
 
-Each channel word is:
-- right-justified native sample bits (expected 24)
-- sign-extended to 32-bit
+Each channel word is signed 32-bit with correct sign extension.
+
+**CRC handling:** output CRC is present on the wire but dropped by v1 streaming.
 
 ### Register interface
 See `spec/regmap.md` / `spec/regmap_v1.yaml` for the firmware-visible interface:
@@ -75,23 +113,31 @@ See `spec/regmap.md` / `spec/regmap_v1.yaml` for the firmware-visible interface:
 - `ADC_FIFO_STATUS.OVERRUN` (sticky, W1C)
 - `ADC_FIFO_DATA` (RO pop)
 
-## Throughput targets (sanity)
-We should support at least:
-- 8 channels, ≥ 1 kS/s effective per channel (v1), with headroom.
+## RTL implications (what to build)
+The SPI capture RTL must support:
+- CPOL=0/CPHA=1 sampling
+- programmable word length (at least 24/32)
+- fixed 10-word receive per frame on DOUT, with 1 response + 8 channel words + 1 CRC
+- DRDY-paced framing (one data frame per conversion period)
 
-RTL should be able to sustain burst transfers into a small FIFO so Wishbone reads are decoupled from DRDY timing.
+Baseline implementation strategy:
+- firmware drives repetitive NULL commands
+- RTL uses DRDY falling edge as the “start capture next frame” event (with appropriate synchronization)
+- capture 10 words, drop final CRC word, and push 9 words into FIFO
 
 ## Verification hooks
-- A synthesizable "ADC model" for DV is *not* required for baseline.
-- Cocotb can drive the SPI bus and DRDY to emulate frames.
+Cocotb can emulate the ADC as a “frame source”:
+- drive DRDY
+- drive DOUT words as response/ch data/CRC
+- observe FIFO pushes + Wishbone drains
 
 Minimum tests:
-1) DRDY-triggered capture of N frames into FIFO
-2) FIFO overrun sticky flag
-3) Software drain via Wishbone, verifying ordering
-4) Reset/disable behavior
+1) capture N frames → FIFO contains 9*N words in correct order
+2) FIFO overrun sets sticky flag
+3) Wishbone draining pops in order
+4) reset/disable behavior
 
 ## TODOs (must close before tapeout)
-- [ ] Verify SPI mode, word ordering, presence of STATUS and CRC with datasheet
-- [ ] Decide whether CRC is included in v1 (DV + silicon debug tradeoff)
-- [ ] Confirm clocking plan for ADC on the OpenMPW harness/PCB
+- [ ] Decide whether we want to **verify** output CRC in RTL (debug vs complexity)
+- [ ] Confirm exact `MODE.WLENGTH` setting that yields **sign-extended** 32-bit data (and reflect it in FW init sequence)
+- [ ] Confirm clocking plan for ADC on the OpenMPW harness/PCB (`CLKIN` source)
