@@ -55,6 +55,9 @@ Expected behavior is design-dependent; for bring-up we mainly care that:
 - `STATUS` changes deterministically (or stays stable) across repeated runs.
 
 ## Step 5 — Configure ADC surface (bring-up)
+If the ADC is present on the board, firmware should also follow the ADS131M08 init checklist:
+- `fw/ADS131M08_INIT_SEQUENCE.md`
+
 Write:
 - `ADC_CFG.NUM_CH = 8` (or the expected populated channel count) @ `0x0000_0200`
 
