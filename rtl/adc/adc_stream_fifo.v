@@ -12,7 +12,7 @@
 `default_nettype none
 
 module adc_stream_fifo #(
-    parameter int DEPTH_WORDS = 64
+    parameter integer DEPTH_WORDS = 64
 ) (
     input  wire        clk,
     input  wire        rst,
@@ -28,28 +28,30 @@ module adc_stream_fifo #(
     input  wire        pop_ready,
 
     // Status
-    output wire [$clog2(DEPTH_WORDS+1)-1:0] level_words,
+    output wire [COUNT_W-1:0] level_words,
     output wire        overrun_sticky,
     input  wire        overrun_clear
 );
+
+    localparam integer COUNT_W = $clog2(DEPTH_WORDS+1);
 
     // Synthesis-time guardrail.
     initial begin
         if (DEPTH_WORDS < 2) $fatal(1, "DEPTH_WORDS must be >= 2");
     end
 
-    localparam int ADDR_W = $clog2(DEPTH_WORDS);
+    localparam integer ADDR_W = $clog2(DEPTH_WORDS);
 
     reg [31:0] mem [0:DEPTH_WORDS-1];
 
     reg [ADDR_W-1:0] rd_ptr;
     reg [ADDR_W-1:0] wr_ptr;
-    reg [$clog2(DEPTH_WORDS+1)-1:0] count;
+    reg [COUNT_W-1:0] count;
 
     reg overrun;
 
-    wire full  = (count == DEPTH_WORDS[$clog2(DEPTH_WORDS+1)-1:0]);
-    wire empty = (count == {($clog2(DEPTH_WORDS+1)){1'b0}});
+    wire full  = (count == DEPTH_WORDS[COUNT_W-1:0]);
+    wire empty = (count == {COUNT_W{1'b0}});
 
     assign push_ready = ~full;
     assign pop_valid  = ~empty;
@@ -65,7 +67,7 @@ module adc_stream_fifo #(
         if (rst) begin
             rd_ptr  <= {ADDR_W{1'b0}};
             wr_ptr  <= {ADDR_W{1'b0}};
-            count   <= {($clog2(DEPTH_WORDS+1)){1'b0}};
+            count   <= {COUNT_W{1'b0}};
             overrun <= 1'b0;
         end else begin
             // Clear sticky overrun (reg-level W1C drives overrun_clear)
@@ -87,8 +89,8 @@ module adc_stream_fifo #(
 
             // Count update
             case ({do_push, do_pop})
-                2'b10: count <= count + {{($clog2(DEPTH_WORDS+1)-1){1'b0}}, 1'b1};
-                2'b01: count <= count - {{($clog2(DEPTH_WORDS+1)-1){1'b0}}, 1'b1};
+                2'b10: count <= count + {{(COUNT_W-1){1'b0}}, 1'b1};
+                2'b01: count <= count - {{(COUNT_W-1){1'b0}}, 1'b1};
                 default: count <= count;
             endcase
         end

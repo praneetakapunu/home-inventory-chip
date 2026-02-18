@@ -14,11 +14,17 @@ RTL_DIR := ../rtl
 TB      := wb_tb.v
 OUT     := wb_tb.out
 
-.PHONY: sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
+FIFO_TB  := adc_stream_fifo_tb.v
+FIFO_OUT := adc_stream_fifo_tb.out
+
+.PHONY: sim fifo-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
 sim: $(OUT)
 	$(VVP) $(OUT)
+
+fifo-sim: $(FIFO_OUT)
+	$(VVP) $(FIFO_OUT)
 
 # Pure-Python consistency check (no Verilog simulator required).
 regmap-check:
@@ -68,5 +74,8 @@ regmap-vh-gen-check:
 $(OUT): $(TB) $(RTL_DIR)/home_inventory_wb.v
 	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
+$(FIFO_OUT): $(FIFO_TB) $(RTL_DIR)/adc/adc_stream_fifo.v
+	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+
 clean:
-	rm -f $(OUT)
+	rm -f $(OUT) $(FIFO_OUT)
