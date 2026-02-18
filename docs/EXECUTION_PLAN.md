@@ -11,8 +11,9 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
    - `rtl/home_inventory_top.v` skeleton
    - `rtl/home_inventory_wb.v` Wishbone reg block
    - `spec/regmap.md` v1 register map
-3) Add a minimal verification surface:
+3) Add a minimal verification + bring-up surface:
    - `docs/VERIFICATION_PLAN.md` (spec-level smoke list) ✅
+   - `docs/BRINGUP_SEQUENCE.md` (FW-facing bring-up checklist + acceptance) ✅
    - `make -C verify regmap-check` (YAML ↔ RTL address-map consistency) ✅
    - Harness repo: cocotb tests for the Wishbone reg block (next)
 4) Tighten v1 acceptance criteria (so we can pick ADC + filtering intentionally):
