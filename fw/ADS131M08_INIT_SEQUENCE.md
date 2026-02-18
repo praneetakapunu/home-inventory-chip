@@ -50,6 +50,12 @@ Notes:
 ## Start continuous data
 Two common patterns exist; v1 assumes the **NULL-command streaming** pattern.
 
+### First data / after pause precaution (must for predictable DRDY)
+Per datasheet note (see `spec/ads131m08_interface.md`), when data collection starts for the first time or resumes after a gap, the ADC’s internal per-channel buffering can require **two full data packets** to be read before DRDY/STATUS settles into the normal “one packet per conversion period” rhythm.
+
+v1 rule:
+- After reset/enable, either strobe **SYNC/RESET** (if available) or read **two consecutive frames** as fast as practical before you treat subsequent frames as steady-state.
+
 ### Pattern A (v1): NULL-command streaming
 1) Issue the required command to enter continuous conversion / data mode (per datasheet).
 2) For each conversion period, clock a full **10-word frame** while sending:

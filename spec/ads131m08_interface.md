@@ -77,6 +77,16 @@ Also (important):
 - “The DRDY pulse is blocked when new conversions complete while conversion data are read.”
   - So: avoid reading exactly at the moment new conversions complete if you need consistent DRDY behavior.
 
+### First data / after pause precaution (datasheet note; critical for predictable DRDY)
+The ADS131M08 has an internal mechanism that behaves like a small FIFO (two samples per channel). If data were **not read for a while** or a sample was missed, the FIFO slots can be full and the per-channel DRDY flags in `STATUS` can remain asserted until **both samples are read**.
+
+v1 guidance:
+- After reset / first data collection / any pause, do **one** of:
+  1) Strobe **SYNC/RESET** (or otherwise re-sync conversions) to clear the internal sample buffer, **or**
+  2) Immediately read **two complete data packets/frames** before you trust steady-state DRDY/STATUS behavior.
+
+This matters even if our RTL drops output CRC: the “two packets after pause” rule is about the ADC’s internal buffering and DRDY/STATUS semantics.
+
 ## What we expose to firmware (chip-inventory contract)
 ### “Frame” definition for our SoC
 We define one captured ADC frame as:
