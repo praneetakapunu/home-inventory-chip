@@ -1,66 +1,53 @@
 # Tapeout Checklist (v1)
 
-This is the end-to-end record of what must happen to reach tapeout. Keep it updated so we can optimize the process next time.
+This checklist is meant to be *actionable* and short. Check items off as they are *actually* done.
 
-## 0) Product/spec freeze
-- [x] Demo form factor: pads
-- [x] Channels: 8
-- [x] Target resolution: 20 g (effective, after calibration)
-- [x] Repo visibility: public + open source (now)
-- [ ] Define success metrics precisely (latency, false-positive rate, drift tolerance)
-  - Drafted: `spec/acceptance_metrics.md` (needs Praneet sign-off)
-- [ ] Finalize v1 feature list + explicit non-goals
+> Scope: OpenMPW (Caravel user project) submission with the **home-inventory** user project IP.
 
-## 1) Tapeout path selection
-- [ ] Choose PDK + shuttle (Sky130A OpenMPW is default)
-- [ ] Choose harness/integration approach (Caravel user project flow)
-- [ ] Confirm budget fit (< $5k) including packaging + PCB
-- [ ] Confirm IO constraints, package options, and shuttle schedule
-- [ ] Decide target clock + perf class (conservative)
+## 0) Decisions locked (pre-freeze)
+- [ ] Top-level intent and boundaries clear (what v1 does / does not do)
+- [ ] External ADC part locked (done: ADS131M08)
+- [ ] SPI framing assumptions documented (DRDY, words-per-frame, CRC policy)
+- [ ] Regmap v1 frozen (addresses + reset values)
 
-## 2) Architecture
-- [x] External multi-channel ADC topology (digital-only chip)
-- [x] Select specific ADC part + interface (SPI vs I2C)
-  - Locked: **TI ADS131M08** (SPI) — see `decisions/008-adc-part-selection.md`
-- [ ] Define sampling plan (rates, decimation, latency budget)
-- [ ] Define SoC architecture: core, memory map, peripherals
-- [ ] Define register map (draft) + bus choice inside harness
-- [ ] Define host interface for demo (UART is minimum)
+## 1) Repo / build hygiene
+- [ ] Canonical RTL filelist exists and is used by CI
+- [ ] `iverilog` (or equivalent) compile check is green for:
+  - [ ] chip-inventory IP (`rtl/`)
+  - [ ] harness integration repo (Caravel user project)
+- [ ] No generated blobs committed (build/ sim/ temp)
+- [ ] License headers / third-party attributions handled
 
-## 3) RTL implementation
-- [ ] Set up RTL tree + lint rules
-- [ ] Implement bus fabric + register map
-- [ ] Implement ADC interface peripheral
-- [ ] Implement timers/interrupts + UART
-- [ ] Integrate CPU (or minimal MCU) + ROM/RAM
+## 2) Harness integration (OpenMPW submission repo)
+- [ ] User project wrapper wires the IP cleanly
+- [ ] Clock/reset strategy documented (which clock, reset polarity, synchronizers)
+- [ ] Wishbone integration verified:
+  - [ ] Reads/writes work for a representative reg set
+  - [ ] Byte enables handled (or explicitly unsupported + documented)
+  - [ ] `ack` behavior meets expectations (no deadlocks)
 
-## 4) Verification
-- [ ] Choose simulator flow (iverilog/verilator/etc.) + CI
-- [ ] Add a **fast local compile loop** in the harness repo (wrapper + filelists) that runs without PDK/OpenLane
-  - See: `docs/OPENMPW_SUBMISSION.md` → “Fast local loop (no PDK/OpenLane)”
-- [x] Define v1 bring-up smoke tests (Wishbone reg block) — see `docs/VERIFICATION_PLAN.md`
-- [ ] Create testbench harness + implement smoke tests (cocotb in harness repo)
-- [ ] Add multi-channel ADC stimulus models
-- [ ] Add regression tests: crosstalk, calibration, event detection
+## 3) Verification gates
+- [ ] Directed smoke tests cover:
+  - [ ] Wishbone regblock (reset values + R/W paths)
+  - [ ] ADC DRDY sync edge pulse behavior
+  - [ ] FIFO: push/pop, level, overrun sticky
+- [ ] CDC/Reset review done (at least a written checklist + known crossings)
+- [ ] Known limitations listed in `docs/KNOWN_LIMITATIONS.md`
 
-## 5) Firmware
-- [ ] Bring-up firmware (UART printf, register reads)
-- [ ] ADC sampling driver + per-channel calibration
-- [ ] Filtering + event detection + telemetry protocol
+## 4) Bring-up readiness (FW-facing)
+- [ ] Bring-up sequence document exists and is realistic
+- [ ] Minimal FW register pokes documented for:
+  - [ ] reset sanity
+  - [ ] enable capture
+  - [ ] drain FIFO
+- [ ] Error observability exists (sticky flags, counters, last-error code)
 
-## 6) Physical design
-- [ ] Choose flow (OpenLane/OpenROAD) + constraints
-- [ ] SDC + pin plan
-- [ ] DRC/LVS clean
-- [ ] STA timing closure (with margin)
-- [ ] Generate GDS + signoff artifacts
+## 5) Precheck / submission gates
+- [ ] OpenMPW precheck runs clean (document exact command + commit hash)
+- [ ] Final tag created (e.g., `tapeout-v1.0.0`)
+- [ ] Release notes written (what changed since last tag)
 
-## 7) Tapeout package + submission
-- [ ] Assemble final deliverables per shuttle requirements
-- [ ] Submit to MPW
-- [ ] Archive submission bundle (for reproducibility)
-
-## 8) Post-tapeout bring-up
-- [ ] PCB design for pads + ADC + chip breakout
-- [ ] Assembly + test plan
-- [ ] Silicon validation + demo documentation
+## 6) Signoff artifacts (lightweight, but explicit)
+- [ ] `docs/ARCH.md` (top-level block diagram + interfaces)
+- [ ] `spec/regmap.md` frozen + referenced by RTL
+- [ ] `docs/VERIFICATION_PLAN.md` updated with *what we actually ran*

@@ -16,14 +16,16 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
    - `docs/BRINGUP_SEQUENCE.md` (FW-facing bring-up checklist + acceptance) ✅
    - `make -C verify regmap-check` (YAML ↔ RTL address-map consistency) ✅
    - Harness repo: cocotb tests for the Wishbone reg block (next)
-4) Tighten v1 acceptance criteria (so we can pick ADC + filtering intentionally):
+4) Define tapeout gates so we stop guessing "done":
+   - `docs/TAPEOUT_CHECKLIST.md` (v1 submission readiness checklist) ✅
+5) Tighten v1 acceptance criteria (so we can pick ADC + filtering intentionally):
    - Decided: v1 effective target is **20 g** (`spec/acceptance_metrics.md` + `decisions/007-effective-resolution-definition.md`)
-5) Choose a specific external 8ch load-cell ADC part and lock SPI vs I2C ✅
+6) Choose a specific external 8ch load-cell ADC part and lock SPI vs I2C ✅
    - Locked: **TI ADS131M08** (`decisions/008-adc-part-selection.md`)
    - Shortlist + rubric: `spec/adc_selection.md`
-6) Define ADC interface contract for RTL/FW (new, draft):
+7) Define ADC interface contract for RTL/FW (new, draft):
    - `spec/ads131m08_interface.md` (signals, framing assumptions, FIFO + regmap hooks)
-7) Break ADC RTL into implementable modules:
+8) Break ADC RTL into implementable modules:
    - `docs/ADC_RTL_ARCH.md` (module split + FIFO contract recap) ✅
    - `rtl/adc/adc_spi_frame_capture_stub.v` (interface stub for framed SPI capture) ✅
    - `rtl/adc/adc_drdy_sync.v` (2FF sync + falling-edge pulse) ✅
