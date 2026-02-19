@@ -36,14 +36,29 @@ regmap-gen:
 	python3 ../ops/gen_regmap_header.py --yaml ../spec/regmap_v1.yaml --out ../fw/include/home_inventory_regmap.h
 	python3 ../ops/gen_regmap_sv_pkg.py --yaml ../spec/regmap_v1.yaml --out ../rtl/include/home_inventory_regmap_pkg.sv
 
-# Assert that the committed generated header is up-to-date.
+# Assert that the committed generated artifacts are up-to-date.
+#
+# This target is what CI should run to ensure contributors didn't forget to
+# re-run generation after editing spec/regmap_v1.yaml.
 regmap-gen-check:
 	@bash -c 'set -euo pipefail; \
 	TMP=$$(mktemp); \
 	python3 ../ops/gen_regmap_header.py --yaml ../spec/regmap_v1.yaml --out $$TMP; \
 	diff -u $$TMP ../fw/include/home_inventory_regmap.h; \
 	rm -f $$TMP; \
-	echo "OK: generated header matches spec/regmap_v1.yaml"'
+	echo "OK: generated C header matches spec/regmap_v1.yaml"'
+	@bash -c 'set -euo pipefail; \
+	TMP=$$(mktemp); \
+	python3 ../ops/gen_regmap_sv_pkg.py --yaml ../spec/regmap_v1.yaml --out $$TMP; \
+	diff -u $$TMP ../rtl/include/home_inventory_regmap_pkg.sv; \
+	rm -f $$TMP; \
+	echo "OK: generated SV package matches spec/regmap_v1.yaml"'
+	@bash -c 'set -euo pipefail; \
+	TMP=$$(mktemp); \
+	python3 ../tools/regmap/gen_verilog_params.py --yaml ../spec/regmap_v1.yaml --out $$TMP; \
+	diff -u $$TMP ../rtl/include/regmap_params.vh; \
+	rm -f $$TMP; \
+	echo "OK: generated Verilog include matches spec/regmap_v1.yaml"'
 
 # (Re)generate the SV package (RTL/DV constants) from YAML.
 regmap-sv-gen:
