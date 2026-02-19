@@ -14,6 +14,7 @@ cd "$ROOT_DIR"
 YAML="spec/regmap_v1.yaml"
 HDR_OUT="fw/include/home_inventory_regmap.h"
 SVPKG_OUT="rtl/include/home_inventory_regmap_pkg.sv"
+VH_OUT="rtl/include/regmap_params.vh"
 
 python3 ops/regmap_validate.py --yaml "$YAML"
 
@@ -25,10 +26,15 @@ python3 ops/gen_regmap_sv_pkg.py \
   --yaml "$YAML" \
   --out  "$SVPKG_OUT"
 
+python3 tools/regmap/gen_verilog_params.py \
+  --yaml "$YAML" \
+  --out  "$VH_OUT"
+
 echo ""
 echo "Regmap artifacts updated from: $YAML"
 echo " - $HDR_OUT"
 echo " - $SVPKG_OUT"
+echo " - $VH_OUT"
 echo ""
 echo "Git status (if anything changed):"
 git status --porcelain=v1 || true

@@ -19,6 +19,7 @@ This will:
 - validate the YAML
 - regenerate the firmware header
 - regenerate the RTL/DV SystemVerilog package
+- regenerate a Verilog `include` file with `ADR_*` localparams (for plain-Verilog modules)
 
 ## Validation (manual)
 Run:
@@ -61,6 +62,21 @@ python3 ops/gen_regmap_sv_pkg.py \
 ### Policy
 - **Do not** hand-edit `rtl/include/home_inventory_regmap_pkg.sv`.
 - Prefer importing this package in RTL/DV instead of duplicating address constants.
+
+## Verilog `ADR_*` params include generation
+For plain-Verilog modules (or quick bring-up), we also generate a small Verilog include file with `ADR_*` localparams.
+
+Run:
+
+```bash
+python3 tools/regmap/gen_verilog_params.py \
+  --yaml spec/regmap_v1.yaml \
+  --out  rtl/include/regmap_params.vh
+```
+
+### Policy
+- **Do not** hand-edit `rtl/include/regmap_params.vh`.
+- Prefer the SV package when working in SystemVerilog; use the `.vh` include for legacy/plain-Verilog code.
 
 ## DV expectations
 In the harness repo, the Wishbone regblock smoke tests should enumerate expected addresses / resets from `spec/regmap_v1.yaml`.
