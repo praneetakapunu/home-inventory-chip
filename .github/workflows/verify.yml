@@ -1,0 +1,32 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  sim:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            iverilog \
+            make \
+            python3
+
+      - name: Regmap drift checks
+        run: make -C verify regmap-check
+
+      - name: Regmap generated artifact checks
+        run: make -C verify regmap-gen-check
+
+      - name: Wishbone smoke sim
+        run: make -C verify sim
+
+      - name: ADC FIFO directed sim
+        run: make -C verify fifo-sim
