@@ -114,7 +114,52 @@ module wb_tb;
 
     reg [31:0] rdata;
 
+    // Address vectors (so we can loop without hard-coding offsets twice)
+    reg [31:0] adr_adc_raw [0:7];
+    reg [31:0] adr_tare    [0:7];
+    reg [31:0] adr_scale   [0:7];
+    reg [31:0] adr_evt_cnt [0:7];
+
+    integer ch;
+
     initial begin
+        // Populate address arrays from generated params
+        adr_adc_raw[0] = ADR_ADC_RAW_CH0;
+        adr_adc_raw[1] = ADR_ADC_RAW_CH1;
+        adr_adc_raw[2] = ADR_ADC_RAW_CH2;
+        adr_adc_raw[3] = ADR_ADC_RAW_CH3;
+        adr_adc_raw[4] = ADR_ADC_RAW_CH4;
+        adr_adc_raw[5] = ADR_ADC_RAW_CH5;
+        adr_adc_raw[6] = ADR_ADC_RAW_CH6;
+        adr_adc_raw[7] = ADR_ADC_RAW_CH7;
+
+        adr_tare[0] = ADR_TARE_CH0;
+        adr_tare[1] = ADR_TARE_CH1;
+        adr_tare[2] = ADR_TARE_CH2;
+        adr_tare[3] = ADR_TARE_CH3;
+        adr_tare[4] = ADR_TARE_CH4;
+        adr_tare[5] = ADR_TARE_CH5;
+        adr_tare[6] = ADR_TARE_CH6;
+        adr_tare[7] = ADR_TARE_CH7;
+
+        adr_scale[0] = ADR_SCALE_CH0;
+        adr_scale[1] = ADR_SCALE_CH1;
+        adr_scale[2] = ADR_SCALE_CH2;
+        adr_scale[3] = ADR_SCALE_CH3;
+        adr_scale[4] = ADR_SCALE_CH4;
+        adr_scale[5] = ADR_SCALE_CH5;
+        adr_scale[6] = ADR_SCALE_CH6;
+        adr_scale[7] = ADR_SCALE_CH7;
+
+        adr_evt_cnt[0] = ADR_EVT_COUNT_CH0;
+        adr_evt_cnt[1] = ADR_EVT_COUNT_CH1;
+        adr_evt_cnt[2] = ADR_EVT_COUNT_CH2;
+        adr_evt_cnt[3] = ADR_EVT_COUNT_CH3;
+        adr_evt_cnt[4] = ADR_EVT_COUNT_CH4;
+        adr_evt_cnt[5] = ADR_EVT_COUNT_CH5;
+        adr_evt_cnt[6] = ADR_EVT_COUNT_CH6;
+        adr_evt_cnt[7] = ADR_EVT_COUNT_CH7;
+
         $display("[tb] start");
         wb_idle();
         core_status = 8'hA5;
@@ -221,11 +266,13 @@ module wb_tb;
             $fatal(1);
         end
 
-        // ADC_RAW defaults to 0 after reset.
-        wb_read32(ADR_ADC_RAW_CH0, rdata);
-        if (rdata !== 32'h0000_0000) begin
-            $display("[tb] ERROR: ADC_RAW_CH0 reset mismatch: got 0x%08x", rdata);
-            $fatal(1);
+        // ADC_RAW defaults to 0 after reset (all channels).
+        for (ch = 0; ch < 8; ch = ch + 1) begin
+            wb_read32(adr_adc_raw[ch], rdata);
+            if (rdata !== 32'h0000_0000) begin
+                $display("[tb] ERROR: ADC_RAW_CH%0d reset mismatch: got 0x%08x", ch, rdata);
+                $fatal(1);
+            end
         end
 
         // ADC_CMD is write-1-to-pulse; reads must return 0.
@@ -238,27 +285,40 @@ module wb_tb;
 
         // SNAPSHOT should update raw regs with a deterministic stub pattern.
         // Pattern increments each snapshot so firmware can observe changing values.
+        // v1 stub: CHn returns 0x0000_1000 + snapshot_count in low bits, plus channel index in [7:4].
         wb_write32(ADR_ADC_CMD, 32'h0000_0001);
-        wb_read32(ADR_ADC_RAW_CH0, rdata);
-        if (rdata !== 32'h0000_1001) begin
-            $display("[tb] ERROR: ADC_RAW_CH0 snapshot[1] pattern mismatch: got 0x%08x", rdata);
-            $fatal(1);
+        for (ch = 0; ch < 8; ch = ch + 1) begin
+            wb_read32(adr_adc_raw[ch], rdata);
+            if (rdata !== (32'h0000_1001 + ch)) begin
+                $display("[tb] ERROR: ADC_RAW_CH%0d snapshot[1] pattern mismatch: got 0x%08x", ch, rdata);
+                $fatal(1);
+            end
         end
 
         wb_write32(ADR_ADC_CMD, 32'h0000_0001);
-        wb_read32(ADR_ADC_RAW_CH0, rdata);
-        if (rdata !== 32'h0000_1002) begin
-            $display("[tb] ERROR: ADC_RAW_CH0 snapshot[2] pattern mismatch: got 0x%08x", rdata);
-            $fatal(1);
+        for (ch = 0; ch < 8; ch = ch + 1) begin
+            wb_read32(adr_adc_raw[ch], rdata);
+            if (rdata !== (32'h0000_1002 + ch)) begin
+                $display("[tb] ERROR: ADC_RAW_CH%0d snapshot[2] pattern mismatch: got 0x%08x", ch, rdata);
+                $fatal(1);
+            end
         end
 
         // -----------------------------------------------------------------
         // Calibration
         // -----------------------------------------------------------------
-        wb_read32(ADR_SCALE_CH0, rdata);
-        if (rdata !== 32'h0001_0000) begin
-            $display("[tb] ERROR: SCALE_CH0 reset mismatch: got 0x%08x", rdata);
-            $fatal(1);
+        // SCALE defaults to 1.0, TARE defaults to 0 (all channels).
+        for (ch = 0; ch < 8; ch = ch + 1) begin
+            wb_read32(adr_scale[ch], rdata);
+            if (rdata !== 32'h0001_0000) begin
+                $display("[tb] ERROR: SCALE_CH%0d reset mismatch: got 0x%08x", ch, rdata);
+                $fatal(1);
+            end
+            wb_read32(adr_tare[ch], rdata);
+            if (rdata !== 32'h0000_0000) begin
+                $display("[tb] ERROR: TARE_CH%0d reset mismatch: got 0x%08x", ch, rdata);
+                $fatal(1);
+            end
         end
 
         // Byte strobes: write 0xDEADBEEF into TARE_CH0 using two half-writes
@@ -270,14 +330,24 @@ module wb_tb;
             $fatal(1);
         end
 
+        // Byte strobes: poke only top byte of SCALE_CH1 and confirm other bytes unchanged.
+        wb_write32_sel(ADR_SCALE_CH1, 32'hAB00_0000, 4'b1000);
+        wb_read32(ADR_SCALE_CH1, rdata);
+        if (rdata !== 32'hAB01_0000) begin
+            $display("[tb] ERROR: SCALE_CH1 byte-strobe mismatch: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
         // -----------------------------------------------------------------
         // RO regs must ignore writes (events are RO)
         // -----------------------------------------------------------------
-        wb_write32(ADR_EVT_COUNT_CH0, 32'hFFFF_FFFF);
-        wb_read32(ADR_EVT_COUNT_CH0, rdata);
-        if (rdata !== 32'h0000_0000) begin
-            $display("[tb] ERROR: EVT_COUNT_CH0 should ignore writes: got 0x%08x", rdata);
-            $fatal(1);
+        for (ch = 0; ch < 8; ch = ch + 1) begin
+            wb_write32(adr_evt_cnt[ch], 32'hFFFF_FFFF);
+            wb_read32(adr_evt_cnt[ch], rdata);
+            if (rdata !== 32'h0000_0000) begin
+                $display("[tb] ERROR: EVT_COUNT_CH%0d should ignore writes: got 0x%08x", ch, rdata);
+                $fatal(1);
+            end
         end
 
         $display("[tb] PASS");
