@@ -20,6 +20,8 @@ package home_inventory_regmap_pkg;
   localparam logic [31:0] HOMEINV_ADR_STATUS = 32'h00000108;
   localparam logic [31:0] HOMEINV_ADR_ADC_CFG = 32'h00000200;
   localparam logic [31:0] HOMEINV_ADR_ADC_CMD = 32'h00000204;
+  localparam logic [31:0] HOMEINV_ADR_ADC_FIFO_STATUS = 32'h00000208;
+  localparam logic [31:0] HOMEINV_ADR_ADC_FIFO_DATA = 32'h0000020C;
   localparam logic [31:0] HOMEINV_ADR_ADC_RAW_CH0 = 32'h00000210;
   localparam logic [31:0] HOMEINV_ADR_ADC_RAW_CH1 = 32'h00000214;
   localparam logic [31:0] HOMEINV_ADR_ADC_RAW_CH2 = 32'h00000218;
@@ -87,6 +89,12 @@ package home_inventory_regmap_pkg;
   // ADC_CMD fields
   localparam int unsigned HOMEINV_ADC_CMD_SNAPSHOT_BIT = 0;
   localparam logic [31:0] HOMEINV_ADC_CMD_SNAPSHOT_MASK = (32'h1 << HOMEINV_ADC_CMD_SNAPSHOT_BIT);
+
+  // ADC_FIFO_STATUS fields
+  localparam int unsigned HOMEINV_ADC_FIFO_STATUS_LEVEL_WORDS_LSB  = 0;
+  localparam logic [31:0] HOMEINV_ADC_FIFO_STATUS_LEVEL_WORDS_MASK = 32'h0000FFFF;
+  localparam int unsigned HOMEINV_ADC_FIFO_STATUS_OVERRUN_BIT = 16;
+  localparam logic [31:0] HOMEINV_ADC_FIFO_STATUS_OVERRUN_MASK = (32'h1 << HOMEINV_ADC_FIFO_STATUS_OVERRUN_BIT);
 
   // -----------------------------
   // Handy constants

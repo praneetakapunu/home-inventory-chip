@@ -8,7 +8,19 @@ Goal: keep **spec**, **RTL**, **DV**, and **firmware** aligned as the design evo
 
 When changing the regmap, update **both** in the same PR.
 
-## Validation
+## One-command update (recommended)
+After editing `spec/regmap_v1.yaml`, run:
+
+```bash
+bash ops/regmap_update.sh
+```
+
+This will:
+- validate the YAML
+- regenerate the firmware header
+- regenerate the RTL/DV SystemVerilog package
+
+## Validation (manual)
 Run:
 
 ```bash
@@ -18,7 +30,7 @@ python3 ops/regmap_validate.py --yaml spec/regmap_v1.yaml
 This checks:
 - unique addresses
 - word alignment
-- sane/ non-overlapping bitfields
+- sane/non-overlapping bitfields
 
 ## Firmware header generation
 The C header used by bring-up software is generated from the YAML.
