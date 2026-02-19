@@ -20,9 +20,11 @@ Firmware-visible models:
 ## Normative FIFO contract
 Source of truth: `spec/regmap.md` + `spec/ads131m08_interface.md`.
 
-Per ADC frame, push **9 x 32-bit words**:
-- Word 0: STATUS word (raw from ADC if present, else 0)
+Per conversion, push **9 x 32-bit words** into the streaming FIFO:
+- Word 0: STATUS/RESPONSE word (raw from ADC; response to NULL command)
 - Word 1..8: CH0..CH7 (native width right-justified, sign-extended to 32b)
+
+Note: on the SPI wire the ADS131M08 outputs an additional **CRC word** at the end of each frame (10th word). v1 capture should **drop** this CRC word and only push the 9-word payload above.
 
 ## Proposed module split
 
@@ -44,18 +46,18 @@ Role: capture a complete "frame" worth of words from the ADC serial stream.
   - `adc_sclk`, `adc_cs_n`, `adc_mosi` (driven elsewhere)
   - `adc_miso` (from ADC)
 - Params:
-  - `BITS_PER_WORD` (default 24, TBD)
-  - `WORDS_PER_FRAME` (default 9: STATUS + 8 channels, TBD)
+  - `BITS_PER_WORD` (default 32, preferred for v1 so samples arrive sign-extended)
+  - `WORDS_PER_FRAME_WIRE` (default 10: RESPONSE/STATUS + 8 channels + CRC)
+  - `DROP_OUTPUT_CRC` (default 1 for v1)
   - `HAS_STATUS_WORD` (default 1)
-  - `HAS_CRC_WORD` (default 0 for v1 unless we decide otherwise)
 - Outputs:
-  - `frame_valid` (pulse when `frame_words[]` are valid)
-  - `frame_words[0:WORDS_PER_FRAME-1]` (packed to 32b, right-justified)
+  - `frame_valid` (pulse when a full wire frame has been captured)
+  - `frame_words_wire[0:WORDS_PER_FRAME_WIRE-1]` (packed to 32b, right-justified)
   - `busy`, `err` (optional)
 
 Implementation strategy (v1):
 - Generate SCLK and CS in a simple deterministic way (or accept them from a shared SPI master).
-- Sample MISO on the correct edge (CPOL/CPHA TBD) — keep this selectable with parameters.
+- Sample MISO on the correct edge (CPOL=0/CPHA=1 per `spec/ads131m08_interface.md`) — keep this selectable with parameters.
 
 ### 3) `adc_frame_unpack_pack`
 - Input: `frame_words[]`
