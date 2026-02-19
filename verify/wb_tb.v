@@ -50,22 +50,9 @@ module wb_tb;
         forever #5 clk = ~clk;
     end
 
-    // Address map (must match rtl/home_inventory_wb.v and spec/regmap_v1.yaml)
-    localparam [31:0] ADR_ID      = 32'h0000_0000;
-    localparam [31:0] ADR_VERSION = 32'h0000_0004;
-
-    localparam [31:0] ADR_CTRL    = 32'h0000_0100;
-    localparam [31:0] ADR_IRQ_EN  = 32'h0000_0104;
-    localparam [31:0] ADR_STATUS  = 32'h0000_0108;
-
-    localparam [31:0] ADR_ADC_CFG     = 32'h0000_0200;
-    localparam [31:0] ADR_ADC_CMD     = 32'h0000_0204;
-    localparam [31:0] ADR_ADC_RAW_CH0 = 32'h0000_0210;
-
-    localparam [31:0] ADR_TARE_CH0    = 32'h0000_0300;
-    localparam [31:0] ADR_SCALE_CH0   = 32'h0000_0320;
-
-    localparam [31:0] ADR_EVT_COUNT_CH0 = 32'h0000_0400;
+    // Address map (single source-of-truth): spec/regmap_v1.yaml
+    // Reuse the generated RTL include so the test can't drift.
+`include "include/regmap_params.vh"
 
     task automatic wb_idle;
         begin
