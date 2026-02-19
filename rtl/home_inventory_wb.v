@@ -53,6 +53,15 @@ module home_inventory_wb (
     reg [31:0] r_adc_snapshot_count;
     reg [31:0] r_adc_raw [0:7];
 
+    // ADC streaming FIFO (stubbed, but matches regmap_v1.yaml semantics)
+    localparam integer ADC_FIFO_DEPTH = 16;
+    localparam integer ADC_FIFO_AW    = 4; // log2(16)
+    reg [31:0] r_adc_fifo_mem [0:ADC_FIFO_DEPTH-1];
+    reg [ADC_FIFO_AW-1:0] r_adc_fifo_wr;
+    reg [ADC_FIFO_AW-1:0] r_adc_fifo_rd;
+    reg [15:0] r_adc_fifo_level;
+    reg        r_adc_fifo_overrun;
+
     // Calibration regs
     reg [31:0] r_tare  [0:7];
     reg [31:0] r_scale [0:7];
@@ -89,6 +98,21 @@ module home_inventory_wb (
         end
     endfunction
 
+    // ---------------------------------------------------------------------
+    // ADC FIFO helpers
+    // ---------------------------------------------------------------------
+    task automatic adc_fifo_push(input [31:0] word);
+        begin
+            if (r_adc_fifo_level == ADC_FIFO_DEPTH) begin
+                r_adc_fifo_overrun <= 1'b1;
+            end else begin
+                r_adc_fifo_mem[r_adc_fifo_wr] <= word;
+                r_adc_fifo_wr <= r_adc_fifo_wr + {{(ADC_FIFO_AW-1){1'b0}},1'b1};
+                r_adc_fifo_level <= r_adc_fifo_level + 16'h1;
+            end
+        end
+    endtask
+
     // Align address to 32-bit word boundary for decode.
     // Caravel/Wishbone masters sometimes present byte addresses; we treat
     // registers as 32-bit word-aligned and ignore adr[1:0] for decode.
@@ -112,16 +136,18 @@ module home_inventory_wb (
             ADR_STATUS:  rd_data = {24'h0, core_status};
 
             // ADC
-            ADR_ADC_CFG:     rd_data = {28'h0, r_adc_num_ch};
-            ADR_ADC_CMD:     rd_data = 32'h0; // write-only pulse bits
-            ADR_ADC_RAW_CH0: rd_data = r_adc_raw[0];
-            ADR_ADC_RAW_CH1: rd_data = r_adc_raw[1];
-            ADR_ADC_RAW_CH2: rd_data = r_adc_raw[2];
-            ADR_ADC_RAW_CH3: rd_data = r_adc_raw[3];
-            ADR_ADC_RAW_CH4: rd_data = r_adc_raw[4];
-            ADR_ADC_RAW_CH5: rd_data = r_adc_raw[5];
-            ADR_ADC_RAW_CH6: rd_data = r_adc_raw[6];
-            ADR_ADC_RAW_CH7: rd_data = r_adc_raw[7];
+            ADR_ADC_CFG:        rd_data = {28'h0, r_adc_num_ch};
+            ADR_ADC_CMD:        rd_data = 32'h0; // write-only pulse bits
+            ADR_ADC_FIFO_STATUS: rd_data = {15'h0, r_adc_fifo_overrun, r_adc_fifo_level};
+            ADR_ADC_FIFO_DATA:   rd_data = (r_adc_fifo_level != 16'h0) ? r_adc_fifo_mem[r_adc_fifo_rd] : 32'h0;
+            ADR_ADC_RAW_CH0:    rd_data = r_adc_raw[0];
+            ADR_ADC_RAW_CH1:    rd_data = r_adc_raw[1];
+            ADR_ADC_RAW_CH2:    rd_data = r_adc_raw[2];
+            ADR_ADC_RAW_CH3:    rd_data = r_adc_raw[3];
+            ADR_ADC_RAW_CH4:    rd_data = r_adc_raw[4];
+            ADR_ADC_RAW_CH5:    rd_data = r_adc_raw[5];
+            ADR_ADC_RAW_CH6:    rd_data = r_adc_raw[6];
+            ADR_ADC_RAW_CH7:    rd_data = r_adc_raw[7];
 
             // Calibration
             ADR_TARE_CH0:  rd_data = r_tare[0];
@@ -180,6 +206,11 @@ module home_inventory_wb (
             r_adc_num_ch    <= 4'h0;
             r_adc_snapshot_count <= 32'h0;
 
+            r_adc_fifo_wr      <= {ADC_FIFO_AW{1'b0}};
+            r_adc_fifo_rd      <= {ADC_FIFO_AW{1'b0}};
+            r_adc_fifo_level   <= 16'h0;
+            r_adc_fifo_overrun <= 1'b0;
+
             r_evt_last_ts <= 32'h0;
 
             for (i = 0; i < 8; i = i + 1) begin
@@ -227,6 +258,10 @@ module home_inventory_wb (
                         // SNAPSHOT is write-1-to-pulse on bit[0]
                         // (pulse is handled by adc_snapshot_fire combinational detection)
                     end
+                    ADR_ADC_FIFO_STATUS: begin
+                        // W1C overrun flag at bit[16]
+                        if ((|wbs_sel_i) && wbs_dat_i[16]) r_adc_fifo_overrun <= 1'b0;
+                    end
 
                     // Calibration
                     ADR_TARE_CH0:  r_tare[0]  <= apply_wstrb(r_tare[0],  wbs_dat_i, wbs_sel_i);
@@ -251,6 +286,14 @@ module home_inventory_wb (
                 endcase
             end
 
+            // FIFO pop on read of ADC_FIFO_DATA
+            if (wb_fire && ~wbs_we_i && (wb_adr_aligned == ADR_ADC_FIFO_DATA)) begin
+                if (r_adc_fifo_level != 16'h0) begin
+                    r_adc_fifo_rd    <= r_adc_fifo_rd + {{(ADC_FIFO_AW-1){1'b0}},1'b1};
+                    r_adc_fifo_level <= r_adc_fifo_level - 16'h1;
+                end
+            end
+
             // ADC snapshot behavior (stub): on SNAPSHOT pulse, update raw regs so
             // firmware can observe changing values even before ADC integration.
             if (adc_snapshot_fire) begin
@@ -258,6 +301,14 @@ module home_inventory_wb (
                 for (i = 0; i < 8; i = i + 1) begin
                     // Deterministic pattern: base + snapshot_count + channel index
                     r_adc_raw[i] <= 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + i[31:0];
+                end
+
+                // Also push a frame into the streaming FIFO to exercise firmware
+                // integration before the real ADC capture path lands.
+                // Packing matches spec/regmap.md: status word then CH0..CH7.
+                adc_fifo_push(32'h0);
+                for (i = 0; i < 8; i = i + 1) begin
+                    adc_fifo_push(32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + i[31:0]);
                 end
             end
         end
