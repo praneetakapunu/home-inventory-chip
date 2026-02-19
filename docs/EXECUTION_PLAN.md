@@ -25,6 +25,7 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
    - Shortlist + rubric: `spec/adc_selection.md`
 7) Define ADC interface contract for RTL/FW (new, draft):
    - `spec/ads131m08_interface.md` (signals, framing assumptions, FIFO + regmap hooks)
+   - `docs/ADC_FW_INIT_SEQUENCE.md` (firmware bring-up sequence + FIFO drain/validate)
 8) Break ADC RTL into implementable modules:
    - `docs/ADC_RTL_ARCH.md` (module split + FIFO contract recap) ✅
    - `rtl/adc/adc_spi_frame_capture_stub.v` (interface stub for framed SPI capture) ✅
