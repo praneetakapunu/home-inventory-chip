@@ -9,6 +9,8 @@ Usage:
 Checks:
 - All register addresses are unique.
 - All register addresses are 32-bit word-aligned.
+- Register and field access types are from an allowed set.
+- Reset values (when present) are valid 32-bit quantities.
 - Field bit ranges are sane (0..31, msb>=lsb).
 - Fields within a register do not overlap.
 """
@@ -37,6 +39,14 @@ def _parse_int(x: Any) -> int:
     raise TypeError(f"Unsupported int value: {x!r}")
 
 
+_ALLOWED_REG_ACCESS = {"ro", "rw", "ro_w1c"}
+_ALLOWED_FIELD_ACCESS = {"ro", "rw", "w1p", "w1c"}
+
+
+def _check_u32(val: int) -> bool:
+    return 0 <= val <= 0xFFFF_FFFF
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--yaml", required=True, type=Path)
@@ -57,6 +67,25 @@ def main() -> int:
             if not rname:
                 errs.append(f"Block {bname}: register missing name")
                 continue
+
+            # Access + reset validation
+            racc = reg.get("access")
+            if racc not in _ALLOWED_REG_ACCESS:
+                errs.append(
+                    f"{bname}.{rname}: invalid access {racc!r} (allowed: {', '.join(sorted(_ALLOWED_REG_ACCESS))})"
+                )
+
+            rreset = reg.get("reset", None)
+            if rreset is None:
+                pass
+            else:
+                try:
+                    rr = _parse_int(rreset)
+                    if not _check_u32(rr):
+                        errs.append(f"{bname}.{rname}: reset out of u32 range: {rreset!r}")
+                except Exception as e:
+                    errs.append(f"{bname}.{rname}: invalid reset {rreset!r}: {e}")
+
             offset = _parse_int(reg.get("offset", 0))
             addr = base + offset
 
@@ -69,6 +98,25 @@ def main() -> int:
             used_mask = 0
             for f in reg.get("fields", []) or []:
                 fname = f.get("name", "<unnamed>")
+
+                facc = f.get("access")
+                if facc not in _ALLOWED_FIELD_ACCESS:
+                    errs.append(
+                        f"{bname}.{rname}.{fname}: invalid access {facc!r} (allowed: {', '.join(sorted(_ALLOWED_FIELD_ACCESS))})"
+                    )
+
+                fres = f.get("reset", None)
+                if fres is None:
+                    pass
+                else:
+                    try:
+                        fr = _parse_int(fres)
+                        # field reset is allowed to be a small integer; still must fit u32
+                        if not _check_u32(fr):
+                            errs.append(f"{bname}.{rname}.{fname}: reset out of u32 range: {fres!r}")
+                    except Exception as e:
+                        errs.append(f"{bname}.{rname}.{fname}: invalid reset {fres!r}: {e}")
+
                 bits = f.get("bits")
                 if not (isinstance(bits, list) and len(bits) == 2):
                     errs.append(f"{bname}.{rname}.{fname}: bits must be [msb, lsb]")
