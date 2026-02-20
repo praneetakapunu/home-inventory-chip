@@ -147,7 +147,10 @@ Minimum tests:
 3) Wishbone draining pops in order
 4) reset/disable behavior
 
+## Policy decisions (v1)
+- SPI word length + CRC policy is locked for v1 in:
+  - `decisions/009-ads131m08-word-length-and-crc.md`
+
 ## TODOs (must close before tapeout)
-- [ ] Decide whether we want to **verify** output CRC in RTL (debug vs complexity)
-- [ ] Confirm exact `MODE.WLENGTH` setting that yields **sign-extended** 32-bit data (and reflect it in FW init sequence)
-- [ ] Confirm clocking plan for ADC on the OpenMPW harness/PCB (`CLKIN` source)
+- [ ] Confirm exact `MODE.WLENGTH` setting that yields **sign-extended** 32-bit data (cite datasheet table) and reflect it in FW init sequence.
+- [ ] Confirm clocking plan for ADC on the OpenMPW harness/PCB (`CLKIN` source).

@@ -108,6 +108,8 @@ Use this when you want a quick “single capture” sanity check without FIFO dr
   - Likely word-length/packing mismatch (24 vs 32-bit mode); confirm WLENGTH choice.
 
 ## Open items (must be resolved before tapeout)
-- Choose the exact ADS131M08 WLENGTH setting we will run in v1 and reflect it in:
-  - firmware init code, and
-  - `spec/ads131m08_interface.md` TODO list.
+- The **policy** (32-bit sign-extended samples; ignore output CRC; no input CRC; DRDY level-style) is locked for v1:
+  - `decisions/009-ads131m08-word-length-and-crc.md`
+
+Remaining closure item:
+- Fill in the exact ADS131M08 `MODE.WLENGTH[1:0]` value used for the chosen 32-bit sign-extended mode (cite datasheet) and reflect it in FW init code.
