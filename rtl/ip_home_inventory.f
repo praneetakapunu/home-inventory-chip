@@ -12,5 +12,5 @@ rtl/include/regmap_params.vh
 rtl/home_inventory_wb.v
 rtl/adc/adc_drdy_sync.v
 rtl/adc/adc_stream_fifo.v
-rtl/adc/adc_spi_frame_capture_stub.v
+rtl/adc/adc_spi_frame_capture.v
 rtl/home_inventory_top.v

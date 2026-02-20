@@ -28,7 +28,7 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
    - `docs/ADC_FW_INIT_SEQUENCE.md` (firmware bring-up sequence + FIFO drain/validate)
 8) Break ADC RTL into implementable modules:
    - `docs/ADC_RTL_ARCH.md` (module split + FIFO contract recap) ✅
-   - `rtl/adc/adc_spi_frame_capture_stub.v` (interface stub for framed SPI capture) ✅
+   - `rtl/adc/adc_spi_frame_capture.v` (generic framed SPI capture; param CPOL/CPHA + packing) ✅
    - `rtl/adc/adc_drdy_sync.v` (2FF sync + falling-edge pulse) ✅
    - `rtl/adc/adc_stream_fifo.v` (32-bit FIFO + level + sticky overrun) ✅
 
