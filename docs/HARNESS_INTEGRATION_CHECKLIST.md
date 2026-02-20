@@ -42,6 +42,7 @@ Why: keeps the *ordering and membership* of RTL sources identical between repos.
 - [ ] `verilog/rtl/user_project_wrapper.v` instantiates the IP top module (currently: `home_inventory_top`)
 - [ ] Wrapper connects only the pins we intend to own (everything else tied off deterministically)
 - [ ] Any bus (Wishbone) signals are named consistently with Caravel conventions
+- [ ] Wishbone behavior matches our documented contract: `chip-inventory/docs/WISHBONE_INTEGRATION.md`
 
 Sanity commands (harness repo):
 
