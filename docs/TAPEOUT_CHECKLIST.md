@@ -49,5 +49,6 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 
 ## 6) Signoff artifacts (lightweight, but explicit)
 - [ ] `docs/ARCH.md` (top-level block diagram + interfaces)
+- [ ] `docs/KNOWN_LIMITATIONS.md` (explicit list of v1 limitations + workarounds)
 - [ ] `spec/regmap.md` frozen + referenced by RTL
 - [ ] `docs/VERIFICATION_PLAN.md` updated with *what we actually ran*
