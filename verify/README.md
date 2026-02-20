@@ -26,6 +26,9 @@ make -C verify sim
 
 # 4) ADC stream FIFO directed test (requires iverilog)
 make -C verify fifo-sim
+
+# 5) DRDY synchronizer falling-edge pulse test (requires iverilog)
+make -C verify drdy-sim
 ```
 
 This checks:
