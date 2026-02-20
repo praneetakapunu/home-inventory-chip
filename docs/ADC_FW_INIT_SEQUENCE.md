@@ -107,9 +107,15 @@ Use this when you want a quick “single capture” sanity check without FIFO dr
 - Channel samples look byte-swapped or misaligned:
   - Likely word-length/packing mismatch (24 vs 32-bit mode); confirm WLENGTH choice.
 
-## Open items (must be resolved before tapeout)
-- The **policy** (32-bit sign-extended samples; ignore output CRC; no input CRC; DRDY level-style) is locked for v1:
-  - `decisions/009-ads131m08-word-length-and-crc.md`
+## ADS131M08 register bit policy (v1)
+These are the ADS131M08-side bit choices we are standardizing on for v1 bring-up:
+- `MODE.WLENGTH[1:0] = 11b` → **32-bit words with sign-extension** for 24-bit ADC conversion data
+- `MODE.RX_CRC_EN = 0` → **no input CRC**
+- `MODE.DRDY_FMT = 0` → **level-style DRDY** (avoid pulse gotchas)
+- Output CRC word is always present on DOUT; v1 RTL streaming **drops** it.
 
-Remaining closure item:
-- Fill in the exact ADS131M08 `MODE.WLENGTH[1:0]` value used for the chosen 32-bit sign-extended mode (cite datasheet) and reflect it in FW init code.
+The high-level policy is tracked in:
+- `decisions/009-ads131m08-word-length-and-crc.md`
+
+## Open items (must be resolved before tapeout)
+- Confirm ADC clocking plan on the harness/PCB (`CLKIN` source) — tracked in `spec/ads131m08_interface.md`.

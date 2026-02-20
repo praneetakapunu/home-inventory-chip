@@ -40,5 +40,5 @@ For v1 bring-up and tapeout:
 - We defer CRC verification until after first “known-good samples” milestone.
 
 ## Follow-ups (must close)
-- [ ] In `spec/ads131m08_interface.md`, fill in the exact `MODE.WLENGTH[1:0]` value used for the chosen 32-bit sign-extended mode (cite datasheet section/table).
-- [ ] In FW bring-up notes (`docs/ADC_FW_INIT_SEQUENCE.md`), document the ADS131M08 register writes that implement this policy.
+- [x] In `spec/ads131m08_interface.md`, fill in the exact `MODE.WLENGTH[1:0]` value used for the chosen 32-bit sign-extended mode.
+- [x] In FW bring-up notes (`docs/ADC_FW_INIT_SEQUENCE.md`), document the ADS131M08 register bit choices that implement this policy.

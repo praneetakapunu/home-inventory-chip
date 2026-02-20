@@ -31,15 +31,17 @@ Optional / board-dependent:
 (From datasheet timing diagram.)
 
 ### Word length
-The ADS131M08 SPI **word size** is programmable:
-- 16 / 24 / 32 bits via `MODE.WLENGTH[1:0]`
+The ADS131M08 SPI **word size** is programmable via `MODE.WLENGTH[1:0]`:
+- `00b` = 16-bit
+- `01b` = 24-bit (default)
+- `10b` = 32-bit (zero-pad 24-bit ADC data)
+- `11b` = 32-bit (**sign-extend** 24-bit ADC data)  ← **v1 choice**
 
 Important nuance:
 - Commands/responses/register words are **16 bits of real data**, MSB-aligned and padded with zeros to 24/32-bit word sizes.
 - Conversion data are nominally **24-bit two’s complement**.
-- In 32-bit mode, conversion words can be either **zero-padded** or **MSB sign-extended** depending on WLENGTH setting.
 
-**v1 baseline preference:** use a 32-bit word mode that yields **sign-extended** samples, so the digital path stays 32-bit-clean.
+**v1 baseline:** use `MODE.WLENGTH[1:0] = 11b` so conversion samples appear as signed 32-bit values on DOUT, keeping the digital path 32-bit-clean.
 
 ## SPI framing (datasheet-verified)
 SPI communication is performed in **frames** consisting of several words.
@@ -152,5 +154,5 @@ Minimum tests:
   - `decisions/009-ads131m08-word-length-and-crc.md`
 
 ## TODOs (must close before tapeout)
-- [ ] Confirm exact `MODE.WLENGTH` setting that yields **sign-extended** 32-bit data (cite datasheet table) and reflect it in FW init sequence.
+- [x] Lock `MODE.WLENGTH[1:0] = 11b` for **32-bit sign-extended** conversion words (reflected in `docs/ADC_FW_INIT_SEQUENCE.md`).
 - [ ] Confirm clocking plan for ADC on the OpenMPW harness/PCB (`CLKIN` source).
