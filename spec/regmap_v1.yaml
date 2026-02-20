@@ -110,7 +110,7 @@ blocks:
         offset: 0x008
         access: ro_w1c
         reset: null
-        desc: Streaming FIFO status. LEVEL_WORDS reports fill level; OVERRUN is sticky and clears on write-1.
+        desc: Streaming FIFO status. LEVEL_WORDS reports fill level; OVERRUN is sticky and clears on write-1 (byte-lane masked by wbs_sel_i).
         fields:
           - name: LEVEL_WORDS
             bits: [15, 0]
@@ -127,7 +127,7 @@ blocks:
         offset: 0x00C
         access: ro
         reset: null
-        desc: FIFO data pop. Each read pops one 32-bit word.
+        desc: FIFO data pop. Each read pops one 32-bit word when LEVEL_WORDS != 0; reads when empty return 0 and do not change state.
 
       - name: ADC_RAW_CH0
         offset: 0x010

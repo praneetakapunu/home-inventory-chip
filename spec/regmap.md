@@ -9,6 +9,11 @@ Source-of-truth (machine-readable): `spec/regmap_v1.yaml`
 - All registers are 32-bit.
 - Byte-enables (`wbs_sel_i`) must be respected on writes.
 
+### Wishbone byte-select semantics (normative)
+- Writes are **byte-lane masked** by `wbs_sel_i[3:0]` (little-endian lanes).
+- For **W1C (write-1-to-clear)** bits, only bits in selected byte lanes participate in the clear operation.
+  - Recommendation for firmware: write full word (`wbs_sel_i = 4'b1111`) when clearing sticky bits.
+
 ## Goals
 - Provide a stable bring-up surface early (ID/VERSION + basic control/status).
 - Leave clean address space for ADC + calibration + event reporting.
@@ -62,7 +67,7 @@ Each channel word is a sign-extended 32-bit value with the **native ADC sample w
 | 0x0000_0200 | `ADC_CFG` | RW | 0x0 | ADC config. For v1 bring-up, only `NUM_CH` is normative; other fields are reserved and must read as 0. |
 | 0x0000_0204 | `ADC_CMD` | RW | 0x0 | ADC command. For v1 bring-up, `SNAPSHOT` is write-1-to-pulse (latch raw regs). Other fields reserved. |
 | 0x0000_0208 | `ADC_FIFO_STATUS` | RO/W1C | — | Streaming FIFO status (level + sticky overrun). |
-| 0x0000_020C | `ADC_FIFO_DATA` | RO | — | Streaming FIFO data pop. Each read pops one 32-bit word. |
+| 0x0000_020C | `ADC_FIFO_DATA` | RO | — | Streaming FIFO data pop. Each read pops one 32-bit word **when `LEVEL_WORDS != 0`**. Reads when empty return 0 and do not change state. |
 | 0x0000_0210 | `ADC_RAW_CH0` | RO | — | Latest raw sample CH0. Format per `spec/fixed_point.md` (24-bit right-justified with sign/zero extension). |
 | 0x0000_0214 | `ADC_RAW_CH1` | RO | — | Latest raw sample CH1. Format per `spec/fixed_point.md`. |
 | 0x0000_0218 | `ADC_RAW_CH2` | RO | — | Latest raw sample CH2. Format per `spec/fixed_point.md`. |
@@ -91,7 +96,7 @@ Each channel word is a sign-extended 32-bit value with the **native ADC sample w
 | Bit(s) | Name | Meaning |
 |---:|---|---|
 | 15:0 | `LEVEL_WORDS` | Current FIFO fill level in 32-bit words. |
-| 16 | `OVERRUN` | Sticky FIFO overrun. Write 1 to clear. |
+| 16 | `OVERRUN` | Sticky FIFO overrun. Write 1 to clear (W1C; byte-lane masked via `wbs_sel_i`). |
 | 31:17 | — | Reserved (read as 0). |
 
 ## 0x0000_0300 — Calibration
