@@ -260,7 +260,8 @@ module home_inventory_wb (
                     end
                     ADR_ADC_FIFO_STATUS: begin
                         // W1C overrun flag at bit[16]
-                        if ((|wbs_sel_i) && wbs_dat_i[16]) r_adc_fifo_overrun <= 1'b0;
+                        // Respect byte-enables: bit[16] lives in byte lane 2 (SEL[2]).
+                        if (wbs_sel_i[2] && wbs_dat_i[16]) r_adc_fifo_overrun <= 1'b0;
                     end
 
                     // Calibration
