@@ -304,6 +304,59 @@ module wb_tb;
             end
         end
 
+        // FIFO behavior: each SNAPSHOT pushes 9 words: status(0) then CH0..CH7.
+        // FIFO depth is 16, so after 2 snapshots without draining:
+        // - FIFO is full
+        // - Overrun sticky flag is set (2 words dropped)
+        wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+        if (rdata[15:0] !== 16'd16 || rdata[16] !== 1'b1) begin
+            $display("[tb] ERROR: ADC_FIFO_STATUS after 2 snapshots mismatch: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Drain FIFO and verify word ordering:
+        // snapshot[1]: status + 8 channels
+        // snapshot[2]: only status + CH0..CH5 fit before overrun
+        begin : fifo_drain_check
+            integer idx;
+            reg [31:0] exp;
+            for (idx = 0; idx < 16; idx = idx + 1) begin
+                wb_read32(ADR_ADC_FIFO_DATA, rdata);
+
+                // Expected sequence
+                exp = 32'hDEAD_DEAD;
+                if (idx == 0) exp = 32'h0000_0000;              // s1 status
+                else if (idx >= 1 && idx <= 8) exp = 32'h0000_1001 + (idx-1); // s1 CH0..CH7
+                else if (idx == 9) exp = 32'h0000_0000;         // s2 status
+                else if (idx >= 10 && idx <= 15) exp = 32'h0000_1002 + (idx-10); // s2 CH0..CH5
+
+                if (rdata !== exp) begin
+                    $display("[tb] ERROR: FIFO_DATA[%0d] mismatch: got 0x%08x exp 0x%08x", idx, rdata, exp);
+                    $fatal(1);
+                end
+
+                // Level must decrement after each pop
+                wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+                if (rdata[15:0] !== (16'd15 - idx)) begin
+                    $display("[tb] ERROR: FIFO level did not decrement at idx=%0d: got 0x%08x", idx, rdata);
+                    $fatal(1);
+                end
+            end
+        end
+
+        // Overrun is sticky until W1C bit[16] (byte lane 2).
+        wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+        if (rdata[16] !== 1'b1) begin
+            $display("[tb] ERROR: FIFO overrun should still be set after drain: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_write32_sel(ADR_ADC_FIFO_STATUS, 32'h0001_0000, 4'b0100);
+        wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+        if (rdata[16] !== 1'b0) begin
+            $display("[tb] ERROR: FIFO overrun W1C failed: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
         // -----------------------------------------------------------------
         // Calibration
         // -----------------------------------------------------------------

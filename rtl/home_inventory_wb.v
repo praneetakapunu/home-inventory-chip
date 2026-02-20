@@ -101,14 +101,21 @@ module home_inventory_wb (
     // ---------------------------------------------------------------------
     // ADC FIFO helpers
     // ---------------------------------------------------------------------
+    // NOTE on assignment style:
+    // This task may be called multiple times in the same clocked always block
+    // (e.g., pushing an entire ADC frame). If we used nonblocking assignments
+    // (<=) to update the pointers/level, only the *last* increment would win.
+    // We therefore use blocking assignments for the pointer/level bookkeeping
+    // so multiple pushes in one cycle accumulate correctly; the final values
+    // still settle to flops at the clock edge.
     task automatic adc_fifo_push(input [31:0] word);
         begin
             if (r_adc_fifo_level == ADC_FIFO_DEPTH) begin
                 r_adc_fifo_overrun <= 1'b1;
             end else begin
                 r_adc_fifo_mem[r_adc_fifo_wr] <= word;
-                r_adc_fifo_wr <= r_adc_fifo_wr + {{(ADC_FIFO_AW-1){1'b0}},1'b1};
-                r_adc_fifo_level <= r_adc_fifo_level + 16'h1;
+                r_adc_fifo_wr    = r_adc_fifo_wr + {{(ADC_FIFO_AW-1){1'b0}},1'b1};
+                r_adc_fifo_level = r_adc_fifo_level + 16'h1;
             end
         end
     endtask
