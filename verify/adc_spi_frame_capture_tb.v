@@ -4,8 +4,9 @@
 //
 // Strategy:
 // - Instantiate DUT with small frame size for fast simulation.
-// - Use CPOL=0, CPHA=0 so sampling occurs on SCLK rising edges.
-// - Drive adc_miso MSB-first, updating on SCLK falling edges (prep next bit).
+// - Use CPOL=0, CPHA=1 (matches ADS131M08 mode per project spec).
+//   => sampling occurs on SCLK *falling* edges (trailing edge back to idle).
+// - Drive adc_miso MSB-first, updating on SCLK rising edges (prep next bit).
 //
 `timescale 1ns/1ps
 `default_nettype none
@@ -42,7 +43,7 @@ module adc_spi_frame_capture_tb;
     .WORDS_PER_FRAME(WORDS_PER_FRAME),
     .SCLK_DIV(SCLK_DIV),
     .CPOL(1'b0),
-    .CPHA(1'b0)
+    .CPHA(1'b1)
   ) dut (
     .clk(clk),
     .rst(rst),
@@ -71,18 +72,26 @@ module adc_spi_frame_capture_tb;
     end
   endtask
 
-  // When CS asserts low, prime the first bit.
+  // When CS asserts low, reset our bit index.
+  // For CPHA=1, the first *valid* data bit is typically presented after the first
+  // leading edge, and sampled on the trailing edge.
   always @(negedge adc_cs_n) begin
     bit_idx = 0;
-    drive_current_bit();
+    adc_miso = 1'b0;
   end
 
-  // For CPHA=0 we sample on rising edges, so update MISO on falling edges.
+  // For CPHA=1 we sample on falling edges, so we present the current bit on the
+  // rising edge (leading edge) and advance the index on the falling edge.
+  always @(posedge adc_sclk) begin
+    if (!adc_cs_n) begin
+      drive_current_bit();
+    end
+  end
+
   always @(negedge adc_sclk) begin
     if (!adc_cs_n) begin
       if (bit_idx < 16-1) begin
         bit_idx = bit_idx + 1;
-        drive_current_bit();
       end
     end
   end
