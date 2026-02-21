@@ -12,8 +12,8 @@ We run CI with two goals:
 These must be fast and reliable.
 
 ### Source of truth (home-inventory-chip)
-- Regmap drift checks (generated artifacts match `spec/regmap_v1.yaml`)
-- Icarus Verilog sims (Wishbone smoke, directed tests)
+- Regmap YAML validation + drift checks (generated artifacts match `spec/regmap_v1.yaml`)
+- Icarus Verilog sims (Wishbone smoke, ADC FIFO, ADC DRDY sync)
 
 ### Harness (home-inventory-chip-openmpw)
 - RTL compile sanity via `iverilog`:

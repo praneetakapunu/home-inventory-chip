@@ -19,10 +19,13 @@ jobs:
             make \
             python3
 
-      - name: Regmap drift checks
+      - name: Validate regmap YAML schema
+        run: python3 ops/regmap_validate.py --yaml spec/regmap_v1.yaml
+
+      - name: Regmap drift checks (YAML ↔ RTL)
         run: make -C verify regmap-check
 
-      - name: Regmap generated artifact checks
+      - name: Regmap generated artifact checks (YAML → committed headers/packages)
         run: make -C verify regmap-gen-check
 
       - name: Wishbone smoke sim
@@ -30,3 +33,6 @@ jobs:
 
       - name: ADC FIFO directed sim
         run: make -C verify fifo-sim
+
+      - name: ADC DRDY synchronizer directed sim
+        run: make -C verify drdy-sim
