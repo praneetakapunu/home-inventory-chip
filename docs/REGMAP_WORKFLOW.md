@@ -33,6 +33,28 @@ This checks:
 - word alignment
 - sane/non-overlapping bitfields
 
+## CI / local "did I forget to regenerate?" checks
+These are the exact targets CI runs.
+
+From repo root:
+
+```bash
+# YAML ↔ RTL (home_inventory_wb.v) address consistency
+make -C verify regmap-check
+
+# Assert committed generated artifacts match the YAML
+make -C verify regmap-gen-check
+```
+
+### Common failure mode
+If `regmap-gen-check` fails after you edited `spec/regmap_v1.yaml`, you almost certainly forgot to run:
+
+```bash
+bash ops/regmap_update.sh
+```
+
+Commit the regenerated artifacts alongside the YAML change.
+
 ## Firmware header generation
 The C header used by bring-up software is generated from the YAML.
 
