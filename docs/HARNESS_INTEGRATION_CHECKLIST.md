@@ -32,9 +32,12 @@ Recommended workflow (generate harness filelist from canonical list):
 ```bash
 # run from harness repo root
 ip/home-inventory-chip/tools/harness/gen_harness_filelist.sh
+
+# optional: verify it stays in sync (non-semantic timestamp is ignored)
+ip/home-inventory-chip/tools/harness/check_harness_filelist.sh --diff
 ```
 
-(Under the hood it prefixes each RTL path with `ip/home-inventory-chip/` and writes `verilog/rtl/ip_home_inventory.f` only if it changed.)
+(Under the hood the generator prefixes each RTL path with `ip/home-inventory-chip/` and writes `verilog/rtl/ip_home_inventory.f` only if it changed.)
 
 Why: keeps the *ordering and membership* of RTL sources identical between repos.
 
