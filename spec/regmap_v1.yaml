@@ -345,3 +345,56 @@ blocks:
         access: ro
         reset: null
         desc: Unsigned 32-bit timestamp (sample ticks) of most recent event.
+
+      - name: EVT_CFG
+        offset: 0x044
+        access: rw
+        reset: 0x00000000
+        desc: Event detector config (v1 planned). Enable/arm per channel.
+        fields:
+          - name: EVT_EN
+            bits: [7, 0]
+            access: rw
+            reset: 0
+            desc: 1 = enable event detection for channel.
+
+      - name: EVT_THRESH_CH0
+        offset: 0x080
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit threshold for CH0 in raw ADC LSBs (after sign-extension to 32b).
+      - name: EVT_THRESH_CH1
+        offset: 0x084
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit threshold for CH1.
+      - name: EVT_THRESH_CH2
+        offset: 0x088
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit threshold for CH2.
+      - name: EVT_THRESH_CH3
+        offset: 0x08C
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit threshold for CH3.
+      - name: EVT_THRESH_CH4
+        offset: 0x090
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit threshold for CH4.
+      - name: EVT_THRESH_CH5
+        offset: 0x094
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit threshold for CH5.
+      - name: EVT_THRESH_CH6
+        offset: 0x098
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit threshold for CH6.
+      - name: EVT_THRESH_CH7
+        offset: 0x09C
+        access: rw
+        reset: 0x00000000
+        desc: Signed 32-bit threshold for CH7.

@@ -63,6 +63,15 @@ package home_inventory_regmap_pkg;
   localparam logic [31:0] HOMEINV_ADR_EVT_LAST_DELTA_CH6 = 32'h00000438;
   localparam logic [31:0] HOMEINV_ADR_EVT_LAST_DELTA_CH7 = 32'h0000043C;
   localparam logic [31:0] HOMEINV_ADR_EVT_LAST_TS = 32'h00000440;
+  localparam logic [31:0] HOMEINV_ADR_EVT_CFG = 32'h00000444;
+  localparam logic [31:0] HOMEINV_ADR_EVT_THRESH_CH0 = 32'h00000480;
+  localparam logic [31:0] HOMEINV_ADR_EVT_THRESH_CH1 = 32'h00000484;
+  localparam logic [31:0] HOMEINV_ADR_EVT_THRESH_CH2 = 32'h00000488;
+  localparam logic [31:0] HOMEINV_ADR_EVT_THRESH_CH3 = 32'h0000048C;
+  localparam logic [31:0] HOMEINV_ADR_EVT_THRESH_CH4 = 32'h00000490;
+  localparam logic [31:0] HOMEINV_ADR_EVT_THRESH_CH5 = 32'h00000494;
+  localparam logic [31:0] HOMEINV_ADR_EVT_THRESH_CH6 = 32'h00000498;
+  localparam logic [31:0] HOMEINV_ADR_EVT_THRESH_CH7 = 32'h0000049C;
 
   // -----------------------------
   // Bitfields
@@ -95,6 +104,10 @@ package home_inventory_regmap_pkg;
   localparam logic [31:0] HOMEINV_ADC_FIFO_STATUS_LEVEL_WORDS_MASK = 32'h0000FFFF;
   localparam int unsigned HOMEINV_ADC_FIFO_STATUS_OVERRUN_BIT = 16;
   localparam logic [31:0] HOMEINV_ADC_FIFO_STATUS_OVERRUN_MASK = (32'h1 << HOMEINV_ADC_FIFO_STATUS_OVERRUN_BIT);
+
+  // EVT_CFG fields
+  localparam int unsigned HOMEINV_EVT_CFG_EVT_EN_LSB  = 0;
+  localparam logic [31:0] HOMEINV_EVT_CFG_EVT_EN_MASK = 32'h000000FF;
 
   // -----------------------------
   // Handy constants

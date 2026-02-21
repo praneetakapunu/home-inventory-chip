@@ -145,7 +145,23 @@ Address space for event/counter reporting. Formats are defined in `spec/fixed_po
 | 0x0000_0438 | `EVT_LAST_DELTA_CH6` | RO | — | Unsigned 32-bit delta (in sample ticks) for CH6. |
 | 0x0000_043C | `EVT_LAST_DELTA_CH7` | RO | — | Unsigned 32-bit delta (in sample ticks) for CH7. |
 | 0x0000_0440 | `EVT_LAST_TS` | RO | — | Unsigned 32-bit timestamp (in sample ticks) of most recent event. |
+| 0x0000_0444 | `EVT_CFG` | RW | 0x0 | Event detector config (v1 planned). `EVT_EN[7:0]` enables per channel. |
+| 0x0000_0480 | `EVT_THRESH_CH0` | RW | 0x0 | Signed 32-bit threshold for CH0 in raw ADC LSBs (after sign-extension to 32b). |
+| 0x0000_0484 | `EVT_THRESH_CH1` | RW | 0x0 | Signed 32-bit threshold for CH1. |
+| 0x0000_0488 | `EVT_THRESH_CH2` | RW | 0x0 | Signed 32-bit threshold for CH2. |
+| 0x0000_048C | `EVT_THRESH_CH3` | RW | 0x0 | Signed 32-bit threshold for CH3. |
+| 0x0000_0490 | `EVT_THRESH_CH4` | RW | 0x0 | Signed 32-bit threshold for CH4. |
+| 0x0000_0494 | `EVT_THRESH_CH5` | RW | 0x0 | Signed 32-bit threshold for CH5. |
+| 0x0000_0498 | `EVT_THRESH_CH6` | RW | 0x0 | Signed 32-bit threshold for CH6. |
+| 0x0000_049C | `EVT_THRESH_CH7` | RW | 0x0 | Signed 32-bit threshold for CH7. |
+
+### `EVT_CFG` bitfields (planned)
+
+| Bit(s) | Name | Meaning |
+|---:|---|---|
+| 7:0 | `EVT_EN` | 1 = enable event detection for channel. |
+| 31:8 | — | Reserved. |
 
 ## Notes
-- Fixed-point formats will be specified once ADC sampling resolution/rate is locked.
+- Event detector thresholds are specified in **raw ADC LSBs** so firmware can start using them immediately; additional modes (hysteresis, debounce, comparator direction) can be added later without changing existing addresses.
 - Unknown/unused addresses must read as 0.
