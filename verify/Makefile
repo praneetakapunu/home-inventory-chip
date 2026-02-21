@@ -23,8 +23,11 @@ DRDY_OUT := adc_drdy_sync_tb.out
 SPI_TB   := adc_spi_frame_capture_tb.v
 SPI_OUT  := adc_spi_frame_capture_tb.out
 
-.PHONY: sim fifo-sim drdy-sim spi-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
+.PHONY: all sim fifo-sim drdy-sim spi-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
+
+# One command to run the whole smoke suite (what humans should run locally).
+all: regmap-check regmap-gen-check sim fifo-sim drdy-sim spi-sim
 
 sim: $(OUT)
 	$(VVP) $(OUT)

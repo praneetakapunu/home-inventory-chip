@@ -15,6 +15,10 @@ sudo apt-get update && sudo apt-get install -y iverilog
 Run:
 
 ```sh
+# One command (recommended)
+make -C verify all
+
+# Or run step-by-step:
 # 1) Regmap drift checks (no simulator needed)
 make -C verify regmap-check
 
@@ -29,6 +33,9 @@ make -C verify fifo-sim
 
 # 5) DRDY synchronizer falling-edge pulse test (requires iverilog)
 make -C verify drdy-sim
+
+# 6) SPI frame-capture directed test (requires iverilog)
+make -C verify spi-sim
 ```
 
 This checks:
@@ -43,6 +50,6 @@ This checks:
 - RO regs ignore writes (events block)
 
 ## Next
-- Add coverage for all ADC_RAW_CHx + all calibration channels (CH0..CH7).
-- Add a tiny CI job (or local script) that runs this smoke test automatically.
+- Add negative tests for bad byte-strobes / reserved-bit masking.
+- Add deeper FIFO stress (wraparound) once FIFO depth becomes configurable.
 - Consider switching to Verilator for faster regression once core RTL grows.
