@@ -36,3 +36,6 @@ jobs:
 
       - name: ADC DRDY synchronizer directed sim
         run: make -C verify drdy-sim
+
+      - name: ADC SPI frame-capture directed sim
+        run: make -C verify spi-sim
