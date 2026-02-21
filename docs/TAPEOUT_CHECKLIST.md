@@ -27,6 +27,7 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
   - [ ] `ack` behavior meets expectations (no deadlocks)
 
 ## 3) Verification gates
+- [ ] CDC/Reset review done (`docs/CDC_RESET_CHECKLIST.md` filled + reviewed)
 - [ ] Directed smoke tests cover:
   - [ ] Wishbone regblock (reset values + R/W paths)
   - [ ] ADC DRDY sync edge pulse behavior

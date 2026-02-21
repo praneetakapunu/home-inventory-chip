@@ -14,6 +14,12 @@ This is the **minimum** verification surface needed to de-risk the first MPW sub
 
 ## Test matrix
 
+### 0) CDC + reset review (written)
+**Goal:** ensure we explicitly enumerate async inputs/crossings and reset behavior.
+
+Deliverable:
+- `docs/CDC_RESET_CHECKLIST.md` is filled to match the current RTL.
+
 ### 1) Wishbone register block — protocol + decode
 **Goal:** prove basic Wishbone correctness and that the regmap matches `spec/regmap.md`.
 
