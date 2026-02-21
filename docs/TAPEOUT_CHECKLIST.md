@@ -28,12 +28,16 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 
 ## 3) Verification gates
 - [ ] CDC/Reset review done (`docs/CDC_RESET_CHECKLIST.md` filled + reviewed)
+  - [ ] All async inputs enumerated
+  - [ ] All clock domains listed (incl. Wishbone)
+  - [ ] Reset deassertion strategy documented (sync/async per domain)
 - [ ] Directed smoke tests cover:
-  - [ ] Wishbone regblock (reset values + R/W paths)
-  - [ ] ADC DRDY sync edge pulse behavior
-  - [ ] FIFO: push/pop, level, overrun sticky
-- [ ] CDC/Reset review done (at least a written checklist + known crossings)
-- [ ] Known limitations listed in `docs/KNOWN_LIMITATIONS.md`
+  - [ ] Wishbone regblock: reset values + R/W paths
+  - [ ] Wishbone: byte-enable policy (supported vs explicitly ignored)
+  - [ ] ADC DRDY sync: edge pulse behavior is correct + no double-pulses
+  - [ ] FIFO: push/pop, level reporting, overrun sticky
+- [ ] Regmap consistency gate is green (`make -C verify regmap-check`)
+- [ ] Known limitations listed in `docs/KNOWN_LIMITATIONS.md` (and match reality)
 
 ## 4) Bring-up readiness (FW-facing)
 - [ ] Bring-up sequence document exists and is realistic
@@ -44,7 +48,9 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 - [ ] Error observability exists (sticky flags, counters, last-error code)
 
 ## 5) Precheck / submission gates
-- [ ] OpenMPW precheck runs clean (document exact command + commit hash)
+- [ ] OpenMPW precheck runs clean
+  - [ ] Document exact command + commit hash in `docs/PRECHECK_LOG.md`
+  - [ ] Attach/log the final summary (pass/fail) and any waived warnings
 - [ ] Final tag created (e.g., `tapeout-v1.0.0`)
 - [ ] Release notes written (what changed since last tag)
 
