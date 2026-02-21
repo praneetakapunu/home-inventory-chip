@@ -3,6 +3,7 @@ reports/
 
 # Verification build outputs
 verify/*.out
+verify/*.vcd
 
 # Private info (do not commit)
 private/
