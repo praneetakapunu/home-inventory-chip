@@ -156,3 +156,4 @@ Minimum tests:
 ## TODOs (must close before tapeout)
 - [x] Lock `MODE.WLENGTH[1:0] = 11b` for **32-bit sign-extended** conversion words (reflected in `docs/ADC_FW_INIT_SEQUENCE.md`).
 - [ ] Confirm clocking plan for ADC on the OpenMPW harness/PCB (`CLKIN` source).
+  - Working notes live in: `docs/ADC_CLOCKING_PLAN.md`

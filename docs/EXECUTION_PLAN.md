@@ -43,4 +43,5 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 
 ## Risks (watchlist)
 - Even 20 g effective resolution may be dominated by mechanical + drift; acceptance criteria must stay realistic.
+- **ADC clocking on the harness/PCB must be explicitly confirmed**; see `docs/ADC_CLOCKING_PLAN.md`.
 - ADC part selection is a dependency for interface details + firmware formats.
