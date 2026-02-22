@@ -32,6 +32,10 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
    - `rtl/adc/adc_drdy_sync.v` (2FF sync + falling-edge pulse) ✅
    - `rtl/adc/adc_stream_fifo.v` (32-bit FIFO + level + sticky overrun) ✅
 
+9) Event detector (minimal v1): define intended semantics & wire into regbank
+   - Spec: `docs/EVENT_DETECTOR_SPEC.md` ✅
+   - Next: implement comparator + saturating counters + timestamp/delta in RTL
+
 ## Blockers (must be explicit)
 - None.
 
