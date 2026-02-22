@@ -1,0 +1,21 @@
+{
+  "DESIGN_NAME": "home_inventory_top",
+  "VERILOG_FILES": [
+    "../../rtl/home_inventory_top.v",
+    "../../rtl/home_inventory_wb.v",
+    "../../rtl/adc/adc_drdy_sync.v",
+    "../../rtl/adc/adc_spi_frame_capture.v",
+    "../../rtl/adc/adc_stream_fifo.v"
+  ],
+
+  "CLOCK_PORT": "wb_clk_i",
+  "CLOCK_PERIOD": 20.0,
+
+  "FP_CORE_UTIL": 40,
+  "PL_TARGET_DENSITY": 0.45,
+
+  "RUN_KLAYOUT_DRC": 0,
+  "RUN_KLAYOUT_LVS": 0,
+
+  "NOTE": "Skeleton config only. Do not treat as runnable until pinout/macros/constraints are locked."
+}
