@@ -153,8 +153,9 @@ module home_inventory_wb (
             ADR_ADC_RAW_CH3:    rd_data = r_adc_raw[3];
             ADR_ADC_RAW_CH4:    rd_data = r_adc_raw[4];
             ADR_ADC_RAW_CH5:    rd_data = r_adc_raw[5];
-            ADR_ADC_RAW_CH6:    rd_data = r_adc_raw[6];
-            ADR_ADC_RAW_CH7:    rd_data = r_adc_raw[7];
+            ADR_ADC_RAW_CH6:           rd_data = r_adc_raw[6];
+            ADR_ADC_RAW_CH7:           rd_data = r_adc_raw[7];
+            ADR_ADC_SNAPSHOT_COUNT:    rd_data = r_adc_snapshot_count;
 
             // Calibration
             ADR_TARE_CH0:  rd_data = r_tare[0];

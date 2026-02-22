@@ -20,6 +20,7 @@ localparam [31:0] ADR_ADC_RAW_CH4        = 32'h00000220;
 localparam [31:0] ADR_ADC_RAW_CH5        = 32'h00000224;
 localparam [31:0] ADR_ADC_RAW_CH6        = 32'h00000228;
 localparam [31:0] ADR_ADC_RAW_CH7        = 32'h0000022C;
+localparam [31:0] ADR_ADC_SNAPSHOT_COUNT = 32'h00000230;
 localparam [31:0] ADR_TARE_CH0           = 32'h00000300;
 localparam [31:0] ADR_TARE_CH1           = 32'h00000304;
 localparam [31:0] ADR_TARE_CH2           = 32'h00000308;

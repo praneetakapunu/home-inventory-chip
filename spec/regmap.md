@@ -76,6 +76,7 @@ Each channel word is a sign-extended 32-bit value with the **native ADC sample w
 | 0x0000_0224 | `ADC_RAW_CH5` | RO | — | Latest raw sample CH5. Format per `spec/fixed_point.md`. |
 | 0x0000_0228 | `ADC_RAW_CH6` | RO | — | Latest raw sample CH6. Format per `spec/fixed_point.md`. |
 | 0x0000_022C | `ADC_RAW_CH7` | RO | — | Latest raw sample CH7. Format per `spec/fixed_point.md`. |
+| 0x0000_0230 | `ADC_SNAPSHOT_COUNT` | RO | — | Counts the number of accepted `ADC_CMD.SNAPSHOT` pulses (bring-up/debug). |
 
 ### `ADC_CFG` bitfields (v1 bring-up)
 

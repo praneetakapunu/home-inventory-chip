@@ -170,6 +170,12 @@ blocks:
         reset: null
         desc: Latest raw sample CH7 (format per spec/fixed_point.md).
 
+      - name: ADC_SNAPSHOT_COUNT
+        offset: 0x030
+        access: ro
+        reset: null
+        desc: Counts the number of accepted SNAPSHOT commands (for bring-up / debug).
+
   - name: calibration
     base: 0x00000300
     registers:

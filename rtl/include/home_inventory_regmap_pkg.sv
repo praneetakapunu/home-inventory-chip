@@ -30,6 +30,7 @@ package home_inventory_regmap_pkg;
   localparam logic [31:0] HOMEINV_ADR_ADC_RAW_CH5 = 32'h00000224;
   localparam logic [31:0] HOMEINV_ADR_ADC_RAW_CH6 = 32'h00000228;
   localparam logic [31:0] HOMEINV_ADR_ADC_RAW_CH7 = 32'h0000022C;
+  localparam logic [31:0] HOMEINV_ADR_ADC_SNAPSHOT_COUNT = 32'h00000230;
   localparam logic [31:0] HOMEINV_ADR_TARE_CH0 = 32'h00000300;
   localparam logic [31:0] HOMEINV_ADR_TARE_CH1 = 32'h00000304;
   localparam logic [31:0] HOMEINV_ADR_TARE_CH2 = 32'h00000308;
