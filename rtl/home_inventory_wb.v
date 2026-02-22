@@ -66,10 +66,14 @@ module home_inventory_wb (
     reg [31:0] r_tare  [0:7];
     reg [31:0] r_scale [0:7];
 
-    // Events regs (read-only for now; will be driven by the core later)
+    // Events regs (status readback driven by core later)
     reg [31:0] r_evt_count      [0:7];
     reg [31:0] r_evt_last_delta [0:7];
     reg [31:0] r_evt_last_ts;
+
+    // Events regs (config, writable now so firmware can bring-up its control path)
+    reg [7:0]  r_evt_en;           // EVT_CFG.EVT_EN
+    reg [31:0] r_evt_thresh [0:7]; // EVT_THRESH_CHx
 
     // Decode fields
     assign ctrl_enable = r_enable;
@@ -197,6 +201,17 @@ module home_inventory_wb (
 
             ADR_EVT_LAST_TS:        rd_data = r_evt_last_ts;
 
+            // Events config
+            ADR_EVT_CFG:            rd_data = {24'h0, r_evt_en};
+            ADR_EVT_THRESH_CH0:     rd_data = r_evt_thresh[0];
+            ADR_EVT_THRESH_CH1:     rd_data = r_evt_thresh[1];
+            ADR_EVT_THRESH_CH2:     rd_data = r_evt_thresh[2];
+            ADR_EVT_THRESH_CH3:     rd_data = r_evt_thresh[3];
+            ADR_EVT_THRESH_CH4:     rd_data = r_evt_thresh[4];
+            ADR_EVT_THRESH_CH5:     rd_data = r_evt_thresh[5];
+            ADR_EVT_THRESH_CH6:     rd_data = r_evt_thresh[6];
+            ADR_EVT_THRESH_CH7:     rd_data = r_evt_thresh[7];
+
             default:     rd_data = 32'h0;
         endcase
     end
@@ -220,6 +235,7 @@ module home_inventory_wb (
             r_adc_fifo_overrun <= 1'b0;
 
             r_evt_last_ts <= 32'h0;
+            r_evt_en      <= 8'h00;
 
             for (i = 0; i < 8; i = i + 1) begin
                 r_adc_raw[i] <= 32'h0;
@@ -228,6 +244,8 @@ module home_inventory_wb (
 
                 r_evt_count[i]      <= 32'h0;
                 r_evt_last_delta[i] <= 32'h0;
+
+                r_evt_thresh[i] <= 32'h0;
             end
         end else begin
             // Pulse generation: delay write-1-to-pulse requests by 1 cycle so
@@ -290,6 +308,22 @@ module home_inventory_wb (
                     ADR_SCALE_CH5: r_scale[5] <= apply_wstrb(r_scale[5], wbs_dat_i, wbs_sel_i);
                     ADR_SCALE_CH6: r_scale[6] <= apply_wstrb(r_scale[6], wbs_dat_i, wbs_sel_i);
                     ADR_SCALE_CH7: r_scale[7] <= apply_wstrb(r_scale[7], wbs_dat_i, wbs_sel_i);
+
+                    // Events config
+                    ADR_EVT_CFG: begin
+                        // EVT_EN lives in bits [7:0]; reserved bits ignore writes.
+                        // Honor byte-enables (all bits are in byte lane 0).
+                        if (wbs_sel_i[0]) r_evt_en <= wbs_dat_i[7:0];
+                    end
+
+                    ADR_EVT_THRESH_CH0: r_evt_thresh[0] <= apply_wstrb(r_evt_thresh[0], wbs_dat_i, wbs_sel_i);
+                    ADR_EVT_THRESH_CH1: r_evt_thresh[1] <= apply_wstrb(r_evt_thresh[1], wbs_dat_i, wbs_sel_i);
+                    ADR_EVT_THRESH_CH2: r_evt_thresh[2] <= apply_wstrb(r_evt_thresh[2], wbs_dat_i, wbs_sel_i);
+                    ADR_EVT_THRESH_CH3: r_evt_thresh[3] <= apply_wstrb(r_evt_thresh[3], wbs_dat_i, wbs_sel_i);
+                    ADR_EVT_THRESH_CH4: r_evt_thresh[4] <= apply_wstrb(r_evt_thresh[4], wbs_dat_i, wbs_sel_i);
+                    ADR_EVT_THRESH_CH5: r_evt_thresh[5] <= apply_wstrb(r_evt_thresh[5], wbs_dat_i, wbs_sel_i);
+                    ADR_EVT_THRESH_CH6: r_evt_thresh[6] <= apply_wstrb(r_evt_thresh[6], wbs_dat_i, wbs_sel_i);
+                    ADR_EVT_THRESH_CH7: r_evt_thresh[7] <= apply_wstrb(r_evt_thresh[7], wbs_dat_i, wbs_sel_i);
 
                     default: ;
                 endcase
