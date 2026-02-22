@@ -30,9 +30,10 @@ Deliver a taped-out **digital** chip (open-source tools only) + a demo board/sys
 
 1) **Shipping address + phone** (for fab/packaging/board houses) — needed before ordering anything.
 2) **Name to print on silkscreen / chip demo branding** (optional).
-3) **Preferred demo form factor**: one “smart shelf scale”, or 4–8 small pads (under bins), or a full kitchen shelf?
+3) **Preferred demo form factor** — **decided: one smart shelf**.
 4) **Success metrics** — **decided: 20 g effective** (see `spec/acceptance_metrics.md`).
-   - Remaining detail needed: expected max per-pad weight (range) + typical bin mass.
+   - **Max weight (full-scale): 1 kg** (smart shelf).
+   - Remaining detail needed: typical empty-bin/container mass (so we can budget tare + drift).
 5) **GitHub visibility**: keep repo **private** or make **public** later?
 
 When you answer #3, I can freeze the v1 spec without waiting.
