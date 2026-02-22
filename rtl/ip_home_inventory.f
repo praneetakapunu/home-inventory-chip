@@ -10,6 +10,7 @@ rtl/include/home_inventory_regmap_pkg.sv
 rtl/include/regmap_params.vh
 
 rtl/home_inventory_wb.v
+rtl/home_inventory_event_detector.v
 rtl/adc/adc_drdy_sync.v
 rtl/adc/adc_stream_fifo.v
 rtl/adc/adc_spi_frame_capture.v

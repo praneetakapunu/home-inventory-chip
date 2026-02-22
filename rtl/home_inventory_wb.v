@@ -66,16 +66,16 @@ module home_inventory_wb (
     reg [31:0] r_tare  [0:7];
     reg [31:0] r_scale [0:7];
 
-    // Events regs (status readback driven by core later)
-    reg [31:0] r_evt_count        [0:7];
-    reg [31:0] r_evt_last_delta   [0:7];
-    reg [31:0] r_evt_last_ts;
-    reg [31:0] r_evt_last_ts_ch   [0:7];
+    // Events (implemented in home_inventory_event_detector; readback via wires)
+    wire [31:0] evt_count_ch0, evt_count_ch1, evt_count_ch2, evt_count_ch3;
+    wire [31:0] evt_count_ch4, evt_count_ch5, evt_count_ch6, evt_count_ch7;
 
-    // Temporary variables used during snapshot/event evaluation
-    reg        r_any_event;
-    reg [31:0] r_ts_now;
-    reg [31:0] r_new_val;
+    wire [31:0] last_delta_ch0, last_delta_ch1, last_delta_ch2, last_delta_ch3;
+    wire [31:0] last_delta_ch4, last_delta_ch5, last_delta_ch6, last_delta_ch7;
+
+    wire [31:0] evt_last_ts;
+    wire [31:0] evt_last_ts_ch0, evt_last_ts_ch1, evt_last_ts_ch2, evt_last_ts_ch3;
+    wire [31:0] evt_last_ts_ch4, evt_last_ts_ch5, evt_last_ts_ch6, evt_last_ts_ch7;
 
     // Events regs (config, writable now so firmware can bring-up its control path)
     reg [7:0]  r_evt_en;           // EVT_CFG.EVT_EN
@@ -139,6 +139,77 @@ module home_inventory_wb (
     wire ctrl_start_fire   = (wb_fire && wbs_we_i && (wb_adr_aligned == ADR_CTRL)    && wbs_sel_i[0] && wbs_dat_i[1]);
     wire adc_snapshot_fire = (wb_fire && wbs_we_i && (wb_adr_aligned == ADR_ADC_CMD) && wbs_sel_i[0] && wbs_dat_i[0]);
 
+    // ---------------------------------------------------------------------
+    // Event detector hookup (currently driven by stub snapshot samples)
+    // ---------------------------------------------------------------------
+    wire        evt_sample_valid = adc_snapshot_fire;
+    wire [31:0] evt_ts_now       = r_adc_snapshot_count + 32'h1;
+
+    // Stub sample pattern is identical to ADC_RAW_CHx update logic.
+    wire [31:0] evt_sample_ch0 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd0;
+    wire [31:0] evt_sample_ch1 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd1;
+    wire [31:0] evt_sample_ch2 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd2;
+    wire [31:0] evt_sample_ch3 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd3;
+    wire [31:0] evt_sample_ch4 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd4;
+    wire [31:0] evt_sample_ch5 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd5;
+    wire [31:0] evt_sample_ch6 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd6;
+    wire [31:0] evt_sample_ch7 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd7;
+
+    home_inventory_event_detector u_evt (
+        .clk(wb_clk_i),
+        .rst(wb_rst_i),
+        .sample_valid(evt_sample_valid),
+        .ts_now(evt_ts_now),
+        .evt_en(r_evt_en),
+
+        .thresh_ch0(r_evt_thresh[0]),
+        .thresh_ch1(r_evt_thresh[1]),
+        .thresh_ch2(r_evt_thresh[2]),
+        .thresh_ch3(r_evt_thresh[3]),
+        .thresh_ch4(r_evt_thresh[4]),
+        .thresh_ch5(r_evt_thresh[5]),
+        .thresh_ch6(r_evt_thresh[6]),
+        .thresh_ch7(r_evt_thresh[7]),
+
+        .sample_ch0(evt_sample_ch0),
+        .sample_ch1(evt_sample_ch1),
+        .sample_ch2(evt_sample_ch2),
+        .sample_ch3(evt_sample_ch3),
+        .sample_ch4(evt_sample_ch4),
+        .sample_ch5(evt_sample_ch5),
+        .sample_ch6(evt_sample_ch6),
+        .sample_ch7(evt_sample_ch7),
+
+        .evt_count_ch0(evt_count_ch0),
+        .evt_count_ch1(evt_count_ch1),
+        .evt_count_ch2(evt_count_ch2),
+        .evt_count_ch3(evt_count_ch3),
+        .evt_count_ch4(evt_count_ch4),
+        .evt_count_ch5(evt_count_ch5),
+        .evt_count_ch6(evt_count_ch6),
+        .evt_count_ch7(evt_count_ch7),
+
+        .last_delta_ch0(last_delta_ch0),
+        .last_delta_ch1(last_delta_ch1),
+        .last_delta_ch2(last_delta_ch2),
+        .last_delta_ch3(last_delta_ch3),
+        .last_delta_ch4(last_delta_ch4),
+        .last_delta_ch5(last_delta_ch5),
+        .last_delta_ch6(last_delta_ch6),
+        .last_delta_ch7(last_delta_ch7),
+
+        .last_ts(evt_last_ts),
+
+        .last_ts_ch0(evt_last_ts_ch0),
+        .last_ts_ch1(evt_last_ts_ch1),
+        .last_ts_ch2(evt_last_ts_ch2),
+        .last_ts_ch3(evt_last_ts_ch3),
+        .last_ts_ch4(evt_last_ts_ch4),
+        .last_ts_ch5(evt_last_ts_ch5),
+        .last_ts_ch6(evt_last_ts_ch6),
+        .last_ts_ch7(evt_last_ts_ch7)
+    );
+
     // Read mux (combinational)
     reg [31:0] rd_data;
     always @(*) begin
@@ -187,25 +258,25 @@ module home_inventory_wb (
             ADR_SCALE_CH7: rd_data = r_scale[7];
 
             // Events (read-only)
-            ADR_EVT_COUNT_CH0:      rd_data = r_evt_count[0];
-            ADR_EVT_COUNT_CH1:      rd_data = r_evt_count[1];
-            ADR_EVT_COUNT_CH2:      rd_data = r_evt_count[2];
-            ADR_EVT_COUNT_CH3:      rd_data = r_evt_count[3];
-            ADR_EVT_COUNT_CH4:      rd_data = r_evt_count[4];
-            ADR_EVT_COUNT_CH5:      rd_data = r_evt_count[5];
-            ADR_EVT_COUNT_CH6:      rd_data = r_evt_count[6];
-            ADR_EVT_COUNT_CH7:      rd_data = r_evt_count[7];
+            ADR_EVT_COUNT_CH0:      rd_data = evt_count_ch0;
+            ADR_EVT_COUNT_CH1:      rd_data = evt_count_ch1;
+            ADR_EVT_COUNT_CH2:      rd_data = evt_count_ch2;
+            ADR_EVT_COUNT_CH3:      rd_data = evt_count_ch3;
+            ADR_EVT_COUNT_CH4:      rd_data = evt_count_ch4;
+            ADR_EVT_COUNT_CH5:      rd_data = evt_count_ch5;
+            ADR_EVT_COUNT_CH6:      rd_data = evt_count_ch6;
+            ADR_EVT_COUNT_CH7:      rd_data = evt_count_ch7;
 
-            ADR_EVT_LAST_DELTA_CH0: rd_data = r_evt_last_delta[0];
-            ADR_EVT_LAST_DELTA_CH1: rd_data = r_evt_last_delta[1];
-            ADR_EVT_LAST_DELTA_CH2: rd_data = r_evt_last_delta[2];
-            ADR_EVT_LAST_DELTA_CH3: rd_data = r_evt_last_delta[3];
-            ADR_EVT_LAST_DELTA_CH4: rd_data = r_evt_last_delta[4];
-            ADR_EVT_LAST_DELTA_CH5: rd_data = r_evt_last_delta[5];
-            ADR_EVT_LAST_DELTA_CH6: rd_data = r_evt_last_delta[6];
-            ADR_EVT_LAST_DELTA_CH7: rd_data = r_evt_last_delta[7];
+            ADR_EVT_LAST_DELTA_CH0: rd_data = last_delta_ch0;
+            ADR_EVT_LAST_DELTA_CH1: rd_data = last_delta_ch1;
+            ADR_EVT_LAST_DELTA_CH2: rd_data = last_delta_ch2;
+            ADR_EVT_LAST_DELTA_CH3: rd_data = last_delta_ch3;
+            ADR_EVT_LAST_DELTA_CH4: rd_data = last_delta_ch4;
+            ADR_EVT_LAST_DELTA_CH5: rd_data = last_delta_ch5;
+            ADR_EVT_LAST_DELTA_CH6: rd_data = last_delta_ch6;
+            ADR_EVT_LAST_DELTA_CH7: rd_data = last_delta_ch7;
 
-            ADR_EVT_LAST_TS:        rd_data = r_evt_last_ts;
+            ADR_EVT_LAST_TS:        rd_data = evt_last_ts;
 
             // Events config
             ADR_EVT_CFG:            rd_data = {24'h0, r_evt_en};
@@ -240,20 +311,14 @@ module home_inventory_wb (
             r_adc_fifo_level   <= 16'h0;
             r_adc_fifo_overrun <= 1'b0;
 
-            r_evt_last_ts <= 32'h0;
             r_evt_en      <= 8'h00;
-            r_any_event   <= 1'b0;
-            r_ts_now      <= 32'h0;
-            r_new_val     <= 32'h0;
 
             for (i = 0; i < 8; i = i + 1) begin
                 r_adc_raw[i] <= 32'h0;
                 r_tare[i]    <= 32'h0;
                 r_scale[i]   <= 32'h0001_0000; // Q16.16 1.0
 
-                r_evt_count[i]        <= 32'h0;
-                r_evt_last_delta[i]   <= 32'h0;
-                r_evt_last_ts_ch[i]   <= 32'h0;
+                // (event detector state lives in u_evt)
 
                 r_evt_thresh[i] <= 32'h0;
             end
@@ -324,14 +389,6 @@ module home_inventory_wb (
                         // EVT_EN lives in bits [7:0]; reserved bits ignore writes.
                         // Honor byte-enables (all bits are in byte lane 0).
                         if (wbs_sel_i[0]) begin
-                            // If a channel is being enabled (0->1), reset its last-ts
-                            // so the next event reports LAST_DELTA=0 per spec.
-                            for (i = 0; i < 8; i = i + 1) begin
-                                if (~r_evt_en[i] && wbs_dat_i[i]) begin
-                                    r_evt_last_ts_ch[i]   <= 32'h0;
-                                    r_evt_last_delta[i]   <= 32'h0;
-                                end
-                            end
                             r_evt_en <= wbs_dat_i[7:0];
                         end
                     end
@@ -374,34 +431,8 @@ module home_inventory_wb (
                     adc_fifo_push(32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + i[31:0]);
                 end
 
-                // Event detector (stubbed, but real semantics): for each channel,
-                // declare an event when the freshly-updated raw sample meets/exceeds
-                // the per-channel threshold and the channel is enabled.
-                // Timestamp source: ADC_SNAPSHOT_COUNT (monotonic).
-                r_ts_now    = r_adc_snapshot_count + 32'h1;
-                r_any_event = 1'b0;
-                for (i = 0; i < 8; i = i + 1) begin
-                    r_new_val = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + i[31:0];
-                    if (r_evt_en[i] && (r_new_val >= r_evt_thresh[i])) begin
-                        // Saturating counter
-                        if (r_evt_count[i] != 32'hFFFF_FFFF) begin
-                            r_evt_count[i] <= r_evt_count[i] + 32'h1;
-                        end
-
-                        // First event after reset/enable: define delta = 0.
-                        if (r_evt_last_ts_ch[i] == 32'h0) begin
-                            r_evt_last_delta[i] <= 32'h0;
-                        end else begin
-                            r_evt_last_delta[i] <= r_ts_now - r_evt_last_ts_ch[i];
-                        end
-
-                        r_evt_last_ts_ch[i] <= r_ts_now;
-                        r_any_event         = 1'b1;
-                    end
-                end
-                if (r_any_event) begin
-                    r_evt_last_ts <= r_ts_now;
-                end
+                // Event detector is driven by the same stub snapshot samples via u_evt.
+                // (When the real ADC stream lands, drive u_evt from that path instead.)
             end
         end
     end
