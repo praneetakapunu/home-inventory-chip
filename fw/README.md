@@ -6,6 +6,7 @@ Goal: keep the RTL/spec **register map** usable from C early, even before full f
 
 ## What lives here
 - `include/home_inventory_regmap.h`: **generated** C header with Wishbone register offsets + bitfields.
+- `tools/decode_adc_fifo.py`: bring-up helper to decode raw FIFO dumps into 9-word frames.
 
 ## Conventions
 - Base address is platform-specific (Caravel / management SoC map). Use offsets from `HOMEINV_*`.
