@@ -7,6 +7,7 @@
 ## Decision
 - v1 demo form factor: **one smart shelf** (single shelf-scale system).
 - **Max weight:** **1 kg** (expected maximum load on the shelf measurement).
+- **Typical empty container/tare:** ~**100 g**.
 
 ## Rationale
 A single shelf demo reduces mechanical complexity and keeps bring-up simpler while still proving end-to-end inventory-by-weight.

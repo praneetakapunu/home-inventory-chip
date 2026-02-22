@@ -33,7 +33,7 @@ Deliver a taped-out **digital** chip (open-source tools only) + a demo board/sys
 3) **Preferred demo form factor** — **decided: one smart shelf**.
 4) **Success metrics** — **decided: 20 g effective** (see `spec/acceptance_metrics.md`).
    - **Max weight (full-scale): 1 kg** (smart shelf).
-   - Remaining detail needed: typical empty-bin/container mass (so we can budget tare + drift).
+   - Typical empty-bin/container mass (tare): ~**100 g**.
 5) **GitHub visibility**: keep repo **private** or make **public** later?
 
 When you answer #3, I can freeze the v1 spec without waiting.
