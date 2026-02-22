@@ -78,6 +78,12 @@ def _emit(spec_path: Path, spec: Dict[str, Any]) -> str:
         "",
         "#include <stdint.h>",
         "",
+        "// -----------------------------",
+        "// Bitfield helpers",
+        "// -----------------------------",
+        f"#define {PREFIX}_FIELD_PREP(mask, shift, val)  (((uint32_t)(val) << (shift)) & (mask))",
+        f"#define {PREFIX}_FIELD_GET(mask, shift, reg)   (((uint32_t)(reg) & (mask)) >> (shift))",
+        "",
     ]
 
     # Register defines
@@ -107,14 +113,16 @@ def _emit(spec_path: Path, spec: Dict[str, Any]) -> str:
 
             # Single-bit
             if msb == lsb:
-                lines.append(f"#define {PREFIX}_{reg_name}_{fname}_BIT   {lsb}u")
+                lines.append(f"#define {PREFIX}_{reg_name}_{fname}_BIT    {lsb}u")
+                lines.append(f"#define {PREFIX}_{reg_name}_{fname}_SHIFT  {lsb}u")
                 lines.append(
-                    f"#define {PREFIX}_{reg_name}_{fname}_MASK  (1u << {PREFIX}_{reg_name}_{fname}_BIT)"
+                    f"#define {PREFIX}_{reg_name}_{fname}_MASK   (1u << {PREFIX}_{reg_name}_{fname}_BIT)"
                 )
             else:
                 mask = _field_mask(msb, lsb)
-                lines.append(f"#define {PREFIX}_{reg_name}_{fname}_LSB   {lsb}u")
-                lines.append(f"#define {PREFIX}_{reg_name}_{fname}_MASK  {_hex32(mask)}")
+                lines.append(f"#define {PREFIX}_{reg_name}_{fname}_LSB    {lsb}u")
+                lines.append(f"#define {PREFIX}_{reg_name}_{fname}_SHIFT  {lsb}u")
+                lines.append(f"#define {PREFIX}_{reg_name}_{fname}_MASK   {_hex32(mask)}")
 
     # Handy constants section (kept tiny)
     lines += [
