@@ -97,6 +97,86 @@ The regmap also provides a snapshot mechanism:
 
 Use this when you want a quick “single capture” sanity check without FIFO draining loops.
 
+## Minimal bring-up pseudocode (C-like)
+This snippet is deliberately boring: it’s meant to be copy/paste-able into whatever bare-metal harness you’re using.
+
+```c
+// Base address: depends on harness integration.
+#define HIP_BASE            0x30000000u
+
+#define REG_ID              0x0000u
+#define REG_VERSION         0x0004u
+
+#define REG_CTRL            0x0100u
+#define   CTRL_ENABLE       (1u << 0)
+#define   CTRL_START        (1u << 1)   // W1P
+
+#define REG_ADC_CFG         0x0200u
+#define REG_ADC_CMD         0x0204u
+#define   ADC_CMD_SNAPSHOT  (1u << 0)   // W1P
+
+#define REG_FIFO_STATUS     0x0208u
+#define   FIFO_LEVEL_MASK   0xFFFFu
+#define   FIFO_OVERRUN      (1u << 16)  // W1C
+
+#define REG_FIFO_DATA       0x020Cu
+
+static inline uint32_t rd(uint32_t off) { return mmio_read32(HIP_BASE + off); }
+static inline void     wr(uint32_t off, uint32_t v) { mmio_write32(HIP_BASE + off, v); }
+
+static void fifo_drain_all(void) {
+  while ((rd(REG_FIFO_STATUS) & FIFO_LEVEL_MASK) != 0) {
+    (void)rd(REG_FIFO_DATA);
+  }
+}
+
+void adc_bringup(void) {
+  // 0) ID/VERSION sanity
+  uint32_t id = rd(REG_ID);
+  uint32_t ver = rd(REG_VERSION);
+  // Expect "HICH" in ASCII for id (endianness depends on your printing).
+  // Expect ver == 1.
+
+  // 1) Enumerate how many channels you expect populated
+  wr(REG_ADC_CFG, 8);
+
+  // 2) Enable core
+  wr(REG_CTRL, CTRL_ENABLE);
+
+  // 3) Clear sticky + drain
+  if (rd(REG_FIFO_STATUS) & FIFO_OVERRUN) {
+    wr(REG_FIFO_STATUS, FIFO_OVERRUN); // W1C
+  }
+  fifo_drain_all();
+
+  // 5) Start capture
+  wr(REG_CTRL, CTRL_START);
+
+  // 6) First-data precaution: discard 2 frames (2 * 9 words)
+  for (int i = 0; i < 18; i++) {
+    while ((rd(REG_FIFO_STATUS) & FIFO_LEVEL_MASK) == 0) {}
+    (void)rd(REG_FIFO_DATA);
+  }
+
+  // 6) Now consume frames normally
+  while (1) {
+    // Wait for one full frame buffered
+    while ((rd(REG_FIFO_STATUS) & FIFO_LEVEL_MASK) < 9) {}
+
+    uint32_t status = rd(REG_FIFO_DATA);
+    int32_t ch[8];
+    for (int k = 0; k < 8; k++) ch[k] = (int32_t)rd(REG_FIFO_DATA);
+
+    // TODO: print/log status + ch[]
+    (void)status; (void)ch;
+  }
+}
+```
+
+Notes:
+- Treat channel samples as **signed** (`int32_t`). With `WLENGTH=11b`, the ADC data are already sign-extended by the ADS131M08.
+- If you see `FIFO_OVERRUN`, don’t trust gaps in the stream: drain + clear + restart capture.
+
 ## Error handling / debug checklist
 - `ADC_FIFO_STATUS.OVERRUN=1`:
   - Drain faster; increase poll rate; reduce ADC output rate; consider enlarging FIFO (RTL change).
