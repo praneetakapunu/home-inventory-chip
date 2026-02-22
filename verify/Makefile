@@ -50,6 +50,7 @@ regmap-gen:
 	python3 ../ops/regmap_validate.py --yaml ../spec/regmap_v1.yaml
 	python3 ../ops/gen_regmap_header.py --yaml ../spec/regmap_v1.yaml --out ../fw/include/home_inventory_regmap.h
 	python3 ../ops/gen_regmap_sv_pkg.py --yaml ../spec/regmap_v1.yaml --out ../rtl/include/home_inventory_regmap_pkg.sv
+	python3 ../tools/regmap/gen_verilog_params.py --yaml ../spec/regmap_v1.yaml --out ../rtl/include/regmap_params.vh
 
 # Assert that the committed generated artifacts are up-to-date.
 #
