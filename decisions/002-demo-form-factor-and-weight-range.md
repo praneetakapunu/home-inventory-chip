@@ -9,6 +9,9 @@
 - **Max weight:** **1 kg** (expected maximum load on the shelf measurement).
 - **Typical empty container/tare:** ~**100 g**.
 - **Minimum meaningful step / detect threshold:** **20 g** (aligns with acceptance metrics).
+- v1 product behavior focus: **add/remove events** (not absolute weight as a primary UX feature).
+- Shelf physical size: ~**10 inches**.
+- Mechanics: **single load cell**.
 
 ## Rationale
 A single shelf demo reduces mechanical complexity and keeps bring-up simpler while still proving end-to-end inventory-by-weight.

@@ -36,7 +36,7 @@ Deliver a taped-out **digital** chip (open-source tools only) + a demo board/sys
    - Typical empty-bin/container mass (tare): ~**100 g**.
 5) **GitHub visibility**: keep repo **private** or make **public** later?
 
-When you answer #3, I can freeze the v1 spec without waiting.
+With form factor + range locked, I can freeze the v1 spec without waiting.
 
 ## Key decisions log
 - See: `decisions/` (one file per decision)
