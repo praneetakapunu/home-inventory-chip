@@ -67,9 +67,15 @@ module home_inventory_wb (
     reg [31:0] r_scale [0:7];
 
     // Events regs (status readback driven by core later)
-    reg [31:0] r_evt_count      [0:7];
-    reg [31:0] r_evt_last_delta [0:7];
+    reg [31:0] r_evt_count        [0:7];
+    reg [31:0] r_evt_last_delta   [0:7];
     reg [31:0] r_evt_last_ts;
+    reg [31:0] r_evt_last_ts_ch   [0:7];
+
+    // Temporary variables used during snapshot/event evaluation
+    reg        r_any_event;
+    reg [31:0] r_ts_now;
+    reg [31:0] r_new_val;
 
     // Events regs (config, writable now so firmware can bring-up its control path)
     reg [7:0]  r_evt_en;           // EVT_CFG.EVT_EN
@@ -236,14 +242,18 @@ module home_inventory_wb (
 
             r_evt_last_ts <= 32'h0;
             r_evt_en      <= 8'h00;
+            r_any_event   <= 1'b0;
+            r_ts_now      <= 32'h0;
+            r_new_val     <= 32'h0;
 
             for (i = 0; i < 8; i = i + 1) begin
                 r_adc_raw[i] <= 32'h0;
                 r_tare[i]    <= 32'h0;
                 r_scale[i]   <= 32'h0001_0000; // Q16.16 1.0
 
-                r_evt_count[i]      <= 32'h0;
-                r_evt_last_delta[i] <= 32'h0;
+                r_evt_count[i]        <= 32'h0;
+                r_evt_last_delta[i]   <= 32'h0;
+                r_evt_last_ts_ch[i]   <= 32'h0;
 
                 r_evt_thresh[i] <= 32'h0;
             end
@@ -313,7 +323,17 @@ module home_inventory_wb (
                     ADR_EVT_CFG: begin
                         // EVT_EN lives in bits [7:0]; reserved bits ignore writes.
                         // Honor byte-enables (all bits are in byte lane 0).
-                        if (wbs_sel_i[0]) r_evt_en <= wbs_dat_i[7:0];
+                        if (wbs_sel_i[0]) begin
+                            // If a channel is being enabled (0->1), reset its last-ts
+                            // so the next event reports LAST_DELTA=0 per spec.
+                            for (i = 0; i < 8; i = i + 1) begin
+                                if (~r_evt_en[i] && wbs_dat_i[i]) begin
+                                    r_evt_last_ts_ch[i]   <= 32'h0;
+                                    r_evt_last_delta[i]   <= 32'h0;
+                                end
+                            end
+                            r_evt_en <= wbs_dat_i[7:0];
+                        end
                     end
 
                     ADR_EVT_THRESH_CH0: r_evt_thresh[0] <= apply_wstrb(r_evt_thresh[0], wbs_dat_i, wbs_sel_i);
@@ -352,6 +372,35 @@ module home_inventory_wb (
                 adc_fifo_push(32'h0);
                 for (i = 0; i < 8; i = i + 1) begin
                     adc_fifo_push(32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + i[31:0]);
+                end
+
+                // Event detector (stubbed, but real semantics): for each channel,
+                // declare an event when the freshly-updated raw sample meets/exceeds
+                // the per-channel threshold and the channel is enabled.
+                // Timestamp source: ADC_SNAPSHOT_COUNT (monotonic).
+                r_ts_now    = r_adc_snapshot_count + 32'h1;
+                r_any_event = 1'b0;
+                for (i = 0; i < 8; i = i + 1) begin
+                    r_new_val = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + i[31:0];
+                    if (r_evt_en[i] && (r_new_val >= r_evt_thresh[i])) begin
+                        // Saturating counter
+                        if (r_evt_count[i] != 32'hFFFF_FFFF) begin
+                            r_evt_count[i] <= r_evt_count[i] + 32'h1;
+                        end
+
+                        // First event after reset/enable: define delta = 0.
+                        if (r_evt_last_ts_ch[i] == 32'h0) begin
+                            r_evt_last_delta[i] <= 32'h0;
+                        end else begin
+                            r_evt_last_delta[i] <= r_ts_now - r_evt_last_ts_ch[i];
+                        end
+
+                        r_evt_last_ts_ch[i] <= r_ts_now;
+                        r_any_event         = 1'b1;
+                    end
+                end
+                if (r_any_event) begin
+                    r_evt_last_ts <= r_ts_now;
                 end
             end
         end
