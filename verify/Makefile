@@ -23,11 +23,14 @@ DRDY_OUT := adc_drdy_sync_tb.out
 SPI_TB   := adc_spi_frame_capture_tb.v
 SPI_OUT  := adc_spi_frame_capture_tb.out
 
-.PHONY: all sim fifo-sim drdy-sim spi-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
+EVT_TB   := event_detector_tb.v
+EVT_OUT  := event_detector_tb.out
+
+.PHONY: all sim fifo-sim drdy-sim spi-sim evt-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
 # One command to run the whole smoke suite (what humans should run locally).
-all: regmap-check regmap-gen-check sim fifo-sim drdy-sim spi-sim
+all: regmap-check regmap-gen-check sim fifo-sim drdy-sim spi-sim evt-sim
 
 sim: $(OUT)
 	$(VVP) $(OUT)
@@ -40,6 +43,9 @@ drdy-sim: $(DRDY_OUT)
 
 spi-sim: $(SPI_OUT)
 	$(VVP) $(SPI_OUT)
+
+evt-sim: $(EVT_OUT)
+	$(VVP) $(EVT_OUT)
 
 # Pure-Python consistency check (no Verilog simulator required).
 regmap-check:
@@ -102,7 +108,7 @@ regmap-vh-gen-check:
 	rm -f $$TMP; \
 	echo "OK: generated Verilog params include matches spec/regmap_v1.yaml"'
 
-$(OUT): $(TB) $(RTL_DIR)/home_inventory_wb.v
+$(OUT): $(TB) $(RTL_DIR)/home_inventory_wb.v $(RTL_DIR)/home_inventory_event_detector.v
 	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(FIFO_OUT): $(FIFO_TB) $(RTL_DIR)/adc/adc_stream_fifo.v
@@ -114,5 +120,8 @@ $(DRDY_OUT): $(DRDY_TB) $(RTL_DIR)/adc/adc_drdy_sync.v
 $(SPI_OUT): $(SPI_TB) $(RTL_DIR)/adc/adc_spi_frame_capture.v
 	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
+$(EVT_OUT): $(EVT_TB) $(RTL_DIR)/home_inventory_event_detector.v
+	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+
 clean:
-	rm -f $(OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT)
+	rm -f $(OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT)
