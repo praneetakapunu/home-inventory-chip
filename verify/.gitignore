@@ -1,0 +1,6 @@
+# Generated simulation artifacts
+*.out
+*.vcd
+*.fst
+*.log
+*.dump
