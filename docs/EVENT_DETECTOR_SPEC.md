@@ -17,7 +17,8 @@ Non-goals for v1:
 
 ## Definitions
 
-- `sample_tick`: increments by 1 for each **accepted** sample update per channel (i.e. at the effective sample cadence of the core).
+- `sample_tick`: a monotonically increasing tick associated with sample updates.
+  - In RTL this may be provided as a **global** `ts_now` that increments once per `sample_valid` update.
 - `event[ch]`: a single-cycle pulse indicating an event detection for channel `ch`.
 
 ## Proposed detection rule (v1)

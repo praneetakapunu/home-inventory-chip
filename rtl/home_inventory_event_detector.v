@@ -77,6 +77,10 @@ module home_inventory_event_detector (
     reg [7:0] prev_evt_en;
     reg [7:0] en_rise_pending;
 
+    // Track whether each channel has ever fired since reset or since the last 0->1 enable.
+    // This avoids using last_ts_ch==0 as a sentinel (ts_now could legitimately be 0).
+    reg [7:0] seen_event;
+
     reg f0, f1, f2, f3, f4, f5, f6, f7;
     reg any_event;
 
@@ -96,26 +100,27 @@ module home_inventory_event_detector (
         inout [31:0] count,
         inout [31:0] last_delta,
         inout [31:0] last_ts_ch,
-        output reg         fired
+        inout        seen,
+        output reg   fired
     );
         reg hit;
         begin
             hit = en && (sample >= thresh);
+
             if (en_rise) begin
                 // On enable rising edge, clear history so the next event reports delta=0.
+                seen      = 1'b0;
                 last_ts_ch = 32'h0;
                 last_delta = 32'h0;
             end
 
             if (hit) begin
                 count = sat_inc32(count);
-                if (last_ts_ch == 32'h0) begin
-                    last_delta = 32'h0;
-                end else begin
-                    last_delta = ts_now - last_ts_ch;
-                end
+                last_delta = (seen) ? (ts_now - last_ts_ch) : 32'h0;
                 last_ts_ch = ts_now;
+                seen = 1'b1;
             end
+
             fired = hit;
         end
     endtask
@@ -124,6 +129,7 @@ module home_inventory_event_detector (
         if (rst) begin
             prev_evt_en <= 8'h00;
             en_rise_pending <= 8'h00;
+            seen_event <= 8'h00;
 
             evt_count_ch0 <= 32'h0; evt_count_ch1 <= 32'h0; evt_count_ch2 <= 32'h0; evt_count_ch3 <= 32'h0;
             evt_count_ch4 <= 32'h0; evt_count_ch5 <= 32'h0; evt_count_ch6 <= 32'h0; evt_count_ch7 <= 32'h0;
@@ -144,22 +150,22 @@ module home_inventory_event_detector (
             if (sample_valid) begin
                 any_event = 1'b0;
 
-                update_ch(evt_en[0], (en_rise_pending[0] | ((~prev_evt_en[0]) & evt_en[0])), sample_ch0, thresh_ch0,
-                          evt_count_ch0, last_delta_ch0, last_ts_ch0, f0);
-                update_ch(evt_en[1], (en_rise_pending[1] | ((~prev_evt_en[1]) & evt_en[1])), sample_ch1, thresh_ch1,
-                          evt_count_ch1, last_delta_ch1, last_ts_ch1, f1);
-                update_ch(evt_en[2], (en_rise_pending[2] | ((~prev_evt_en[2]) & evt_en[2])), sample_ch2, thresh_ch2,
-                          evt_count_ch2, last_delta_ch2, last_ts_ch2, f2);
-                update_ch(evt_en[3], (en_rise_pending[3] | ((~prev_evt_en[3]) & evt_en[3])), sample_ch3, thresh_ch3,
-                          evt_count_ch3, last_delta_ch3, last_ts_ch3, f3);
-                update_ch(evt_en[4], (en_rise_pending[4] | ((~prev_evt_en[4]) & evt_en[4])), sample_ch4, thresh_ch4,
-                          evt_count_ch4, last_delta_ch4, last_ts_ch4, f4);
-                update_ch(evt_en[5], (en_rise_pending[5] | ((~prev_evt_en[5]) & evt_en[5])), sample_ch5, thresh_ch5,
-                          evt_count_ch5, last_delta_ch5, last_ts_ch5, f5);
-                update_ch(evt_en[6], (en_rise_pending[6] | ((~prev_evt_en[6]) & evt_en[6])), sample_ch6, thresh_ch6,
-                          evt_count_ch6, last_delta_ch6, last_ts_ch6, f6);
-                update_ch(evt_en[7], (en_rise_pending[7] | ((~prev_evt_en[7]) & evt_en[7])), sample_ch7, thresh_ch7,
-                          evt_count_ch7, last_delta_ch7, last_ts_ch7, f7);
+                update_ch(evt_en[0], en_rise_pending[0], sample_ch0, thresh_ch0,
+                          evt_count_ch0, last_delta_ch0, last_ts_ch0, seen_event[0], f0);
+                update_ch(evt_en[1], en_rise_pending[1], sample_ch1, thresh_ch1,
+                          evt_count_ch1, last_delta_ch1, last_ts_ch1, seen_event[1], f1);
+                update_ch(evt_en[2], en_rise_pending[2], sample_ch2, thresh_ch2,
+                          evt_count_ch2, last_delta_ch2, last_ts_ch2, seen_event[2], f2);
+                update_ch(evt_en[3], en_rise_pending[3], sample_ch3, thresh_ch3,
+                          evt_count_ch3, last_delta_ch3, last_ts_ch3, seen_event[3], f3);
+                update_ch(evt_en[4], en_rise_pending[4], sample_ch4, thresh_ch4,
+                          evt_count_ch4, last_delta_ch4, last_ts_ch4, seen_event[4], f4);
+                update_ch(evt_en[5], en_rise_pending[5], sample_ch5, thresh_ch5,
+                          evt_count_ch5, last_delta_ch5, last_ts_ch5, seen_event[5], f5);
+                update_ch(evt_en[6], en_rise_pending[6], sample_ch6, thresh_ch6,
+                          evt_count_ch6, last_delta_ch6, last_ts_ch6, seen_event[6], f6);
+                update_ch(evt_en[7], en_rise_pending[7], sample_ch7, thresh_ch7,
+                          evt_count_ch7, last_delta_ch7, last_ts_ch7, seen_event[7], f7);
 
                 // Clear any pending enable-rises once we have consumed a sample while enabled.
                 en_rise_pending <= en_rise_pending & ~evt_en;
