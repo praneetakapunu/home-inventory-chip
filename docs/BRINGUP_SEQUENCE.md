@@ -90,6 +90,39 @@ Normative packing (if streaming is enabled):
 - Word0: ADC status word (or 0)
 - Word1..8: CH0..CH7 raw samples
 
+## Step 8 — Event detector surface (bring-up)
+This validates that the RTL can:
+- accept writes to event config/threshold registers,
+- update event counters/timestamps, and
+- read back per-channel state.
+
+**Important (current RTL behavior):** until the real ADC pipeline is wired, the event detector is driven by the **ADC snapshot pulse** (not continuous sampling). Each write of `ADC_CMD.SNAPSHOT=1` produces exactly one `sample_valid` into the event detector.
+
+### 8.1 Configure thresholds + enable
+Write:
+- `EVT_CFG.EVT_EN = 0xFF` @ `0x0000_0444` (enable all channels)
+- `EVT_THRESH_CHx` @ `0x0000_0480 .. 0x0000_049C`
+
+For the current stubbed sample pattern (see `rtl/home_inventory_wb.v`):
+- `ts_now` increments by 1 per snapshot.
+- `sample_chN = 0x0000_1000 + ts_now + N`.
+
+So, a simple deterministic test is:
+- set all thresholds to `0x0000_1000` and confirm **every snapshot increments every channel**, or
+- set thresholds to `0x0000_1000 + 100` and confirm **no events for the first 100 snapshots**, then events start.
+
+### 8.2 Trigger a few snapshots and confirm state updates
+Perform 2–3 snapshots (Step 6), then read:
+- `EVT_COUNT_CH0..CH7` @ `0x0000_0400 .. 0x0000_041C`
+- `EVT_LAST_TS` @ `0x0000_0440`
+- `EVT_LAST_TS_CH0..CH7` @ `0x0000_0448 .. 0x0000_0464`
+- `EVT_LAST_DELTA_CH0..CH7` @ `0x0000_0420 .. 0x0000_043C`
+
+Bring-up acceptance:
+- counters increment monotonically (saturating at 0xFFFF_FFFF),
+- `EVT_LAST_TS` tracks the most recent snapshot in which any enabled channel hit,
+- per-channel `LAST_DELTA` is 0 for the first event after enable, then matches the delta between snapshots that hit.
+
 ## Logging requirements
 When running bring-up on real silicon, always log:
 - raw reads of ID/VERSION/STATUS
@@ -110,7 +143,12 @@ void     mmio_write(uint32_t addr, uint32_t data);
 #define REG_ADC_CMD       0x00000204
 #define REG_ADC_FIFO_ST   0x00000208
 #define REG_ADC_FIFO_DATA 0x0000020C
-#define REG_ADC_RAW_CH0   0x00000210
+#define REG_ADC_RAW_CH0     0x00000210
+
+#define REG_EVT_CFG         0x00000444
+#define REG_EVT_THRESH_CH0  0x00000480
+#define REG_EVT_COUNT_CH0   0x00000400
+#define REG_EVT_LAST_TS     0x00000440
 
 void bringup(void) {
   uint32_t id = mmio_read(REG_ID);
@@ -121,10 +159,21 @@ void bringup(void) {
 
   // snapshot
   mmio_write(REG_ADC_CFG, 8u);
-  mmio_write(REG_ADC_CMD, 1u);
 
+  // event detector: enable all channels + low threshold so every snapshot hits
+  mmio_write(REG_EVT_CFG, 0x000000FFu);
   for (int ch = 0; ch < 8; ch++) {
-    (void)mmio_read(REG_ADC_RAW_CH0 + 4u*ch);
+    mmio_write(REG_EVT_THRESH_CH0 + 4u*ch, 0x00001000u);
+  }
+
+  // take a few snapshots
+  for (int i = 0; i < 3; i++) {
+    mmio_write(REG_ADC_CMD, 1u);
+    for (int ch = 0; ch < 8; ch++) {
+      (void)mmio_read(REG_ADC_RAW_CH0 + 4u*ch);
+      (void)mmio_read(REG_EVT_COUNT_CH0 + 4u*ch);
+    }
+    (void)mmio_read(REG_EVT_LAST_TS);
   }
 }
 ```
