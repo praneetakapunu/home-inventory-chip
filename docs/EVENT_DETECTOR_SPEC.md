@@ -51,7 +51,12 @@ EVT_LAST_DELTA_CHx <= sample_tick[ch] - last_event_tick[ch]
 
 ### `EVT_LAST_TS` (RO)
 - On any channel event, updates to the **global** sample tick at which the event occurred.
-- If multiple channels assert `event[ch]` in the same cycle, `EVT_LAST_TS` may reflect any one of them (implementation-defined).
+- If multiple channels assert `event[ch]` in the same cycle, `EVT_LAST_TS` may reflect that shared tick (implementation-defined if different tick domains exist; for v1 we assume a single tick).
+
+### `EVT_LAST_TS_CHx` (RO)
+- On each `event[ch]`, updates to the per-channel sample tick at which the event occurred.
+- Reset value is 0, but firmware must not treat 0 as a sentinel for "never" (the tick could legitimately be 0).
+- On `EVT_EN[ch]` 0→1, per-channel timestamp history is cleared; the next event sets `EVT_LAST_TS_CHx` to the current tick.
 
 ### `EVT_CFG` (RW)
 - `EVT_EN[7:0]` gates event detection per channel.
