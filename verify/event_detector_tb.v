@@ -85,8 +85,8 @@ module event_detector_tb;
     ts_now = 32'h0;
     evt_en = 8'h00;
 
-    thresh_ch0 = 32'd100; thresh_ch1 = 32'd0;   thresh_ch2 = 32'd0;   thresh_ch3 = 32'd0;
-    thresh_ch4 = 32'd0;   thresh_ch5 = 32'd0;   thresh_ch6 = 32'd0;   thresh_ch7 = 32'd0;
+    thresh_ch0 = 32'd100; thresh_ch1 = 32'd1000; thresh_ch2 = 32'd0;   thresh_ch3 = 32'd0;
+    thresh_ch4 = 32'd0;   thresh_ch5 = 32'd0;    thresh_ch6 = 32'd0;   thresh_ch7 = 32'd0;
 
     sample_ch0 = 32'd0; sample_ch1 = 32'd0; sample_ch2 = 32'd0; sample_ch3 = 32'd0;
     sample_ch4 = 32'd0; sample_ch5 = 32'd0; sample_ch6 = 32'd0; sample_ch7 = 32'd0;
@@ -100,6 +100,7 @@ module event_detector_tb;
 
     // After reset, counters should be 0
     expect32(evt_count_ch0, 32'd0, "count ch0 after reset");
+    expect32(evt_count_ch1, 32'd0, "count ch1 after reset");
     expect32(last_ts,       32'd0, "last_ts after reset");
     expect32(last_delta_ch0,32'd0, "last_delta ch0 after reset");
 
@@ -143,13 +144,42 @@ module event_detector_tb;
     expect32(last_ts_ch0,   32'd25, "last_ts_ch0 unchanged on miss");
     expect32(last_delta_ch0,32'd15, "delta unchanged on miss");
 
-    // Disable then re-enable: next event should reset history and delta should be 0
+    // Multi-channel: an event on another enabled channel should update last_ts
+    // and the per-channel state for that channel only.
+    evt_en = 8'b0000_0011; // ch0 + ch1 enabled
+    tick();
+
+    ts_now = 32'd60;
+    sample_ch0 = 32'd0;       // miss
+    sample_ch1 = 32'd2000;    // hit (thresh=1000)
+    sample_valid = 1'b1;
+    tick();
+    sample_valid = 1'b0;
+
+    expect32(evt_count_ch0, 32'd2,  "ch0 count unchanged on ch1-only hit");
+    expect32(evt_count_ch1, 32'd1,  "ch1 count increments on hit");
+    expect32(last_ts,       32'd60, "last_ts updates on any-channel event");
+    expect32(last_ts_ch1,   32'd60, "last_ts_ch1 updates on ch1 hit");
+    expect32(last_delta_ch1,32'd0,  "ch1 delta is 0 for first event");
+
+    // Saturation: if a counter is already max, a hit should not wrap.
+    // (Use hierarchical force since reaching 2^32-1 hits is impractical in sim.)
+    force dut.evt_count_ch1 = 32'hFFFF_FFFF;
+    ts_now = 32'd70;
+    sample_ch1 = 32'd3000; // hit
+    sample_valid = 1'b1;
+    tick();
+    sample_valid = 1'b0;
+    expect32(evt_count_ch1, 32'hFFFF_FFFF, "saturating count holds at max");
+    release dut.evt_count_ch1;
+
+    // Disable then re-enable ch0: next event should reset history and delta should be 0
     evt_en = 8'h00;
     tick();
     evt_en = 8'h01;
     tick();
 
-    ts_now = 32'd50;
+    ts_now = 32'd90;
     sample_ch0 = 32'd200; // hit
     sample_valid = 1'b1;
     tick();
