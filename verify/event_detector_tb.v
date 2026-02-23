@@ -144,6 +144,24 @@ module event_detector_tb;
     expect32(last_ts_ch0,   32'd25, "last_ts_ch0 unchanged on miss");
     expect32(last_delta_ch0,32'd15, "delta unchanged on miss");
 
+    // Glitchy enable pulse should not clear history if we never take a sample while enabled.
+    // (Regression for en_rise_pending masking.)
+    evt_en = 8'h01;
+    tick();
+    evt_en = 8'h00;
+    tick();
+
+    ts_now = 32'd50;
+    sample_ch0 = 32'd150; // would hit, but channel is disabled
+    sample_valid = 1'b1;
+    tick();
+    sample_valid = 1'b0;
+
+    expect32(evt_count_ch0, 32'd2,  "disabled sample does not increment count");
+    expect32(last_ts,       32'd25, "disabled sample does not update global last_ts");
+    expect32(last_ts_ch0,   32'd25, "disabled sample does not clear per-ch last_ts");
+    expect32(last_delta_ch0,32'd15, "disabled sample does not clear per-ch delta");
+
     // Multi-channel: an event on another enabled channel should update last_ts
     // and the per-channel state for that channel only.
     evt_en = 8'b0000_0011; // ch0 + ch1 enabled

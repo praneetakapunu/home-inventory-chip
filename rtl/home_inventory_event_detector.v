@@ -144,7 +144,11 @@ module home_inventory_event_detector (
         end else begin
             // Capture 0->1 enable edges even if sample_valid is not asserted that cycle.
             // We then apply the "clear history on enable" behavior on the next sample_valid.
-            en_rise_pending <= en_rise_pending | ((~prev_evt_en) & evt_en);
+            //
+            // Important: if a channel is disabled before we ever consume a sample (evt_en
+            // returns to 0), we must *not* keep a pending enable-rise around. Otherwise a
+            // later sample while disabled would incorrectly clear that channel's history.
+            en_rise_pending <= (en_rise_pending | ((~prev_evt_en) & evt_en)) & evt_en;
             prev_evt_en <= evt_en;
 
             if (sample_valid) begin
