@@ -278,6 +278,15 @@ module home_inventory_wb (
 
             ADR_EVT_LAST_TS:        rd_data = evt_last_ts;
 
+            ADR_EVT_LAST_TS_CH0:    rd_data = evt_last_ts_ch0;
+            ADR_EVT_LAST_TS_CH1:    rd_data = evt_last_ts_ch1;
+            ADR_EVT_LAST_TS_CH2:    rd_data = evt_last_ts_ch2;
+            ADR_EVT_LAST_TS_CH3:    rd_data = evt_last_ts_ch3;
+            ADR_EVT_LAST_TS_CH4:    rd_data = evt_last_ts_ch4;
+            ADR_EVT_LAST_TS_CH5:    rd_data = evt_last_ts_ch5;
+            ADR_EVT_LAST_TS_CH6:    rd_data = evt_last_ts_ch6;
+            ADR_EVT_LAST_TS_CH7:    rd_data = evt_last_ts_ch7;
+
             // Events config
             ADR_EVT_CFG:            rd_data = {24'h0, r_evt_en};
             ADR_EVT_THRESH_CH0:     rd_data = r_evt_thresh[0];

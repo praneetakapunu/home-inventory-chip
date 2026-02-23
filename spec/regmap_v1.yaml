@@ -364,6 +364,47 @@ blocks:
             reset: 0
             desc: 1 = enable event detection for channel.
 
+      - name: EVT_LAST_TS_CH0
+        offset: 0x048
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit timestamp (sample ticks) of most recent event on CH0.
+      - name: EVT_LAST_TS_CH1
+        offset: 0x04C
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit timestamp (sample ticks) of most recent event on CH1.
+      - name: EVT_LAST_TS_CH2
+        offset: 0x050
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit timestamp (sample ticks) of most recent event on CH2.
+      - name: EVT_LAST_TS_CH3
+        offset: 0x054
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit timestamp (sample ticks) of most recent event on CH3.
+      - name: EVT_LAST_TS_CH4
+        offset: 0x058
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit timestamp (sample ticks) of most recent event on CH4.
+      - name: EVT_LAST_TS_CH5
+        offset: 0x05C
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit timestamp (sample ticks) of most recent event on CH5.
+      - name: EVT_LAST_TS_CH6
+        offset: 0x060
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit timestamp (sample ticks) of most recent event on CH6.
+      - name: EVT_LAST_TS_CH7
+        offset: 0x064
+        access: ro
+        reset: null
+        desc: Unsigned 32-bit timestamp (sample ticks) of most recent event on CH7.
+
       - name: EVT_THRESH_CH0
         offset: 0x080
         access: rw
