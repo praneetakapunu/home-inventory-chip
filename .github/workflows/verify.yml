@@ -39,3 +39,6 @@ jobs:
 
       - name: ADC SPI frame-capture directed sim
         run: make -C verify spi-sim
+
+      - name: Event detector directed sim
+        run: make -C verify evt-sim
