@@ -21,5 +21,12 @@ Anything listed here must be acceptable for OpenMPW submission / first-silicon b
 
 - Full-system OpenLane or timing signoff is not part of this repo; tapeout readiness is gated by OpenMPW precheck + basic compile/smoke tests.
 
-TODO (before tapeout):
-- Add any bring-up discoveries here (e.g., ADC clocking quirks, DRDY edge cases, firmware workarounds).
+## Bring-up discoveries (append-only)
+
+As we learn things on real hardware, **append short entries here** so they survive context switches.
+Format suggestion:
+- Date (UTC):
+- Symptom:
+- Root cause (if known):
+- Workaround / mitigation:
+- Links: (scope capture, issue, commit)

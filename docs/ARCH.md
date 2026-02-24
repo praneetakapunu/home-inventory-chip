@@ -67,17 +67,25 @@ v1 streaming contract:
 
 ## 4) Clocking / reset assumptions (v1)
 
-- Single primary user clock from Caravel
-- All externally-sourced async signals (notably `adc_drdy`) must be synchronized before use
+- **Primary clock:** single primary user clock from Caravel (no internal PLLs in v1).
+- **Async inputs:** all externally-sourced async signals (notably `adc_drdy`) are synchronized before use.
+- **ADC clocking:** the *board/harness* must provide a valid ADS131M08 clock source.
+  - See: `docs/ADC_CLOCKING_PLAN.md` (decision + bring-up checklist).
 
-TODO (before tapeout):
-- Record exact clock frequency used on harness + ADC SCLK strategy
-- Record reset polarity + which domains are synchronous/asynchronous
+### What must be explicitly recorded before tapeout
+- Caravel/user-project clock frequency used by the harness (Hz)
+- ADC `CLKIN` source + frequency (Hz)
+- SPI `SCLK` strategy (derive from user clock, divider value, max SCLK)
+- Reset polarity and deassertion strategy:
+  - what reset reaches the user project (active high/low)
+  - which internal blocks treat reset as async assertion / sync deassertion
 
 ## 5) Observability / debug
 
 - FIFO `OVERRUN` sticky flag via `ADC_FIFO_STATUS.OVERRUN` (W1C)
 - Minimal status bits via `STATUS.CORE_STATUS`
+- Event detector exposes per-channel last-timestamp regs (`EVT_LAST_TS*`) and counters (see regmap).
 
-TODO:
-- Define a small `LAST_ERROR` code register if bring-up needs more observability
+### Optional (only if bring-up needs it)
+- A small `LAST_ERROR` code register (sticky, W1C) for quick “what went wrong” reporting.
+  - If added, it must be reflected in `spec/regmap_v1.yaml` + `spec/regmap.md` + RTL + directed sim.
