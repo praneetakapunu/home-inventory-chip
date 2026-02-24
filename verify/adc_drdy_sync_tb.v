@@ -5,6 +5,7 @@
 //  - reset initializes synced DRDY high (inactive)
 //  - a falling edge on adc_drdy_n_async produces exactly one clk-wide pulse
 //  - steady-low / steady-high does not create extra pulses
+//  - no spurious pulse occurs if DRDY is held low across reset (arming logic)
 //
 `timescale 1ns/1ps
 `default_nettype none
@@ -75,11 +76,12 @@ module adc_drdy_sync_tb;
   initial begin
     pulses = 0;
 
-    // init
+    // ------------------------------------------------------------------
+    // Case A: Normal bring-up, DRDY idles high.
+    // ------------------------------------------------------------------
     rst = 1'b1;
     adc_drdy_n_async = 1'b1; // inactive high (active-low)
 
-    // hold reset a few cycles
     repeat (3) @(posedge clk);
     rst = 1'b0;
 
@@ -100,6 +102,26 @@ module adc_drdy_sync_tb;
     // Second falling edge.
     #2 adc_drdy_n_async = 1'b0;
     expect_pulse_once("second falling edge");
+
+    // ------------------------------------------------------------------
+    // Case B: DRDY held low across reset deassertion.
+    // Expectation: no spurious pulse until we observe DRDY high post-reset.
+    // ------------------------------------------------------------------
+    rst = 1'b1;
+    adc_drdy_n_async = 1'b0;
+    repeat (3) @(posedge clk);
+    rst = 1'b0;
+
+    // Still low: should NOT produce a pulse (arming not satisfied).
+    expect_no_pulse("held-low after reset deassert (no arm yet)");
+
+    // Go high (arm), still no pulse.
+    #2 adc_drdy_n_async = 1'b1;
+    expect_no_pulse("arm on high (no pulse)");
+
+    // Now falling edge should pulse once.
+    #2 adc_drdy_n_async = 1'b0;
+    expect_pulse_once("falling edge after arm");
 
     $display("PASS: adc_drdy_sync_tb (total pulses=%0d)", pulses);
     $finish;
