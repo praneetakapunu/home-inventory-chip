@@ -198,6 +198,15 @@ module wb_tb;
             $fatal(1);
         end
 
+        // TIME_NOW should be a free-running counter.
+        wb_read32(ADR_TIME_NOW, ts1);
+        repeat (3) @(negedge clk);
+        wb_read32(ADR_TIME_NOW, ts2);
+        if (ts2 <= ts1) begin
+            $display("[tb] ERROR: TIME_NOW did not increment: t0=%0d t1=%0d", ts1, ts2);
+            $fatal(1);
+        end
+
         // -----------------------------------------------------------------
         // CTRL/IRQ
         // -----------------------------------------------------------------
@@ -411,12 +420,9 @@ module wb_tb;
             $fatal(1);
         end
 
-        // Take a reference snapshot count so timestamp expectations stay stable
-        // even if earlier parts of this test already exercised ADC_CMD.SNAPSHOT.
-        wb_read32(ADR_ADC_SNAPSHOT_COUNT, base_sc);
-        ts1 = base_sc + 32'd1;
-        ts2 = base_sc + 32'd2;
-        ts3 = base_sc + 32'd3;
+        // Take a reference TIME_NOW so timestamp expectations stay stable
+        // even if earlier parts of this test took extra cycles.
+        wb_read32(ADR_TIME_NOW, base_sc);
 
         // First snapshot after enable: count increments, delta must be 0, timestamps update.
         wb_write32(ADR_ADC_CMD, 32'h0000_0001);
@@ -430,9 +436,9 @@ module wb_tb;
             $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after first snapshot should be 0: got 0x%08x", rdata);
             $fatal(1);
         end
-        wb_read32(ADR_EVT_LAST_TS_CH0, rdata);
-        if (rdata !== ts1) begin
-            $display("[tb] ERROR: EVT_LAST_TS_CH0 after first snapshot: got 0x%08x exp 0x%08x", rdata, ts1);
+        wb_read32(ADR_EVT_LAST_TS_CH0, ts1);
+        if (ts1 < base_sc) begin
+            $display("[tb] ERROR: EVT_LAST_TS_CH0 moved backwards: got 0x%08x base 0x%08x", ts1, base_sc);
             $fatal(1);
         end
         wb_read32(ADR_EVT_LAST_TS, rdata);
@@ -441,21 +447,30 @@ module wb_tb;
             $fatal(1);
         end
 
-        // Second snapshot: delta should be 1 tick.
+        // Second snapshot: delta should match the TIME_NOW difference.
+        wb_read32(ADR_TIME_NOW, base_sc);
         wb_write32(ADR_ADC_CMD, 32'h0000_0001);
         wb_read32(ADR_EVT_COUNT_CH0, rdata);
         if (rdata !== 32'd2) begin
             $display("[tb] ERROR: EVT_COUNT_CH0 after second snapshot: got 0x%08x", rdata);
             $fatal(1);
         end
-        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
-        if (rdata !== 32'd1) begin
-            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after second snapshot should be 1: got 0x%08x", rdata);
+        wb_read32(ADR_EVT_LAST_TS_CH0, ts2);
+        if (ts2 <= ts1) begin
+            $display("[tb] ERROR: EVT_LAST_TS_CH0 not monotonic: ts1=0x%08x ts2=0x%08x", ts1, ts2);
             $fatal(1);
         end
-        wb_read32(ADR_EVT_LAST_TS_CH0, rdata);
-        if (rdata !== ts2) begin
-            $display("[tb] ERROR: EVT_LAST_TS_CH0 after second snapshot: got 0x%08x exp 0x%08x", rdata, ts2);
+        if (ts2 < base_sc) begin
+            $display("[tb] ERROR: EVT_LAST_TS_CH0 before snapshot base: ts2=0x%08x base=0x%08x", ts2, base_sc);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
+        if (rdata == 32'd0) begin
+            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after second snapshot should be >0: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        if (rdata !== (ts2 - ts1)) begin
+            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 mismatch: got 0x%08x exp 0x%08x", rdata, (ts2 - ts1));
             $fatal(1);
         end
 
@@ -473,9 +488,9 @@ module wb_tb;
             $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after re-enable should be 0: got 0x%08x", rdata);
             $fatal(1);
         end
-        wb_read32(ADR_EVT_LAST_TS_CH0, rdata);
-        if (rdata !== ts3) begin
-            $display("[tb] ERROR: EVT_LAST_TS_CH0 after re-enable snapshot: got 0x%08x exp 0x%08x", rdata, ts3);
+        wb_read32(ADR_EVT_LAST_TS_CH0, ts3);
+        if (ts3 <= ts2) begin
+            $display("[tb] ERROR: EVT_LAST_TS_CH0 after re-enable not monotonic: ts2=0x%08x ts3=0x%08x", ts2, ts3);
             $fatal(1);
         end
 

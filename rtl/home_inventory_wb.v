@@ -48,6 +48,9 @@ module home_inventory_wb (
     reg        r_start_pending;
     reg [31:0] r_irq_en;
 
+    // Free-running timebase (used for event timestamping; also readable via TIME_NOW)
+    reg [31:0] r_time_now;
+
     // ADC regs (stubbed for now; enough for firmware to enumerate + latch)
     reg [3:0]  r_adc_num_ch;
     reg [31:0] r_adc_snapshot_count;
@@ -143,7 +146,7 @@ module home_inventory_wb (
     // Event detector hookup (currently driven by stub snapshot samples)
     // ---------------------------------------------------------------------
     wire        evt_sample_valid = adc_snapshot_fire;
-    wire [31:0] evt_ts_now       = r_adc_snapshot_count + 32'h1;
+    wire [31:0] evt_ts_now       = r_time_now;
 
     // Stub sample pattern is identical to ADC_RAW_CHx update logic.
     wire [31:0] evt_sample_ch0 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd0;
@@ -221,7 +224,8 @@ module home_inventory_wb (
             ADR_CTRL:    rd_data = {30'h0, 1'b0, r_enable};
             // Only bits [2:0] are defined; reserved bits read as 0.
             ADR_IRQ_EN:  rd_data = {29'h0, r_irq_en[2:0]};
-            ADR_STATUS:  rd_data = {24'h0, core_status};
+            ADR_STATUS:    rd_data = {24'h0, core_status};
+            ADR_TIME_NOW:  rd_data = r_time_now;
 
             // ADC
             ADR_ADC_CFG:        rd_data = {28'h0, r_adc_num_ch};
@@ -311,6 +315,7 @@ module home_inventory_wb (
             r_start_pulse   <= 1'b0;
             r_start_pending <= 1'b0;
             r_irq_en        <= 32'h0;
+            r_time_now      <= 32'h0;
 
             r_adc_num_ch    <= 4'h0;
             r_adc_snapshot_count <= 32'h0;
@@ -337,6 +342,9 @@ module home_inventory_wb (
             // Wishbone write has been accepted.
             r_start_pulse   <= r_start_pending;
             r_start_pending <= ctrl_start_fire;
+
+            // Free-running counter (wraps). Useful as a simple on-chip timebase.
+            r_time_now <= r_time_now + 32'h1;
 
             // ACK pulse for each accepted request.
             wbs_ack_o <= wb_valid & ~wbs_ack_o;

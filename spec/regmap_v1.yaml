@@ -79,6 +79,12 @@ blocks:
             reset: null
             desc: Core status bits.
 
+      - name: TIME_NOW
+        offset: 0x00C
+        access: ro
+        reset: null
+        desc: Free-running 32-bit timebase counter (increments every wb_clk_i). Wraps naturally.
+
   - name: adc
     base: 0x00000200
     registers:

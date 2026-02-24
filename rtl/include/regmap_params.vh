@@ -8,6 +8,7 @@ localparam [31:0] ADR_VERSION            = 32'h00000004;
 localparam [31:0] ADR_CTRL               = 32'h00000100;
 localparam [31:0] ADR_IRQ_EN             = 32'h00000104;
 localparam [31:0] ADR_STATUS             = 32'h00000108;
+localparam [31:0] ADR_TIME_NOW           = 32'h0000010C;
 localparam [31:0] ADR_ADC_CFG            = 32'h00000200;
 localparam [31:0] ADR_ADC_CMD            = 32'h00000204;
 localparam [31:0] ADR_ADC_FIFO_STATUS    = 32'h00000208;

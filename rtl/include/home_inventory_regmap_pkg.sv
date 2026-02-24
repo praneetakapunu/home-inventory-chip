@@ -18,6 +18,7 @@ package home_inventory_regmap_pkg;
   localparam logic [31:0] HOMEINV_ADR_CTRL = 32'h00000100;
   localparam logic [31:0] HOMEINV_ADR_IRQ_EN = 32'h00000104;
   localparam logic [31:0] HOMEINV_ADR_STATUS = 32'h00000108;
+  localparam logic [31:0] HOMEINV_ADR_TIME_NOW = 32'h0000010C;
   localparam logic [31:0] HOMEINV_ADR_ADC_CFG = 32'h00000200;
   localparam logic [31:0] HOMEINV_ADR_ADC_CMD = 32'h00000204;
   localparam logic [31:0] HOMEINV_ADR_ADC_FIFO_STATUS = 32'h00000208;

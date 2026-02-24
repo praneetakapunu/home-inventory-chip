@@ -32,6 +32,7 @@ Source-of-truth (machine-readable): `spec/regmap_v1.yaml`
 | 0x0000_0100 | `CTRL` | RW | 0x0 | Control bits (see below). `START` is write-1-to-pulse. |
 | 0x0000_0104 | `IRQ_EN` | RW | 0x0 | Enable bits for `user_irq[2:0]` (future). |
 | 0x0000_0108 | `STATUS` | RO | — | Status from core. Current RTL exposes `core_status[7:0]` in bits `[7:0]`. |
+| 0x0000_010C | `TIME_NOW` | RO | — | Free-running 32-bit timebase counter (increments every `wb_clk_i`). Wraps naturally. |
 
 ### `CTRL` bitfields
 
