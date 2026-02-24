@@ -36,6 +36,9 @@ make -C verify drdy-sim
 
 # 6) SPI frame-capture directed test (requires iverilog)
 make -C verify spi-sim
+
+# 7) Event detector directed test (requires iverilog)
+make -C verify evt-sim
 ```
 
 This checks:
@@ -48,6 +51,7 @@ This checks:
 - ADC_CMD readback=0 (W1P-style)
 - Calibration reset values + byte strobe behavior
 - RO regs ignore writes (events block)
+- Event detector: threshold compare, per-channel enable edge semantics (first delta=0), multi-channel last_ts, and saturating counters
 
 ## Next
 - Add negative tests for bad byte-strobes / reserved-bit masking.
