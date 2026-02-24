@@ -6,7 +6,10 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 **OpenMPW tapeout path lock → harness/repo integration → RTL baseline**
 
 ## Next 48 hours (Madhuri)
-1) Submission mechanics: get harness repo to a state where `make setup` + precheck can run with our stub
+1) Submission mechanics: keep harness repo integrated and green on **low-disk** checks
+   - IP repo: `make -C verify all`
+   - Harness repo: `make sync-ip-filelist` + `make rtl-compile-check`
+   - Notes/checklist: `docs/HARNESS_INTEGRATION.md`
 2) Land RTL baseline in source-of-truth (done, keep iterating):
    - `rtl/home_inventory_top.v` skeleton
    - `rtl/home_inventory_wb.v` Wishbone reg block
