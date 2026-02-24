@@ -60,6 +60,8 @@ When streaming is enabled, each captured ADC frame is pushed to the FIFO as:
 - Word 0: `ADC_STATUS_WORD` (raw ADC status if available; otherwise 0)
 - Word 1..8: `ADC_CH0..ADC_CH7` raw samples
 
+FIFO depth (v1): **16 words**. See Decision 010 (`decisions/010-adc-fifo-depth-and-overrun-policy.md`).
+
 Each channel word is a sign-extended 32-bit value with the **native ADC sample width** right-justified (expected 24-bit).
 
 | Address | Name | Access | Reset | Description |
