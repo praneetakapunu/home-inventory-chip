@@ -148,37 +148,50 @@ module home_inventory_event_detector (
             // Important: if a channel is disabled before we ever consume a sample (evt_en
             // returns to 0), we must *not* keep a pending enable-rise around. Otherwise a
             // later sample while disabled would incorrectly clear that channel's history.
-            en_rise_pending <= (en_rise_pending | ((~prev_evt_en) & evt_en)) & evt_en;
-            prev_evt_en <= evt_en;
+            //
+            // NOTE: keep this as a *single* en_rise_pending update (avoid multiple <= writes
+            // in the same always block), otherwise we can accidentally use the pre-update
+            // value when consuming sample_valid.
+            begin : en_rise_track
+                reg [7:0] en_rise_new;
+                reg [7:0] en_rise_pending_next;
 
-            if (sample_valid) begin
-                any_event = 1'b0;
+                en_rise_new = (~prev_evt_en) & evt_en;
+                en_rise_pending_next = (en_rise_pending | en_rise_new) & evt_en;
 
-                update_ch(evt_en[0], en_rise_pending[0], sample_ch0, thresh_ch0,
-                          evt_count_ch0, last_delta_ch0, last_ts_ch0, seen_event[0], f0);
-                update_ch(evt_en[1], en_rise_pending[1], sample_ch1, thresh_ch1,
-                          evt_count_ch1, last_delta_ch1, last_ts_ch1, seen_event[1], f1);
-                update_ch(evt_en[2], en_rise_pending[2], sample_ch2, thresh_ch2,
-                          evt_count_ch2, last_delta_ch2, last_ts_ch2, seen_event[2], f2);
-                update_ch(evt_en[3], en_rise_pending[3], sample_ch3, thresh_ch3,
-                          evt_count_ch3, last_delta_ch3, last_ts_ch3, seen_event[3], f3);
-                update_ch(evt_en[4], en_rise_pending[4], sample_ch4, thresh_ch4,
-                          evt_count_ch4, last_delta_ch4, last_ts_ch4, seen_event[4], f4);
-                update_ch(evt_en[5], en_rise_pending[5], sample_ch5, thresh_ch5,
-                          evt_count_ch5, last_delta_ch5, last_ts_ch5, seen_event[5], f5);
-                update_ch(evt_en[6], en_rise_pending[6], sample_ch6, thresh_ch6,
-                          evt_count_ch6, last_delta_ch6, last_ts_ch6, seen_event[6], f6);
-                update_ch(evt_en[7], en_rise_pending[7], sample_ch7, thresh_ch7,
-                          evt_count_ch7, last_delta_ch7, last_ts_ch7, seen_event[7], f7);
+                if (sample_valid) begin
+                    any_event = 1'b0;
 
-                // Clear any pending enable-rises once we have consumed a sample while enabled.
-                en_rise_pending <= en_rise_pending & ~evt_en;
+                    update_ch(evt_en[0], en_rise_pending_next[0], sample_ch0, thresh_ch0,
+                              evt_count_ch0, last_delta_ch0, last_ts_ch0, seen_event[0], f0);
+                    update_ch(evt_en[1], en_rise_pending_next[1], sample_ch1, thresh_ch1,
+                              evt_count_ch1, last_delta_ch1, last_ts_ch1, seen_event[1], f1);
+                    update_ch(evt_en[2], en_rise_pending_next[2], sample_ch2, thresh_ch2,
+                              evt_count_ch2, last_delta_ch2, last_ts_ch2, seen_event[2], f2);
+                    update_ch(evt_en[3], en_rise_pending_next[3], sample_ch3, thresh_ch3,
+                              evt_count_ch3, last_delta_ch3, last_ts_ch3, seen_event[3], f3);
+                    update_ch(evt_en[4], en_rise_pending_next[4], sample_ch4, thresh_ch4,
+                              evt_count_ch4, last_delta_ch4, last_ts_ch4, seen_event[4], f4);
+                    update_ch(evt_en[5], en_rise_pending_next[5], sample_ch5, thresh_ch5,
+                              evt_count_ch5, last_delta_ch5, last_ts_ch5, seen_event[5], f5);
+                    update_ch(evt_en[6], en_rise_pending_next[6], sample_ch6, thresh_ch6,
+                              evt_count_ch6, last_delta_ch6, last_ts_ch6, seen_event[6], f6);
+                    update_ch(evt_en[7], en_rise_pending_next[7], sample_ch7, thresh_ch7,
+                              evt_count_ch7, last_delta_ch7, last_ts_ch7, seen_event[7], f7);
 
-                any_event = f0|f1|f2|f3|f4|f5|f6|f7;
-                if (any_event) begin
-                    last_ts <= ts_now;
+                    // Clear any pending enable-rises once we have consumed a sample while enabled.
+                    en_rise_pending_next = en_rise_pending_next & ~evt_en;
+
+                    any_event = f0|f1|f2|f3|f4|f5|f6|f7;
+                    if (any_event) begin
+                        last_ts <= ts_now;
+                    end
                 end
+
+                en_rise_pending <= en_rise_pending_next;
             end
+
+            prev_evt_en <= evt_en;
         end
     end
 
