@@ -164,12 +164,12 @@ Address space for event/counter reporting. Formats are defined in `spec/fixed_po
 | 0x0000_0498 | `EVT_THRESH_CH6` | RW | 0x0 | Signed 32-bit threshold for CH6. |
 | 0x0000_049C | `EVT_THRESH_CH7` | RW | 0x0 | Signed 32-bit threshold for CH7. |
 
-### `EVT_CFG` bitfields (planned)
+### `EVT_CFG` bitfields (v1)
 
 | Bit(s) | Name | Meaning |
 |---:|---|---|
-| 7:0 | `EVT_EN` | 1 = enable event detection for channel. |
-| 31:8 | — | Reserved. |
+| 7:0 | `EVT_EN` | 1 = enable event detection for channel. **0→1 clears per-channel timestamp history**, so the first event after enabling reports `EVT_LAST_DELTA_CHx = 0`. |
+| 31:8 | — | Reserved (read as 0; writes ignored). |
 
 ## Notes
 - Event detector thresholds are specified in **raw ADC LSBs** so firmware can start using them immediately; additional modes (hysteresis, debounce, comparator direction) can be added later without changing existing addresses.

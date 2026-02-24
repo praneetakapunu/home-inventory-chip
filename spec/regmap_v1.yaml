@@ -356,7 +356,7 @@ blocks:
         offset: 0x044
         access: rw
         reset: 0x00000000
-        desc: Event detector config (v1 planned). Enable/arm per channel.
+        desc: Event detector config (v1). EVT_EN[7:0] enables per channel. 0→1 clears per-channel timestamp history so first event reports LAST_DELTA=0.
         fields:
           - name: EVT_EN
             bits: [7, 0]
