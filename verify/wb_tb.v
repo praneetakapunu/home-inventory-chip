@@ -114,6 +114,12 @@ module wb_tb;
 
     reg [31:0] rdata;
 
+    // Event-test helpers
+    reg [31:0] base_sc;
+    reg [31:0] ts1;
+    reg [31:0] ts2;
+    reg [31:0] ts3;
+
     // Address vectors (so we can loop without hard-coding offsets twice)
     reg [31:0] adr_adc_raw [0:7];
     reg [31:0] adr_tare    [0:7];
@@ -392,15 +398,103 @@ module wb_tb;
         end
 
         // -----------------------------------------------------------------
+        // Events: config path + counter/timestamp behavior via ADC snapshot stub
+        // -----------------------------------------------------------------
+        // Program a low threshold so each snapshot "hits".
+        wb_write32(ADR_EVT_THRESH_CH0, 32'h0000_0000);
+
+        // Enable only CH0.
+        wb_write32(ADR_EVT_CFG, 32'h0000_0001);
+        wb_read32(ADR_EVT_CFG, rdata);
+        if (rdata[7:0] !== 8'h01) begin
+            $display("[tb] ERROR: EVT_CFG readback mismatch: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Take a reference snapshot count so timestamp expectations stay stable
+        // even if earlier parts of this test already exercised ADC_CMD.SNAPSHOT.
+        wb_read32(ADR_ADC_SNAPSHOT_COUNT, base_sc);
+        ts1 = base_sc + 32'd1;
+        ts2 = base_sc + 32'd2;
+        ts3 = base_sc + 32'd3;
+
+        // First snapshot after enable: count increments, delta must be 0, timestamps update.
+        wb_write32(ADR_ADC_CMD, 32'h0000_0001);
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd1) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 after first snapshot: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after first snapshot should be 0: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_TS_CH0, rdata);
+        if (rdata !== ts1) begin
+            $display("[tb] ERROR: EVT_LAST_TS_CH0 after first snapshot: got 0x%08x exp 0x%08x", rdata, ts1);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_TS, rdata);
+        if (rdata !== ts1) begin
+            $display("[tb] ERROR: EVT_LAST_TS after first snapshot: got 0x%08x exp 0x%08x", rdata, ts1);
+            $fatal(1);
+        end
+
+        // Second snapshot: delta should be 1 tick.
+        wb_write32(ADR_ADC_CMD, 32'h0000_0001);
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd2) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 after second snapshot: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
+        if (rdata !== 32'd1) begin
+            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after second snapshot should be 1: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_TS_CH0, rdata);
+        if (rdata !== ts2) begin
+            $display("[tb] ERROR: EVT_LAST_TS_CH0 after second snapshot: got 0x%08x exp 0x%08x", rdata, ts2);
+            $fatal(1);
+        end
+
+        // Disable then re-enable: next event should reset delta to 0 again.
+        wb_write32(ADR_EVT_CFG, 32'h0000_0000);
+        wb_write32(ADR_EVT_CFG,  32'h0000_0001);
+        wb_write32(ADR_ADC_CMD,  32'h0000_0001);
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd3) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 after re-enable snapshot: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after re-enable should be 0: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_TS_CH0, rdata);
+        if (rdata !== ts3) begin
+            $display("[tb] ERROR: EVT_LAST_TS_CH0 after re-enable snapshot: got 0x%08x exp 0x%08x", rdata, ts3);
+            $fatal(1);
+        end
+
+        // -----------------------------------------------------------------
         // RO regs must ignore writes (events are RO)
         // -----------------------------------------------------------------
         for (ch = 0; ch < 8; ch = ch + 1) begin
             wb_write32(adr_evt_cnt[ch], 32'hFFFF_FFFF);
             wb_read32(adr_evt_cnt[ch], rdata);
-            if (rdata !== 32'h0000_0000) begin
+            if (rdata !== 32'h0000_0000 && ch != 0) begin
                 $display("[tb] ERROR: EVT_COUNT_CH%0d should ignore writes: got 0x%08x", ch, rdata);
                 $fatal(1);
             end
+        end
+        // CH0 already incremented above; confirm write still didn't clobber it.
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd3) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 should ignore writes (preserve count=3): got 0x%08x", rdata);
+            $fatal(1);
         end
 
         $display("[tb] PASS");
