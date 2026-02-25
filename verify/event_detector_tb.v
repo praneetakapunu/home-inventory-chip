@@ -14,6 +14,9 @@ module event_detector_tb;
   reg [31:0] ts_now;
   reg [7:0]  evt_en;
 
+  reg clear_counts;
+  reg clear_history;
+
   reg [31:0] thresh_ch0, thresh_ch1, thresh_ch2, thresh_ch3;
   reg [31:0] thresh_ch4, thresh_ch5, thresh_ch6, thresh_ch7;
 
@@ -40,8 +43,8 @@ module event_detector_tb;
 
     .evt_en(evt_en),
 
-    .clear_counts(1'b0),
-    .clear_history(1'b0),
+    .clear_counts(clear_counts),
+    .clear_history(clear_history),
 
     .thresh_ch0(thresh_ch0), .thresh_ch1(thresh_ch1), .thresh_ch2(thresh_ch2), .thresh_ch3(thresh_ch3),
     .thresh_ch4(thresh_ch4), .thresh_ch5(thresh_ch5), .thresh_ch6(thresh_ch6), .thresh_ch7(thresh_ch7),
@@ -87,6 +90,8 @@ module event_detector_tb;
     sample_valid = 1'b0;
     ts_now = 32'h0;
     evt_en = 8'h00;
+    clear_counts = 1'b0;
+    clear_history = 1'b0;
 
     thresh_ch0 = 32'd100; thresh_ch1 = 32'd1000; thresh_ch2 = 32'd0;   thresh_ch3 = 32'd0;
     thresh_ch4 = 32'd0;   thresh_ch5 = 32'd0;    thresh_ch6 = 32'd0;   thresh_ch7 = 32'd0;
@@ -194,6 +199,46 @@ module event_detector_tb;
     expect32(evt_count_ch1, 32'hFFFF_FFFF, "saturating count holds at max");
     release dut.evt_count_ch1;
 
+    // Clear counts should zero counters but keep history intact.
+    clear_counts = 1'b1;
+    tick();
+    clear_counts = 1'b0;
+    tick();
+
+    expect32(evt_count_ch0, 32'd0,  "clear_counts resets ch0 count");
+    expect32(evt_count_ch1, 32'd0,  "clear_counts resets ch1 count");
+    expect32(last_ts,       32'd70, "clear_counts does not clear global last_ts");
+    expect32(last_ts_ch0,   32'd0,  "clear_counts does not clear per-ch last_ts (was already cleared on enable-rise sample boundary)");
+    expect32(last_ts_ch1,   32'd70, "clear_counts does not clear ch1 last_ts");
+    expect32(last_delta_ch1,32'd10, "clear_counts does not clear ch1 delta");
+    expect32(last_delta_ch0,32'd0,  "clear_counts does not clear per-ch delta (was already cleared on enable-rise sample boundary)");
+
+    // Clear history should zero timestamp history + deltas (and global last_ts).
+    clear_history = 1'b1;
+    tick();
+    clear_history = 1'b0;
+    tick();
+
+    expect32(last_ts,       32'd0, "clear_history clears global last_ts");
+    expect32(last_ts_ch0,   32'd0, "clear_history clears per-ch last_ts");
+    expect32(last_delta_ch0,32'd0, "clear_history clears per-ch delta");
+
+    // If clear and sample_valid happen in the same cycle, clear wins and sample is ignored.
+    evt_en = 8'h01;
+    tick();
+    ts_now = 32'd80;
+    sample_ch0 = 32'd500; // would hit
+    clear_counts = 1'b1;
+    clear_history = 1'b1;
+    sample_valid = 1'b1;
+    tick();
+    sample_valid = 1'b0;
+    clear_counts = 1'b0;
+    clear_history = 1'b0;
+
+    expect32(evt_count_ch0, 32'd0, "clear wins over sample_valid: count remains 0");
+    expect32(last_ts,       32'd0, "clear wins over sample_valid: last_ts remains 0");
+
     // Disable then re-enable ch0: next event should reset history and delta should be 0
     evt_en = 8'h00;
     tick();
@@ -206,7 +251,7 @@ module event_detector_tb;
     tick();
     sample_valid = 1'b0;
 
-    expect32(evt_count_ch0, 32'd3, "count after hit post re-enable");
+    expect32(evt_count_ch0, 32'd1, "count after hit post re-enable (post-clear)");
     expect32(last_delta_ch0,32'd0, "delta resets to 0 after re-enable");
 
     $display("PASS: event_detector_tb");
