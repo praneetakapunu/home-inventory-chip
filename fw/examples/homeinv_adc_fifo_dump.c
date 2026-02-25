@@ -59,12 +59,12 @@ static inline uint8_t adc_fifo_overrun(uint32_t st) {
 // NOTE: Bit[16] is in byte lane 2; the RTL respects byte enables. Most FW
 // MMIO writes are full-word, so this is fine.
 static inline void adc_fifo_clear_overrun(void) {
-    homeinv_write(HOMEINV_ADC_FIFO_STATUS, (1u << 16));
+    homeinv_write(HOMEINV_REG_ADC_FIFO_STATUS, (1u << 16));
 }
 
 // Trigger a stub "snapshot" (or later, a real capture) via write-1-to-pulse.
 static inline void adc_snapshot(void) {
-    homeinv_write(HOMEINV_ADC_CMD, HOMEINV_ADC_CMD_SNAPSHOT_MASK);
+    homeinv_write(HOMEINV_REG_ADC_CMD, HOMEINV_ADC_CMD_SNAPSHOT_MASK);
 }
 
 // Drain FIFO into a caller-provided buffer.
@@ -73,11 +73,11 @@ static size_t adc_fifo_drain(uint32_t *out_words, size_t max_words) {
     size_t n = 0;
 
     while (n < max_words) {
-        uint32_t st = homeinv_read(HOMEINV_ADC_FIFO_STATUS);
+        uint32_t st = homeinv_read(HOMEINV_REG_ADC_FIFO_STATUS);
         uint16_t level = adc_fifo_level_words(st);
         if (level == 0) break;
 
-        out_words[n++] = homeinv_read(HOMEINV_ADC_FIFO_DATA);
+        out_words[n++] = homeinv_read(HOMEINV_REG_ADC_FIFO_DATA);
     }
 
     return n;
@@ -90,12 +90,12 @@ static size_t adc_fifo_drain(uint32_t *out_words, size_t max_words) {
 // (This file intentionally does not include any print routines.)
 void homeinv_example_adc_fifo_dump(void) {
     // 1) Optional: enable chip block (CTRL.ENABLE)
-    uint32_t ctrl = homeinv_read(HOMEINV_CTRL);
+    uint32_t ctrl = homeinv_read(HOMEINV_REG_CTRL);
     ctrl |= HOMEINV_CTRL_ENABLE_MASK;
-    homeinv_write(HOMEINV_CTRL, ctrl);
+    homeinv_write(HOMEINV_REG_CTRL, ctrl);
 
     // 2) Clear overrun before starting
-    if (adc_fifo_overrun(homeinv_read(HOMEINV_ADC_FIFO_STATUS))) {
+    if (adc_fifo_overrun(homeinv_read(HOMEINV_REG_ADC_FIFO_STATUS))) {
         adc_fifo_clear_overrun();
     }
 
@@ -112,7 +112,7 @@ void homeinv_example_adc_fifo_dump(void) {
     (void)words;
 
     // 5) If overrun set, clear + investigate drain loop speed.
-    if (adc_fifo_overrun(homeinv_read(HOMEINV_ADC_FIFO_STATUS))) {
+    if (adc_fifo_overrun(homeinv_read(HOMEINV_REG_ADC_FIFO_STATUS))) {
         adc_fifo_clear_overrun();
     }
 }
