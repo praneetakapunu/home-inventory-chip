@@ -1,62 +1,83 @@
-# CDC + Reset Checklist (v1)
+# CDC / Reset Checklist (v1)
 
-This is a **lightweight** checklist to keep us honest about clock-domain crossings (CDC) and reset behavior for the first MPW submission.
+This is a lightweight, explicit checklist to avoid tapeout-killers.
+Fill this out as the RTL/harness wiring settles.
 
-> Goal: we don’t need formal CDC tooling for v1, but we *do* need to explicitly enumerate crossings, pick a policy, and make sure reset can’t wedge the design.
+> Scope: `chip-inventory/rtl/**` as integrated into the OpenMPW harness repo.
 
-## 0) Clock / reset assumptions (write down)
-- [x] Which clock(s) are used in v1?
-  - **Single domain:** Caravel Wishbone clock (`wb_clk_i` in harness; `clk` inside IP RTL).
-- [x] Reset polarity and type (sync/async) for each domain
-  - `wb_rst_i` is **active-high**. Inside the IP we treat `rst` as **synchronous** to `clk` (all state resets in `always @(posedge clk)` blocks).
-- [x] Are any derived clocks used?
-  - None planned for v1 (avoid derived/gated clocks).
+## 1) Clock domains (enumerate)
 
-## 1) Enumerate all domains and crossings
+- [ ] **wb_clk_i** (Wishbone / bus clock)
+  - Source in harness: TBD (document exact net)
+  - Frequency: TBD
+- [ ] **adc_sclk** (ADC SPI clock)
+  - Source: TBD (generated vs external)
+  - Frequency: TBD
+- [ ] **core_clk** (CPU / fabric clock, if present)
+  - Source: TBD
 
-Domains present (v1 intent):
-- **WB domain (`clk`)**: Wishbone bus + register block + FIFO readout
-- **Async inputs (not a clock domain):** external ADC `DRDY` (active-low) treated as asynchronous input into WB domain.
+Notes:
+- If we end up using only one clock for v1, explicitly state it and delete unused sections.
 
-Crossings to track:
-- [x] `adc_drdy_n_async` (async pin) → WB clocked logic
-  - Implemented via `rtl/adc/adc_drdy_sync.v` (2FF sync + falling-edge detect pulse).
-- [ ] SPI `sclk` / `mosi` / `miso` interactions
-  - **Open item:** need to explicitly decide whether `sclk` is generated internally (in WB domain) or provided externally by the ADC (and if so, what capture strategy is used).
-- [x] WB-visible status/sticky flags
-  - Implemented in WB domain and read out synchronously; no multi-bit CDC planned for v1.
+## 2) Resets (enumerate)
 
-## 2) CDC implementation policy (v1)
-- **Async single-bit status / event** (e.g., DRDY):
-  - [x] Use 2-FF synchronizer into WB clock domain
-  - [x] For edge/event pulses: synchronize level, then detect edge in WB domain
-  - [ ] Minimum pulse width requirement documented if needed
-    - DRDY is expected to be long compared to `clk` period; if we ever see missed DRDY pulses, document the minimum width requirement here.
+- [ ] **wb_rst_i** polarity: [ ] active-high  [ ] active-low
+- [ ] Reset deassertion strategy:
+  - [ ] synchronous to wb clock
+  - [ ] asynchronous assert, synchronous deassert
 
-- **Multi-bit data buses**:
-  - [x] Avoid raw multi-bit CDC in v1
-  - [x] If unavoidable: use an async FIFO or a full handshake (req/ack) with stability guarantees
+For each clock domain above, document:
+- [ ] what reset signal applies
+- [ ] whether reset deassertion is synchronized
 
-## 3) Reset behavior checklist
-- [x] On reset assertion, all state is driven to known values
-  - Example: `adc_drdy_sync` resets synchronizer regs to `1'b1` (idle-high for active-low DRDY).
-- [x] Reset deassertion cannot create spurious pulses (e.g., START, FIFO pop)
-  - Ensure pulse-style controls read as 0 and only assert for one cycle on WB write.
-- [x] Sticky flags clear policy is explicit (reset clears all sticky flags)
-- [x] FIFO pointers/level reset to empty; no X-prop into WB read mux
+## 3) Async inputs (enumerate + mitigation)
 
-## 4) “Known good” building blocks in this repo
-- [x] `rtl/adc/adc_drdy_sync.v` is the *only* path from raw DRDY to internal event pulse
-- [x] Any future async inputs must have a named `*_sync` module (avoid ad-hoc 2FF copies)
+List every signal that can be asynchronous to a receiving clock domain.
 
-## 5) Verification hooks (minimum)
-- [ ] Directed sim verifies DRDY sync produces **one** pulse per falling edge
-- [ ] Directed sim toggles reset around DRDY edges and proves no double-count / wedge
-- [ ] FIFO overrun sticky is stable and clears on reset
+### Candidate list (update as wiring is finalized)
 
-## 6) Signoff notes
-- Date: 2026-02-22
-- Reviewer: Madhuri (self-check)
-- Summary of crossings & how they’re handled:
-  - v1 is designed to be a **single synchronous WB clock domain**. The only explicit CDC item is ADC `DRDY` (async, active-low), synchronized with a 2FF chain and edge-detected in WB domain (`adc_drdy_sync`).
-  - SPI clocking strategy is still open and must be pinned down before hardening.
+- [ ] **adc_drdy** (from ADC)
+  - Receiving domain: wb_clk_i (currently assumed)
+  - Mitigation:
+    - [ ] 2FF synchronizer
+    - [ ] edge detector uses synchronized signal only
+
+- [ ] **gpio inputs** (if used)
+  - Receiving domain: TBD
+  - Mitigation: [ ] 2FF per bit  [ ] other (document)
+
+- [ ] **interrupts** (if any external)
+  - Receiving domain: TBD
+
+## 4) Cross-domain transfers (explicitly identify)
+
+For each transfer, state the mechanism (FIFO, handshake, Gray counter, etc.).
+
+- [ ] ADC capture → Wishbone-visible FIFO
+  - Mechanism: [ ] same clock (no CDC)  [ ] async FIFO  [ ] handshake
+  - Notes: `rtl/adc/adc_stream_fifo.v` currently assumes synchronous push/pop.
+
+## 5) Reset-safe state + X-prop assumptions
+
+- [ ] All state elements have reset values (or are otherwise safe)
+- [ ] No latches inferred
+- [ ] No reliance on X-initialization for functional correctness
+
+## 6) Byte enable policy (Wishbone)
+
+- [ ] Supported byte enables: [ ] full 32-bit only  [ ] per-byte writes  [ ] other
+- [ ] If unsupported, reads/writes behavior is explicitly documented in:
+  - [ ] `docs/KNOWN_LIMITATIONS.md`
+  - [ ] `spec/regmap.md`
+
+## 7) Evidence (what we actually checked)
+
+- [ ] Manual review complete (record who/when)
+- [ ] Lint/CDC tool run (if any):
+  - Tool:
+  - Command:
+  - Result summary:
+
+## 8) Open items
+
+- [ ] (fill)

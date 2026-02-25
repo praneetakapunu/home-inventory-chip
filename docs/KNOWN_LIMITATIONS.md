@@ -1,32 +1,37 @@
 # Known Limitations (v1)
 
-This file is a living list of **intentional** v1 limitations.
-Anything listed here must be acceptable for OpenMPW submission / first-silicon bring-up.
+This file is the honest list of what v1 **does not** do (or does only partially), so the harness + firmware + demo expectations stay aligned.
 
-## ADC / streaming
+> Keep this list small and accurate. If we fix something, delete the limitation.
 
-- Output CRC from ADS131M08 is **not** exposed to firmware in v1 streaming.
-  - Rationale: keep first-silicon path simple.
-  - Mitigation: firmware can do basic sanity checks (range/consistency), and we can add CRC verification in a later revision.
+## Functional limitations
 
-- After long pauses / missed reads, ADS131M08 internal buffering can require reading **two** frames to return to steady state.
-  - See: `spec/ads131m08_interface.md`.
+- **Event detector is minimal / in-progress:**
+  - Comparator / hysteresis / counters are still being iterated.
+  - Until finalized, treat event outputs as *best-effort* and validate via directed tests.
 
-## Regmap / control
+- **ADC interface assumptions are fixed to ADS131M08 framing:**
+  - DRDY-driven frame capture assumptions are documented in `spec/ads131m08_interface.md`.
+  - CRC policy and exact words-per-frame must match that document.
 
-- `CTRL.START` is a **write-1-to-pulse** bit; reads return 0.
-- Unknown/unimplemented addresses read as 0.
+## Bus / register interface limitations
 
-## DV / signoff
+- **Wishbone byte-enable policy may be restricted:**
+  - If only full 32-bit accesses are supported, firmware must avoid partial writes.
+  - Source of truth: `spec/regmap.md` + `rtl/home_inventory_wb.v`.
 
-- Full-system OpenLane or timing signoff is not part of this repo; tapeout readiness is gated by OpenMPW precheck + basic compile/smoke tests.
+- **No DMA / high-throughput streaming guarantees:**
+  - FIFO depth + servicing rate may limit sustained capture.
+  - Overrun is signaled via sticky flags; software must poll/handle.
 
-## Bring-up discoveries (append-only)
+## Verification limitations
 
-As we learn things on real hardware, **append short entries here** so they survive context switches.
-Format suggestion:
-- Date (UTC):
-- Symptom:
-- Root cause (if known):
-- Workaround / mitigation:
-- Links: (scope capture, issue, commit)
+- **DV is directed-smoke level (not exhaustive):**
+  - We rely on a small set of cocotb + compile checks.
+  - Source: `docs/VERIFICATION_PLAN.md`.
+
+## Bring-up / demo limitations
+
+- **Bench acceptance metrics are system-level and depend on mechanics:**
+  - The ~20 g goal is not purely digital; fixture + drift dominate.
+  - Source: `spec/v1.md` + `spec/acceptance_metrics.md`.

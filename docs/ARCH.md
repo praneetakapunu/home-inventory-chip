@@ -1,91 +1,72 @@
-# Architecture (v1)
+# Architecture (v1) — Home Inventory Chip
 
-> Scope: **home-inventory** user-project IP for OpenMPW/Caravel.
-> This document is the top-level “what exists” reference for tapeout.
+This is the top-level architecture snapshot for the v1 tapeout.
 
-## 1) System context
-
-- Caravel SoC exposes:
-  - Wishbone (WB) bus to the user project
-  - a user clock + reset
-  - GPIO/IRQ pins
-- This IP is a **Wishbone slave** that provides:
-  - a small control/status register file
-  - an ADC streaming interface (FIFO) for external ADC samples
-
-## 2) Top-level block diagram (logical)
+## Block diagram (logical)
 
 ```
-            +------------------------------+
-WB (32b) -->| Wishbone regblock            |
-            |  - ID/VERSION                |
-            |  - CTRL/STATUS               |
-            |  - ADC_CFG/ADC_CMD           |
-            |  - ADC_FIFO_STATUS/DATA      |
-            |  - CAL (tare/scale regs)     |
-            +--------------+---------------+
+           +-------------------------------+
+           |           Host / MCU          |
+           | (Wishbone master via Caravel) |
+           +---------------+---------------+
                            |
-                           | internal (sample words)
+                           | Wishbone
                            v
-                    +-------------+
-DRDY/MISO/SCLK/CS ->| ADC capture |
-                    |  (SPI frame |
-                    |   capture)  |
-                    +------+------+ 
-                           |
-                           v
-                    +-------------+
-                    | Stream FIFO |
-                    |  32-bit     |
-                    |  level +    |
-                    |  overrun    |
-                    +-------------+
++--------------------------+--------------------------+
+|                 home_inventory_top                  |
+|                                                      |
+|  +------------------+     +-----------------------+  |
+|  | Wishbone regbank |<--->|  ADC capture + FIFO   |  |
+|  | (control/status) |     | (DRDY sync, packer)   |  |
+|  +------------------+     +-----------------------+  |
+|             |                          |             |
+|             |                          v             |
+|             |                +------------------+    |
+|             |                | Event detector   |    |
+|             |                | (delta + time)   |    |
+|             |                +------------------+    |
+|             |                                          
++-------------+----------------------------------------+
+              |
+              | SPI (to external ADC)
+              v
+        +-----------+
+        | ADS131M08 |
+        +-----------+
 ```
 
-## 3) Interfaces
+## External interfaces
 
-### 3.1 Wishbone
+### Wishbone
+- File: `rtl/home_inventory_wb.v`
+- Address map: `spec/regmap.md` (generated YAML: `spec/regmap_v1.yaml`)
+- Policy notes:
+  - `ack` behavior: must not deadlock.
+  - Byte enables: document supported policy (see `docs/CDC_RESET_CHECKLIST.md`).
 
-- 32-bit Wishbone slave
-- Byte addresses (`wbs_adr_i` is a byte address)
-- Registers decode as **word aligned**; ignore `wbs_adr_i[1:0]`
-- Must honor `wbs_sel_i` byte enables on writes
+### ADC SPI (ADS131M08)
+- Interface contract: `spec/ads131m08_interface.md`
+- Assumptions:
+  - DRDY is treated as async and is synchronized before edge detect.
+  - Frame packing is 32-bit words into a FIFO exposed over Wishbone.
 
-Register map:
-- Human-readable: `spec/regmap.md`
-- Source of truth: `spec/regmap_v1.yaml`
+## Clocks and resets
 
-### 3.2 External ADC (ADS131M08)
+- Clock domain plan: track in `docs/CDC_RESET_CHECKLIST.md`.
+- Goal for v1: minimize domains (prefer 1 clock where feasible).
 
-- SPI framing + DRDY behavior assumptions: `spec/ads131m08_interface.md`
-- Firmware init sequence expectations: `docs/ADC_FW_INIT_SEQUENCE.md`
+## RTL structure (current)
 
-v1 streaming contract:
-- For each conversion, hardware pushes **9 words** into FIFO:
-  1) STATUS word
-  2..9) CH0..CH7 samples (signed 32-bit, sign-extended)
+- `rtl/home_inventory_top.v` — top-level wrapper
+- `rtl/home_inventory_wb.v` — Wishbone regbank
+- `rtl/adc/*` — ADC capture + DRDY sync + FIFO
 
-## 4) Clocking / reset assumptions (v1)
+## Verification hooks
 
-- **Primary clock:** single primary user clock from Caravel (no internal PLLs in v1).
-- **Async inputs:** all externally-sourced async signals (notably `adc_drdy`) are synchronized before use.
-- **ADC clocking:** the *board/harness* must provide a valid ADS131M08 clock source.
-  - See: `docs/ADC_CLOCKING_PLAN.md` (decision + bring-up checklist).
+- Regmap consistency gate: `make -C verify regmap-check`
+- Smoke DV: directed cocotb tests in harness repo.
 
-### What must be explicitly recorded before tapeout
-- Caravel/user-project clock frequency used by the harness (Hz)
-- ADC `CLKIN` source + frequency (Hz)
-- SPI `SCLK` strategy (derive from user clock, divider value, max SCLK)
-- Reset polarity and deassertion strategy:
-  - what reset reaches the user project (active high/low)
-  - which internal blocks treat reset as async assertion / sync deassertion
+## Open items
 
-## 5) Observability / debug
-
-- FIFO `OVERRUN` sticky flag via `ADC_FIFO_STATUS.OVERRUN` (W1C)
-- Minimal status bits via `STATUS.CORE_STATUS`
-- Event detector exposes per-channel last-timestamp regs (`EVT_LAST_TS*`) and counters (see regmap).
-
-### Optional (only if bring-up needs it)
-- A small `LAST_ERROR` code register (sticky, W1C) for quick “what went wrong” reporting.
-  - If added, it must be reflected in `spec/regmap_v1.yaml` + `spec/regmap.md` + RTL + directed sim.
+- Finalize event detector RTL and its exact observability surface in regmap.
+- Lock byte-enable policy and document it in regmap + limitations.
