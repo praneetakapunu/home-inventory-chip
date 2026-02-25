@@ -26,7 +26,10 @@ These are the things we can run repeatedly without needing a full OpenLane setup
   - GitHub Actions: a lightweight RTL compile-check runs on every push.
   - Cocotb user-project test exists: `home_inventory_wb_smoke` (mgmt-core firmware drives Wishbone).
 
-## Milestones (high level)
+## Milestones / schedule
+Baseline dates: see `docs/TIMELINE.md` (baseline start 2026-02-25).
+
+High level:
 1) Spec/acceptance frozen (v1)
 2) RTL baseline + verification passing (v1)
 3) Physical design (OpenLane/OpenROAD) meets DRC/LVS/timing targets
