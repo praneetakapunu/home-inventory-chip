@@ -13,12 +13,20 @@ These must be fast and reliable.
 
 ### Source of truth (home-inventory-chip)
 - Regmap YAML validation + drift checks (generated artifacts match `spec/regmap_v1.yaml`)
-- Icarus Verilog sims (Wishbone smoke, ADC FIFO, ADC DRDY sync)
+- Regmap generated artifact drift checks (YAML → committed headers/packages)
+- Icarus Verilog directed sims:
+  - Wishbone smoke (`make -C verify sim`)
+  - ADC FIFO (`make -C verify fifo-sim`)
+  - ADC DRDY sync (`make -C verify drdy-sim`)
+  - ADC SPI frame capture (`make -C verify spi-sim`)
+  - Event detector (`make -C verify evt-sim`)
+  - One-shot full Tier-1 suite: `make -C verify all`
 
 ### Harness (home-inventory-chip-openmpw)
 - RTL compile sanity via `iverilog`:
+  - `make sync-ip-filelist`
   - `make rtl-compile-check`
-  - Includes syncing the IP filelist so the harness can’t silently drift from the submodule.
+  - This ensures the harness filelist can’t silently drift from the IP submodule.
 
 ## Tier 2: Heavy flows (manual / gated)
 These are run only when we’re ready for an OpenMPW submission checkpoint.
