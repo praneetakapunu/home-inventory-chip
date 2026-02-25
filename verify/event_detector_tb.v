@@ -40,6 +40,9 @@ module event_detector_tb;
 
     .evt_en(evt_en),
 
+    .clear_counts(1'b0),
+    .clear_history(1'b0),
+
     .thresh_ch0(thresh_ch0), .thresh_ch1(thresh_ch1), .thresh_ch2(thresh_ch2), .thresh_ch3(thresh_ch3),
     .thresh_ch4(thresh_ch4), .thresh_ch5(thresh_ch5), .thresh_ch6(thresh_ch6), .thresh_ch7(thresh_ch7),
 

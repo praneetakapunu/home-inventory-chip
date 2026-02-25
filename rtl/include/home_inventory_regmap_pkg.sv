@@ -118,6 +118,10 @@ package home_inventory_regmap_pkg;
   // EVT_CFG fields
   localparam int unsigned HOMEINV_EVT_CFG_EVT_EN_LSB  = 0;
   localparam logic [31:0] HOMEINV_EVT_CFG_EVT_EN_MASK = 32'h000000FF;
+  localparam int unsigned HOMEINV_EVT_CFG_CLEAR_COUNTS_BIT = 8;
+  localparam logic [31:0] HOMEINV_EVT_CFG_CLEAR_COUNTS_MASK = (32'h1 << HOMEINV_EVT_CFG_CLEAR_COUNTS_BIT);
+  localparam int unsigned HOMEINV_EVT_CFG_CLEAR_HISTORY_BIT = 9;
+  localparam logic [31:0] HOMEINV_EVT_CFG_CLEAR_HISTORY_MASK = (32'h1 << HOMEINV_EVT_CFG_CLEAR_HISTORY_BIT);
 
   // -----------------------------
   // Handy constants

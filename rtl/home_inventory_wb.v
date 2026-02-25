@@ -142,6 +142,11 @@ module home_inventory_wb (
     wire ctrl_start_fire   = (wb_fire && wbs_we_i && (wb_adr_aligned == ADR_CTRL)    && wbs_sel_i[0] && wbs_dat_i[1]);
     wire adc_snapshot_fire = (wb_fire && wbs_we_i && (wb_adr_aligned == ADR_ADC_CMD) && wbs_sel_i[0] && wbs_dat_i[0]);
 
+    // Event detector write-1-to-pulse controls in EVT_CFG.
+    // Bits [9:8] live in byte lane 1, so they are masked by wbs_sel_i[1].
+    wire evt_clear_counts_fire  = (wb_fire && wbs_we_i && (wb_adr_aligned == ADR_EVT_CFG) && wbs_sel_i[1] && wbs_dat_i[8]);
+    wire evt_clear_history_fire = (wb_fire && wbs_we_i && (wb_adr_aligned == ADR_EVT_CFG) && wbs_sel_i[1] && wbs_dat_i[9]);
+
     // ---------------------------------------------------------------------
     // Event detector hookup (currently driven by stub snapshot samples)
     // ---------------------------------------------------------------------
@@ -164,6 +169,8 @@ module home_inventory_wb (
         .sample_valid(evt_sample_valid),
         .ts_now(evt_ts_now),
         .evt_en(r_evt_en),
+        .clear_counts(evt_clear_counts_fire),
+        .clear_history(evt_clear_history_fire),
 
         .thresh_ch0(r_evt_thresh[0]),
         .thresh_ch1(r_evt_thresh[1]),

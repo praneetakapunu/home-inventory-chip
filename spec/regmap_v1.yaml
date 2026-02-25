@@ -369,6 +369,16 @@ blocks:
             access: rw
             reset: 0
             desc: 1 = enable event detection for channel.
+          - name: CLEAR_COUNTS
+            bits: [8, 8]
+            access: w1p
+            reset: 0
+            desc: Write 1 to clear all EVT_COUNT_CHx counters (timestamps unaffected).
+          - name: CLEAR_HISTORY
+            bits: [9, 9]
+            access: w1p
+            reset: 0
+            desc: Write 1 to clear per-channel timestamp history (LAST_TS_CHx/LAST_DELTA_CHx) and EVT_LAST_TS.
 
       - name: EVT_LAST_TS_CH0
         offset: 0x048

@@ -62,6 +62,8 @@ EVT_LAST_DELTA_CHx <= sample_tick[ch] - last_event_tick[ch]
 - `EVT_EN[7:0]` gates event detection per channel.
 - Writing `0` disables detection.
 - Reset value `0x0` (all disabled).
+- `CLEAR_COUNTS` (W1P): clears `EVT_COUNT_CH0..7` to 0 (timestamps unaffected).
+- `CLEAR_HISTORY` (W1P): clears `EVT_LAST_TS`, `EVT_LAST_TS_CHx`, and `EVT_LAST_DELTA_CHx` and resets the "first event after enable" behavior.
 
 ### `EVT_THRESH_CHx` (RW)
 - Signed 32-bit threshold in raw ADC LSBs.

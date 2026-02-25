@@ -495,6 +495,51 @@ module wb_tb;
         end
 
         // -----------------------------------------------------------------
+        // EVT_CFG clear controls (byte-lane masked W1P)
+        // -----------------------------------------------------------------
+        // Clear counts without disturbing enable bits: touch only byte lane 1.
+        wb_write32_sel(ADR_EVT_CFG, 32'h0000_0100, 4'b0010); // CLEAR_COUNTS
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: CLEAR_COUNTS did not clear EVT_COUNT_CH0: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Snapshot should increment from 0 again (still enabled).
+        wb_write32(ADR_ADC_CMD, 32'h0000_0001);
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd1) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 after CLEAR_COUNTS + snapshot: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Clear history (timestamps + deltas) without disturbing enable bits.
+        wb_write32_sel(ADR_EVT_CFG, 32'h0000_0200, 4'b0010); // CLEAR_HISTORY
+        wb_read32(ADR_EVT_LAST_TS, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: CLEAR_HISTORY did not clear EVT_LAST_TS: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_TS_CH0, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: CLEAR_HISTORY did not clear EVT_LAST_TS_CH0: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: CLEAR_HISTORY did not clear EVT_LAST_DELTA_CH0: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Next snapshot should behave like first event again (delta = 0).
+        wb_write32(ADR_ADC_CMD, 32'h0000_0001);
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after CLEAR_HISTORY should be 0: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // -----------------------------------------------------------------
         // RO regs must ignore writes (events are RO)
         // -----------------------------------------------------------------
         for (ch = 0; ch < 8; ch = ch + 1) begin
@@ -507,8 +552,8 @@ module wb_tb;
         end
         // CH0 already incremented above; confirm write still didn't clobber it.
         wb_read32(ADR_EVT_COUNT_CH0, rdata);
-        if (rdata !== 32'd3) begin
-            $display("[tb] ERROR: EVT_COUNT_CH0 should ignore writes (preserve count=3): got 0x%08x", rdata);
+        if (rdata !== 32'd2) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 should ignore writes (preserve count=2): got 0x%08x", rdata);
             $fatal(1);
         end
 

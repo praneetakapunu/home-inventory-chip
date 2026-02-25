@@ -26,6 +26,10 @@ module home_inventory_event_detector (
 
     input  wire [7:0]  evt_en,
 
+    // Write-1-to-pulse clears from the register block (synchronous to clk).
+    input  wire        clear_counts,
+    input  wire        clear_history,
+
     input  wire [31:0] thresh_ch0,
     input  wire [31:0] thresh_ch1,
     input  wire [31:0] thresh_ch2,
@@ -115,12 +119,38 @@ module home_inventory_event_detector (
             last_ts_ch0 <= 32'h0; last_ts_ch1 <= 32'h0; last_ts_ch2 <= 32'h0; last_ts_ch3 <= 32'h0;
             last_ts_ch4 <= 32'h0; last_ts_ch5 <= 32'h0; last_ts_ch6 <= 32'h0; last_ts_ch7 <= 32'h0;
         end else begin
-            // Capture 0->1 enable edges even if sample_valid is not asserted that cycle.
-            // We then apply the "clear history on enable" behavior on the next sample_valid.
-            //
-            // Important: if a channel is disabled before we ever consume a sample (evt_en
-            // returns to 0), we must *not* keep a pending enable-rise around.
-            begin : en_rise_track
+            // Synchronous clears from FW.
+            // Semantics:
+            // - clear_counts: clears all per-channel counters.
+            // - clear_history: clears per-channel timestamp history and global last_ts.
+            // If a clear and sample_valid happen in the same cycle, the clear wins and the
+            // sample is ignored (keeps behavior simple and deterministic for FW).
+            if (clear_counts || clear_history) begin
+                if (clear_counts) begin
+                    evt_count_ch0 <= 32'h0; evt_count_ch1 <= 32'h0; evt_count_ch2 <= 32'h0; evt_count_ch3 <= 32'h0;
+                    evt_count_ch4 <= 32'h0; evt_count_ch5 <= 32'h0; evt_count_ch6 <= 32'h0; evt_count_ch7 <= 32'h0;
+                end
+                if (clear_history) begin
+                    en_rise_pending <= 8'h00;
+                    seen_event      <= 8'h00;
+
+                    last_delta_ch0 <= 32'h0; last_delta_ch1 <= 32'h0; last_delta_ch2 <= 32'h0; last_delta_ch3 <= 32'h0;
+                    last_delta_ch4 <= 32'h0; last_delta_ch5 <= 32'h0; last_delta_ch6 <= 32'h0; last_delta_ch7 <= 32'h0;
+
+                    last_ts <= 32'h0;
+
+                    last_ts_ch0 <= 32'h0; last_ts_ch1 <= 32'h0; last_ts_ch2 <= 32'h0; last_ts_ch3 <= 32'h0;
+                    last_ts_ch4 <= 32'h0; last_ts_ch5 <= 32'h0; last_ts_ch6 <= 32'h0; last_ts_ch7 <= 32'h0;
+                end
+                // Avoid creating fake 0->1 edges after a clear.
+                prev_evt_en <= evt_en;
+            end else begin
+                // Capture 0->1 enable edges even if sample_valid is not asserted that cycle.
+                // We then apply the "clear history on enable" behavior on the next sample_valid.
+                //
+                // Important: if a channel is disabled before we ever consume a sample (evt_en
+                // returns to 0), we must *not* keep a pending enable-rise around.
+                begin : en_rise_track
                 reg [7:0] en_rise_new;
                 reg [7:0] en_rise_pending_next;
 
@@ -247,6 +277,7 @@ module home_inventory_event_detector (
             end
 
             prev_evt_en <= evt_en;
+            end
         end
     end
 
