@@ -7,7 +7,8 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 
 ## Next 48 hours (Madhuri)
 1) Submission mechanics: keep harness repo integrated and green on **low-disk** checks
-   - IP repo: `make -C verify all`
+   - IP repo: `bash ops/preflight_low_disk.sh` (one-shot low-disk suite)
+     - (equivalent to: `bash ops/rtl_compile_check.sh` + `make -C verify all`)
    - Harness repo: `make sync-ip-filelist` + `make rtl-compile-check`
    - Notes/checklist: `docs/HARNESS_INTEGRATION.md`
 2) Land RTL baseline in source-of-truth (done, keep iterating):
