@@ -38,7 +38,8 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 
 9) Event detector (minimal v1): define intended semantics & wire into regbank
    - Spec: `docs/EVENT_DETECTOR_SPEC.md` ✅
-   - Next: implement comparator + saturating counters + timestamp/delta in RTL
+   - RTL: `rtl/home_inventory_event_detector.v` + `verify/event_detector_tb.v` ✅
+   - Next: wire event detector signals into top/regbank sample path (select `ts_now` and sample sources)
 
 ## Blockers (must be explicit)
 - None.

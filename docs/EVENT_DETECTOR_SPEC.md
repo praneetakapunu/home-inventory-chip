@@ -75,6 +75,19 @@ When `EVT_EN[ch]` transitions 0→1:
 - `last_event_tick[ch]` should be treated as uninitialized.
 - The next detected event sets `EVT_LAST_DELTA_CHx` to 0.
 
+### Enable-edge consumption (important)
+
+Because `EVT_EN[ch]` is a firmware-controlled bit and samples arrive on a (potentially) different cadence, v1 defines a simple, deterministic rule:
+
+- A 0→1 enable edge is **latched** and only **consumed** at the next `sample_valid` boundary.
+- If firmware briefly pulses `EVT_EN[ch]` high but it returns to 0 **before any `sample_valid` occurs**, then **no history is cleared**.
+
+This prevents “glitchy enable” from unexpectedly wiping history.
+
+### Clear precedence vs sampling
+
+If `CLEAR_COUNTS` and/or `CLEAR_HISTORY` are asserted in the same cycle as `sample_valid`, the clear operation **wins** and the sample is ignored for that cycle.
+
 ## Implementation note
 
 This spec is deliberately conservative so it can be implemented with:
