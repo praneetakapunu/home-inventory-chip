@@ -75,15 +75,25 @@ If we *cannot* produce a full frame strobe early:
 
 Short-term (v1): keep event detector instantiated inside `home_inventory_wb.v`.
 
-Change needed:
-1) Replace the stub `evt_sample_valid` and `evt_sample_ch*` wires with real ADC frame signals.
-2) Keep `evt_ts_now = r_time_now`.
+**Concrete code hook (current state):**
+- `rtl/home_inventory_wb.v` currently drives the event detector via these stub wires:
+  - `evt_sample_valid = adc_snapshot_fire` (i.e. `ADC_CMD.SNAPSHOT`)
+  - `evt_sample_ch0..7 = 0x0000_1000 + snapshot_count + channel_index`
+  - `evt_ts_now = r_time_now`
 
-This implies `home_inventory_wb.v` must see the ADC frame signals. Two options:
-- Option A (preferred): instantiate ADC capture logic inside `home_inventory_wb.v` (still in wb clock domain) and produce `adc_frame_valid/ch*` locally.
+**Change needed (v1 integration target):**
+1) Replace the stub `evt_sample_valid` and `evt_sample_ch*` with real ADC frame samples.
+2) Keep `evt_ts_now = r_time_now` (Wishbone-domain monotonic timestamp) for v1.
+
+This implies `home_inventory_wb.v` must see the decoded ADC frame signals. Two options:
+- Option A (preferred): instantiate ADC capture + unpack inside `home_inventory_wb.v` (still in wb clock domain) and produce:
+  - `adc_frame_valid` (1-cycle pulse when a complete frame is ready)
+  - `adc_frame_ch0..7` (sign-extended 32-bit samples)
 - Option B: instantiate ADC logic in `home_inventory_top.v` and pass the decoded frame into `home_inventory_wb` ports.
 
 Given `home_inventory_top.v` is currently a placeholder and the harness expects `home_inventory_wb` as DUT, **Option A** keeps integration smallest.
+
+**Important:** keep the `EVT_*` register semantics stable while swapping the sample source. `verify/wb_tb.v` already exercises the enable/clear semantics via the current stub; after real wiring lands, we should update/add a directed test that injects a synthetic frame into the capture/unpack path (or uses a DV-friendly ADC model) so event behavior remains testable without silicon.
 
 ### In harness repo (`home-inventory-chip-openmpw`)
 
