@@ -91,6 +91,27 @@ Registers:
 Empty-read semantics:
 - Reads when empty **return 0** and **do not** change FIFO state.
 
+### Draining exactly one ADC frame (recommended pattern)
+
+v1 FIFO packing pushes **9 words per ADC conversion frame** in this exact order:
+1) STATUS word
+2) CH0
+3) CH1
+4) CH2
+5) CH3
+6) CH4
+7) CH5
+8) CH6
+9) CH7
+
+Firmware pattern:
+1) Poll until `LEVEL_WORDS >= 9` (bounded timeout).
+2) Read 9 consecutive pops from `ADC_FIFO_DATA` and interpret them as one frame.
+
+Notes:
+- Do **not** assume the FIFO level jumps to 9 in the same cycle the capture completes; the RTL push sequencer may take multiple cycles.
+- If `LEVEL_WORDS` is not a multiple of 9, firmware should still drain safely but may want to resynchronize by draining until the next boundary (or by gating producer during drain in future FW).
+
 ### Clearing OVERRUN (W1C)
 
 To clear the sticky overrun bit:
