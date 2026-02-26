@@ -55,7 +55,20 @@ Define a single internal strobe:
 - `adc_frame_valid` : 1-cycle pulse when a complete ADS131M08 frame has been captured and unpacked into 8 channel words.
 
 Define 8 sample wires:
-- `adc_frame_ch0..adc_frame_ch7` : 32-bit sign-extended samples (or raw 24-bit left-aligned) — but choose one and document it.
+- `adc_frame_ch0..adc_frame_ch7` : **32-bit sign-extended** samples derived from the ADS131M08 24-bit channel words.
+
+**Exact mapping (ADS131M08 framing assumption, v1):**
+- ADC capture produces a packed vector `frame_words_packed` from `adc_spi_frame_capture`.
+- `WORDS_PER_FRAME = 9` and `BITS_PER_WORD = 24`.
+- Word indices:
+  - word[0] = STATUS (ignored by event detector for v1)
+  - word[1] = CH0
+  - word[2] = CH1
+  - ...
+  - word[8] = CH7
+
+Unpack to channels as:
+- `adc_frame_chN = {{8{word[N+1][23]}}, word[N+1][23:0]}` (two’s complement sign-extension to 32b)
 
 Then:
 - `evt_sample_valid <= adc_frame_valid`
@@ -64,6 +77,11 @@ Then:
 **Data format decision (v1):**
 - Use **sign-extended 32-bit** samples in two’s complement.
 - Threshold compare uses the same numeric domain.
+
+Future (not v1): add a small selection mux so the event detector can choose among multiple sources:
+- raw ADC channels (as above)
+- filtered/decimated channels
+- DV-only synthetic sources (ramp/PRBS), behind a synthesis guard
 
 If we *cannot* produce a full frame strobe early:
 - Alternative is to trigger `sample_valid` once per channel update, but that breaks “simultaneous” semantics and complicates deltas.
@@ -148,4 +166,6 @@ Consider the event detector “integrated” when:
    - `CLEAR_COUNTS` clears the counters
    - `CLEAR_HISTORY` clears history/ts state
 3) Harness: `make rtl-compile-check` passes after the wiring + filelist changes.
+
+4) Doc hygiene: this plan is updated with the *exact* word→channel mapping and sign-extension rule (so the eventual wiring commit is purely mechanical).
 
