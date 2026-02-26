@@ -14,7 +14,7 @@ Pick *one* of these and land it as a small, reviewable commit:
      - per-event counters + clear behavior
      - history FIFO depth/format + pop semantics
    - Add a “done when” checklist item so we can close it.
-2) **ADC streaming end-to-end wiring plan**
+2) **ADC streaming end-to-end wiring plan** ✅ (see `docs/ADC_STREAM_CONTRACT.md`)
    - Specify the signal contract between `adc_spi_frame_capture` → `adc_stream_fifo` → regbank pop
    - Define a minimal acceptance smoke (DV + FW) for “we can capture one frame and drain it”.
 
