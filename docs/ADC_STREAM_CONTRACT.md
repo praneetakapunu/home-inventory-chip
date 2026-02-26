@@ -109,6 +109,54 @@ Normative behavior: see `spec/regmap.md`.
 3) Drain 16 words and confirm the retained word ordering is consistent with a drop-on-full policy.
 4) Clear `OVERRUN` with W1C and confirm it reads 0.
 
+## Integration in `home_inventory_wb.v` (implementation sketch)
+
+This section exists to prevent “wiring drift”: the regbank contract is fixed, but there are several reasonable internal implementations.
+
+### FIFO implementation choice
+
+Use the shared RTL FIFO:
+- `rtl/adc/adc_stream_fifo.v`
+- Instantiate with `DEPTH_WORDS = 16` to match the firmware-visible depth defined above.
+
+Expose the following internal signals in the Wishbone block:
+- `adc_fifo_push_valid`, `adc_fifo_push_data[31:0]`, `adc_fifo_push_ready`
+- `adc_fifo_pop_valid`,  `adc_fifo_pop_data[31:0]`,  `adc_fifo_pop_ready`
+- `adc_fifo_level_words` (0..16)
+- `adc_fifo_overrun_sticky` + `adc_fifo_overrun_clear` (W1C pulse from `ADC_FIFO_STATUS.OVERRUN`)
+
+### Push sequencing rule (important)
+
+A single `frame_valid` pulse represents **9 logical words** that must enter the FIFO in-order.
+
+Because the FIFO push interface is 1 word/beat, the integration must include a tiny “push sequencer”:
+
+- Latch the packed frame (`frame_words_packed`) on `frame_valid`.
+- Set `push_idx = 0`.
+- While `push_idx < 9`:
+  - if `adc_fifo_push_ready`:
+    - drive `adc_fifo_push_valid=1` with the next word
+    - increment `push_idx`
+  - else:
+    - keep `adc_fifo_push_valid=1` (or retry) until ready
+
+Normative behavior when FIFO becomes full mid-frame:
+- subsequent words are dropped by the FIFO’s drop-on-full policy
+- `overrun_sticky` must assert and stay set until W1C cleared
+
+### Register mapping (exact)
+
+- `ADC_FIFO_STATUS.LEVEL_WORDS` returns `adc_fifo_level_words` (zero-extended into [15:0]).
+- `ADC_FIFO_STATUS.OVERRUN` returns `adc_fifo_overrun_sticky`.
+- `ADC_FIFO_DATA` read:
+  - returns `adc_fifo_pop_data` when `adc_fifo_pop_valid==1`, else 0
+  - asserts `adc_fifo_pop_ready` for 1 cycle only on the Wishbone **accepted read** beat
+
+### Acceptance timing note
+
+Tests should not assume the FIFO level becomes 9 in the same cycle as `frame_valid`.
+Instead, DV/FW should poll `LEVEL_WORDS` until it reaches 9 (or a bounded timeout), then drain.
+
 ## Notes
 - The existing Wishbone block (`rtl/home_inventory_wb.v`) currently implements a **deterministic stub** for streaming FIFO population on `ADC_CMD.SNAPSHOT`.
   - That stub is the reference behavior until `adc_spi_frame_capture` is wired in.
