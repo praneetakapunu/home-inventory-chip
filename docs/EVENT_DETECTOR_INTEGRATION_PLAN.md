@@ -104,12 +104,13 @@ These are the semantics firmware will rely on:
 
 - `EVT_CFG.CLEAR_COUNTS` (W1P):
   - Clears all `EVT_COUNT_CHx` counters.
-  - Clears `EVT_LAST_DELTA_CHx`.
+  - Does **not** clear timestamps/deltas (history is unaffected).
   - Does **not** clear thresholds or enable bits.
 
 - `EVT_CFG.CLEAR_HISTORY` (W1P):
-  - Clears the history FIFO and any overflow indicator (if implemented).
+  - Clears per-channel timestamp history (and any overflow indicator, if implemented).
   - Clears `EVT_LAST_TS*` fields.
+  - Clears `EVT_LAST_DELTA_CHx` to 0.
 
 - Readbacks:
   - `EVT_COUNT_CHx` increments once per detected event.
