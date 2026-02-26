@@ -323,9 +323,20 @@ module wb_tb;
         // FIFO depth is 16, so after 2 snapshots without draining:
         // - FIFO is full
         // - Overrun sticky flag is set (2 words dropped)
-        wb_read32(ADR_ADC_FIFO_STATUS, rdata);
-        if (rdata[15:0] !== 16'd16 || rdata[16] !== 1'b1) begin
-            $display("[tb] ERROR: ADC_FIFO_STATUS after 2 snapshots mismatch: got 0x%08x", rdata);
+        //
+        // IMPORTANT: do not assume the FIFO reaches its final level in the same
+        // cycle as the SNAPSHOT pulse. Today the stub implementation populates
+        // immediately, but the real ADC path will likely include a push sequencer.
+        // Therefore we poll for the expected steady-state (bounded wait).
+        begin : fifo_fill_wait
+            integer tries;
+            for (tries = 0; tries < 50; tries = tries + 1) begin
+                wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+                if (rdata[15:0] === 16'd16 && rdata[16] === 1'b1) begin
+                    disable fifo_fill_wait;
+                end
+            end
+            $display("[tb] ERROR: ADC_FIFO_STATUS did not reach full+overrun after 2 snapshots: got 0x%08x", rdata);
             $fatal(1);
         end
 
