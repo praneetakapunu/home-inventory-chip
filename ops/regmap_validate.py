@@ -13,6 +13,8 @@ Checks:
 - Reset values (when present) are valid 32-bit quantities.
 - Field bit ranges are sane (0..31, msb>=lsb).
 - Fields within a register do not overlap.
+- Field access is compatible with the parent register access.
+- When both register reset and field reset are provided, they must agree.
 """
 
 from __future__ import annotations
@@ -47,6 +49,22 @@ def _check_u32(val: int) -> bool:
     return 0 <= val <= 0xFFFF_FFFF
 
 
+def _allowed_field_access_for_reg(reg_access: str) -> set[str]:
+    # Keep this conservative; it can always be relaxed later.
+    if reg_access == "ro":
+        return {"ro"}
+    if reg_access == "ro_w1c":
+        return {"ro", "w1c"}
+    if reg_access == "rw":
+        return {"ro", "rw", "w1p", "w1c"}
+    return set()
+
+
+def _extract_bits(val: int, msb: int, lsb: int) -> int:
+    width = msb - lsb + 1
+    return (val >> lsb) & ((1 << width) - 1)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--yaml", required=True, type=Path)
@@ -76,15 +94,18 @@ def main() -> int:
                 )
 
             rreset = reg.get("reset", None)
+            rreset_int: int | None
             if rreset is None:
-                pass
+                rreset_int = None
             else:
                 try:
                     rr = _parse_int(rreset)
                     if not _check_u32(rr):
                         errs.append(f"{bname}.{rname}: reset out of u32 range: {rreset!r}")
+                    rreset_int = rr
                 except Exception as e:
                     errs.append(f"{bname}.{rname}: invalid reset {rreset!r}: {e}")
+                    rreset_int = None
 
             offset = _parse_int(reg.get("offset", 0))
             addr = base + offset
@@ -96,6 +117,8 @@ def main() -> int:
 
             # Fields
             used_mask = 0
+            allowed_field_acc = _allowed_field_access_for_reg(str(racc))
+
             for f in reg.get("fields", []) or []:
                 fname = f.get("name", "<unnamed>")
 
@@ -104,18 +127,11 @@ def main() -> int:
                     errs.append(
                         f"{bname}.{rname}.{fname}: invalid access {facc!r} (allowed: {', '.join(sorted(_ALLOWED_FIELD_ACCESS))})"
                     )
-
-                fres = f.get("reset", None)
-                if fres is None:
-                    pass
                 else:
-                    try:
-                        fr = _parse_int(fres)
-                        # field reset is allowed to be a small integer; still must fit u32
-                        if not _check_u32(fr):
-                            errs.append(f"{bname}.{rname}.{fname}: reset out of u32 range: {fres!r}")
-                    except Exception as e:
-                        errs.append(f"{bname}.{rname}.{fname}: invalid reset {fres!r}: {e}")
+                    if racc in _ALLOWED_REG_ACCESS and facc not in allowed_field_acc:
+                        errs.append(
+                            f"{bname}.{rname}.{fname}: field access {facc!r} incompatible with reg access {racc!r}"
+                        )
 
                 bits = f.get("bits")
                 if not (isinstance(bits, list) and len(bits) == 2):
@@ -137,8 +153,34 @@ def main() -> int:
                     errs.append(f"{bname}.{rname}: field overlap at {fname} ({msb}:{lsb})")
                 used_mask |= mask
 
+                # Reset validation (field reset must fit the field width)
+                fres = f.get("reset", None)
+                if fres is None:
+                    continue
+
+                try:
+                    fr = _parse_int(fres)
+                    if not _check_u32(fr):
+                        errs.append(f"{bname}.{rname}.{fname}: reset out of u32 range: {fres!r}")
+                        continue
+                    if fr >= (1 << width):
+                        errs.append(
+                            f"{bname}.{rname}.{fname}: reset 0x{fr:X} does not fit in field width {width} ({msb}:{lsb})"
+                        )
+                        continue
+
+                    # If the parent register reset is present, it must match.
+                    if rreset_int is not None:
+                        r_field = _extract_bits(rreset_int, msb, lsb)
+                        if r_field != fr:
+                            errs.append(
+                                f"{bname}.{rname}.{fname}: field reset 0x{fr:X} disagrees with reg reset bits 0x{r_field:X}"
+                            )
+                except Exception as e:
+                    errs.append(f"{bname}.{rname}.{fname}: invalid reset {fres!r}: {e}")
+
     # Uniqueness of addresses
-    seen = {}
+    seen: Dict[int, str] = {}
     for name, addr in addrs:
         if addr in seen:
             errs.append(f"Address collision: 0x{addr:08X} used by {seen[addr]} and {name}")
