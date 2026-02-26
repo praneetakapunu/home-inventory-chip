@@ -7,12 +7,9 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 
 ## Next 2 hours (progress-tick target)
 Pick *one* of these and land it as a small, reviewable commit:
-1) **Event detector integration wiring plan**
-   - Specify exact signal sources (sample stream(s) + timestamp source) at `rtl/home_inventory_top.v`
-   - Specify which registers expose:
-     - enable/mode bits
-     - per-event counters + clear behavior
-     - history FIFO depth/format + pop semantics
+1) **Event detector integration wiring plan** ✅ (see `docs/EVENT_DETECTOR_INTEGRATION_PLAN.md`)
+   - Specify exact signal sources (sample stream(s) + timestamp source)
+   - Specify which registers expose enable/clear/threshold semantics
    - Add a “done when” checklist item so we can close it.
 2) **ADC streaming end-to-end wiring plan** ✅ (see `docs/ADC_STREAM_CONTRACT.md`)
    - Specify the signal contract between `adc_spi_frame_capture` → `adc_stream_fifo` → regbank pop
