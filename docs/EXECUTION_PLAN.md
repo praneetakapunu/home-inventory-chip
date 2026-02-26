@@ -5,6 +5,19 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 ## Current phase
 **OpenMPW tapeout path lock → harness/repo integration → RTL baseline**
 
+## Next 2 hours (progress-tick target)
+Pick *one* of these and land it as a small, reviewable commit:
+1) **Event detector integration wiring plan**
+   - Specify exact signal sources (sample stream(s) + timestamp source) at `rtl/home_inventory_top.v`
+   - Specify which registers expose:
+     - enable/mode bits
+     - per-event counters + clear behavior
+     - history FIFO depth/format + pop semantics
+   - Add a “done when” checklist item so we can close it.
+2) **ADC streaming end-to-end wiring plan**
+   - Specify the signal contract between `adc_spi_frame_capture` → `adc_stream_fifo` → regbank pop
+   - Define a minimal acceptance smoke (DV + FW) for “we can capture one frame and drain it”.
+
 ## Next 48 hours (Madhuri)
 1) Submission mechanics: keep harness repo integrated and green on **low-disk** checks
    - IP repo: `bash ops/preflight_low_disk.sh` (one-shot low-disk suite)
@@ -39,7 +52,20 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 9) Event detector (minimal v1): define intended semantics & wire into regbank
    - Spec: `docs/EVENT_DETECTOR_SPEC.md` ✅
    - RTL: `rtl/home_inventory_event_detector.v` + `verify/event_detector_tb.v` ✅
-   - Next: wire event detector signals into top/regbank sample path (select `ts_now` and sample sources)
+   - Integration wiring plan (next):
+     - **Timestamp source**: define `ts_now` origin (likely a free-running counter in wb clock domain)
+     - **Sample sources**: enumerate candidates + selection mux
+       - raw ADC channel sample(s)
+       - filtered/decimated channel(s) (future)
+       - optional “synthetic” sources for DV (e.g., ramp)
+     - **Top-level placement**: instantiate event detector in `rtl/home_inventory_top.v` with explicit CDC notes
+     - **Regbank exposure**:
+       - control: enable + mode + threshold(s)
+       - status: sticky flags + overflow indicators
+       - W1P clear: counters + history clear (already implemented in RTL)
+     - **“Done when”**:
+       - DV: one directed sim proves event triggers increment + history capture + clears work
+       - Harness: RTL compile-check passes after wiring
 
 ## Blockers (must be explicit)
 - None.
