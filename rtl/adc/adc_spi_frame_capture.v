@@ -9,6 +9,8 @@
 // - This block acts as a simple SPI master for read-only framed captures.
 // - It generates SCLK + CS_N, drives MOSI low (NULL command).
 // - It shifts in WORDS_PER_FRAME words of BITS_PER_WORD each from MISO.
+// - For ADS131M08, wire-level frames include an OUTPUT_CRC word at the end.
+//   Instantiate with WORDS_PER_FRAME=10 and drop/ignore the final CRC word at integration time.
 // - Each captured word is right-justified into a 32-bit slot and packed into
 //   frame_words_packed.
 // - Packing convention: word 0 occupies bits [31:0], word 1 occupies [63:32], …

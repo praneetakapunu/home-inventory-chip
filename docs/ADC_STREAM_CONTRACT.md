@@ -24,7 +24,17 @@ If a future rev adds an ADC-specific clock, this contract must be revisited (CDC
 
 ## Frame model (normative)
 
-A *frame* is a fixed-length sequence of **9 words** (32-bit each) produced per ADC conversion event:
+There are two related "frames" in v1:
+
+1) **Wire frame** (ADS131M08 DOUT): **10 words** per conversion
+   - word0 = STATUS/RESPONSE
+   - word1..8 = CH0..CH7
+   - word9 = OUTPUT_CRC (always present on the wire; ignored in v1)
+
+2) **SoC frame** (what we push to the firmware-visible FIFO / event detector): **9 words**
+   - STATUS + CH0..CH7 (CRC dropped)
+
+A *SoC frame* is the fixed-length sequence of **9 words** (32-bit each) produced per ADC conversion event:
 
 - Word 0: `ADC_STATUS_WORD`
 - Word 1..8: `ADC_CH0 .. ADC_CH7`
@@ -41,6 +51,12 @@ For ADS131M08 bring-up we assume 24-bit samples.
 ## Capture block interface (`adc_spi_frame_capture`)
 
 Module: `rtl/adc/adc_spi_frame_capture.v`
+
+For ADS131M08 bring-up, instantiate this block with:
+- `BITS_PER_WORD = 32` (MODE.WLENGTH=32b sign-extend)
+- `WORDS_PER_FRAME = 10` (STATUS + 8 channels + output CRC)
+
+The integration layer then **drops the final CRC word** and only pushes 9 words to the firmware FIFO/event detector.
 
 ### Inputs
 - `start` (pulse): request capture of exactly one frame.

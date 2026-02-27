@@ -58,17 +58,26 @@ Define 8 sample wires:
 - `adc_frame_ch0..adc_frame_ch7` : **32-bit sign-extended** samples derived from the ADS131M08 24-bit channel words.
 
 **Exact mapping (ADS131M08 framing assumption, v1):**
+- Wire-level ADS131M08 frames are 10 words (last word = OUTPUT_CRC).
+  For v1, we **drop OUTPUT_CRC** and treat the internal "frame" as 9 words: STATUS + CH0..CH7.
+
 - ADC capture produces a packed vector `frame_words_packed` from `adc_spi_frame_capture`.
-- `WORDS_PER_FRAME = 9` and `BITS_PER_WORD = 24`.
-- Word indices:
+- For ADS131M08 bring-up, instantiate capture with:
+  - `BITS_PER_WORD = 32` (sign-extended samples on the wire)
+  - `WORDS_PER_FRAME = 10` (STATUS + CH0..CH7 + OUTPUT_CRC)
+- Word indices (captured):
   - word[0] = STATUS (ignored by event detector for v1)
   - word[1] = CH0
   - word[2] = CH1
   - ...
   - word[8] = CH7
+  - word[9] = OUTPUT_CRC (dropped)
 
 Unpack to channels as:
-- `adc_frame_chN = {{8{word[N+1][23]}}, word[N+1][23:0]}` (two’s complement sign-extension to 32b)
+- If capture uses `BITS_PER_WORD=32` (ADS131M08 WLENGTH=32b sign-extend):
+  - `adc_frame_chN = word[N+1]`
+- If capture uses 24-bit words (older DV mode):
+  - `adc_frame_chN = {{8{word[N+1][23]}}, word[N+1][23:0]}` (two’s complement sign-extension to 32b)
 
 Then:
 - `evt_sample_valid <= adc_frame_valid`
