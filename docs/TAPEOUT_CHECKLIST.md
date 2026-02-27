@@ -48,9 +48,15 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 - [ ] Error observability exists (sticky flags, counters, last-error code)
 
 ## 5) Precheck / submission gates
-- [ ] OpenMPW precheck runs clean
-  - [ ] Document exact command + commit hash in `docs/PRECHECK_LOG.md`
-  - [ ] Attach/log the final summary (pass/fail) and any waived warnings
+- [ ] OpenMPW precheck runs clean (harness repo)
+  - [ ] Install/update precheck tooling (one-time, Docker required)
+    - `cd home-inventory-chip-openmpw && make precheck`
+  - [ ] Run precheck (from harness repo root)
+    - `cd home-inventory-chip-openmpw && make run-precheck`
+    - Optional: disable LVS if you only want “fast sanity” (still log it):
+      - `DISABLE_LVS=1 cd home-inventory-chip-openmpw && make run-precheck`
+  - [ ] Record *exact* invocation + repo commit hashes in `chip-inventory/docs/PRECHECK_LOG.md`
+  - [ ] Attach/log the final summary (PASS/FAIL) and any waived warnings
 - [ ] Final tag created (e.g., `tapeout-v1.0.0`)
 - [ ] Release notes written (what changed since last tag)
 
