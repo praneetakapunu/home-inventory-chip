@@ -150,18 +150,67 @@ module home_inventory_wb (
     // ---------------------------------------------------------------------
     // Event detector hookup (currently driven by stub snapshot samples)
     // ---------------------------------------------------------------------
-    wire        evt_sample_valid = adc_snapshot_fire;
-    wire [31:0] evt_ts_now       = r_time_now;
+    // Default v1 behavior: drive the event detector from the existing SNAPSHOT
+    // stub samples (firmware can validate enable/clear semantics without ADC).
+    //
+    // DV hook: in simulation, allow a testbench to override the event-detector
+    // sample stream *without* changing the regmap. This keeps wb_tb.v able to
+    // generate directed events even after we swap the stub to real ADC frames.
+    //
+    // How to use (from a testbench):
+    //   force dut.u_wb.sim_evt_override_en = 1'b1;
+    //   force dut.u_wb.sim_evt_sample_valid = 1'b1; // 1-cycle pulse
+    //   force dut.u_wb.sim_evt_sample_ch0 = 32'sd123;
+    //   ...
+    //   #1; release ...
+    //
+    // NOTE: these SIM wires are tied-off in RTL; they exist to be forced.
+
+    wire [31:0] evt_ts_now = r_time_now;
 
     // Stub sample pattern is identical to ADC_RAW_CHx update logic.
-    wire [31:0] evt_sample_ch0 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd0;
-    wire [31:0] evt_sample_ch1 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd1;
-    wire [31:0] evt_sample_ch2 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd2;
-    wire [31:0] evt_sample_ch3 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd3;
-    wire [31:0] evt_sample_ch4 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd4;
-    wire [31:0] evt_sample_ch5 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd5;
-    wire [31:0] evt_sample_ch6 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd6;
-    wire [31:0] evt_sample_ch7 = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd7;
+    wire        evt_sample_valid_stub = adc_snapshot_fire;
+    wire [31:0] evt_sample_ch0_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd0;
+    wire [31:0] evt_sample_ch1_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd1;
+    wire [31:0] evt_sample_ch2_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd2;
+    wire [31:0] evt_sample_ch3_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd3;
+    wire [31:0] evt_sample_ch4_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd4;
+    wire [31:0] evt_sample_ch5_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd5;
+    wire [31:0] evt_sample_ch6_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd6;
+    wire [31:0] evt_sample_ch7_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd7;
+
+`ifdef SIM
+    (* keep *) wire        sim_evt_override_en   = 1'b0;
+    (* keep *) wire        sim_evt_sample_valid  = 1'b0;
+    (* keep *) wire [31:0] sim_evt_sample_ch0    = 32'h0;
+    (* keep *) wire [31:0] sim_evt_sample_ch1    = 32'h0;
+    (* keep *) wire [31:0] sim_evt_sample_ch2    = 32'h0;
+    (* keep *) wire [31:0] sim_evt_sample_ch3    = 32'h0;
+    (* keep *) wire [31:0] sim_evt_sample_ch4    = 32'h0;
+    (* keep *) wire [31:0] sim_evt_sample_ch5    = 32'h0;
+    (* keep *) wire [31:0] sim_evt_sample_ch6    = 32'h0;
+    (* keep *) wire [31:0] sim_evt_sample_ch7    = 32'h0;
+
+    wire        evt_sample_valid = sim_evt_override_en ? sim_evt_sample_valid : evt_sample_valid_stub;
+    wire [31:0] evt_sample_ch0   = sim_evt_override_en ? sim_evt_sample_ch0   : evt_sample_ch0_stub;
+    wire [31:0] evt_sample_ch1   = sim_evt_override_en ? sim_evt_sample_ch1   : evt_sample_ch1_stub;
+    wire [31:0] evt_sample_ch2   = sim_evt_override_en ? sim_evt_sample_ch2   : evt_sample_ch2_stub;
+    wire [31:0] evt_sample_ch3   = sim_evt_override_en ? sim_evt_sample_ch3   : evt_sample_ch3_stub;
+    wire [31:0] evt_sample_ch4   = sim_evt_override_en ? sim_evt_sample_ch4   : evt_sample_ch4_stub;
+    wire [31:0] evt_sample_ch5   = sim_evt_override_en ? sim_evt_sample_ch5   : evt_sample_ch5_stub;
+    wire [31:0] evt_sample_ch6   = sim_evt_override_en ? sim_evt_sample_ch6   : evt_sample_ch6_stub;
+    wire [31:0] evt_sample_ch7   = sim_evt_override_en ? sim_evt_sample_ch7   : evt_sample_ch7_stub;
+`else
+    wire        evt_sample_valid = evt_sample_valid_stub;
+    wire [31:0] evt_sample_ch0   = evt_sample_ch0_stub;
+    wire [31:0] evt_sample_ch1   = evt_sample_ch1_stub;
+    wire [31:0] evt_sample_ch2   = evt_sample_ch2_stub;
+    wire [31:0] evt_sample_ch3   = evt_sample_ch3_stub;
+    wire [31:0] evt_sample_ch4   = evt_sample_ch4_stub;
+    wire [31:0] evt_sample_ch5   = evt_sample_ch5_stub;
+    wire [31:0] evt_sample_ch6   = evt_sample_ch6_stub;
+    wire [31:0] evt_sample_ch7   = evt_sample_ch7_stub;
+`endif
 
     home_inventory_event_detector u_evt (
         .clk(wb_clk_i),

@@ -136,6 +136,12 @@ Stub removal steps (inside `home_inventory_wb.v`):
 
 DV hook (so we don’t lose testability when the stub disappears):
 - Add a DV-only mode (guarded by `ifdef SIM`) that lets the testbench inject a synthetic `adc_frame_valid` + 8 sample words (bypassing SPI).
+
+Concrete SIM override implemented (no regmap changes):
+- In `rtl/home_inventory_wb.v` (guarded by `ifdef SIM`), the testbench may `force` these wires:
+  - `sim_evt_override_en` (set to 1 to select SIM path)
+  - `sim_evt_sample_valid` (1-cycle pulse)
+  - `sim_evt_sample_ch0..7` (32-bit signed samples)
   - Goal: keep `verify/wb_tb.v` able to trigger a known event without modeling the real ADC.
 
 This implies `home_inventory_wb.v` must see the decoded ADC frame signals. Two options:
