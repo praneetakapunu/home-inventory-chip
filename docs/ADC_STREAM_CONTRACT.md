@@ -145,7 +145,14 @@ Expose the following internal signals in the Wishbone block:
 
 A single `frame_valid` pulse represents **9 logical words** that must enter the FIFO in-order.
 
-Because the FIFO push interface is 1 word/beat, the integration must include a tiny “push sequencer”:
+Because the FIFO push interface is 1 word/beat, the integration must include a tiny “push sequencer”.
+
+Two equivalent options are acceptable in v1:
+
+1) Inline the sequencer inside the top/wb block.
+2) Instantiate the shared helper `rtl/adc/adc_frame_to_fifo.v`.
+
+Sequencer behavior (normative):
 
 - Latch the packed frame (`frame_words_packed`) on `frame_valid`.
 - Set `push_idx = 0`.

@@ -14,5 +14,6 @@ rtl/home_inventory_event_detector.v
 rtl/adc/adc_drdy_sync.v
 rtl/adc/adc_stream_fifo.v
 rtl/adc/adc_spi_frame_capture.v
+rtl/adc/adc_frame_to_fifo.v
 rtl/adc/adc_streaming_ingest.v
 rtl/home_inventory_top.v
