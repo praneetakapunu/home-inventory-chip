@@ -28,7 +28,8 @@ module adc_stream_fifo #(
     input  wire        pop_ready,
 
     // Status
-    output wire [COUNT_W-1:0] level_words,
+    // Use an explicit $clog2() expression here so the width is legal in the port list.
+    output wire [$clog2(DEPTH_WORDS+1)-1:0] level_words,
     output wire        overrun_sticky,
     input  wire        overrun_clear
 );
