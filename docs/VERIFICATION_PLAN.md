@@ -80,11 +80,14 @@ Implemented by:
 - `verify/adc_drdy_sync_tb.v`
 - `verify/adc_stream_fifo_tb.v`
 
-### 4) Top-level integration sanity (next)
-**Goal:** ensure the top can elaborate and basic signals are wired.
+### 4) Top-level integration sanity
+**Goal:** ensure the top can elaborate and placeholder outputs are stable (no accidental Xs).
 
-Deliverable:
-- Add a small `verify/top_tb.v` (or equivalent) that instantiates `rtl/home_inventory_top.v` and exercises a minimal Wishbone read.
+Implemented by:
+- `verify/top_tb.v` (runs via `make -C verify top-sim`)
+
+Notes:
+- v1 top-level is still a skeleton (no Wishbone interface yet), so this test only checks reset/placeholder output stability.
 
 ## Definition of Done (v1 smoke)
 - `make -C verify all` passes on a clean checkout (CI + local).

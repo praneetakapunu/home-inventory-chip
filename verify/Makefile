@@ -14,6 +14,9 @@ RTL_DIR := ../rtl
 TB      := wb_tb.v
 OUT     := wb_tb.out
 
+TOP_TB  := top_tb.v
+TOP_OUT := top_tb.out
+
 FIFO_TB  := adc_stream_fifo_tb.v
 FIFO_OUT := adc_stream_fifo_tb.out
 
@@ -29,14 +32,17 @@ EVT_OUT  := event_detector_tb.out
 F2F_TB   := adc_frame_to_fifo_tb.v
 F2F_OUT  := adc_frame_to_fifo_tb.out
 
-.PHONY: all sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
+.PHONY: all sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
 # One command to run the whole smoke suite (what humans should run locally).
-all: regmap-check regmap-gen-check sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim
+all: regmap-check regmap-gen-check sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim
 
 sim: $(OUT)
 	$(VVP) $(OUT)
+
+top-sim: $(TOP_OUT)
+	$(VVP) $(TOP_OUT)
 
 fifo-sim: $(FIFO_OUT)
 	$(VVP) $(FIFO_OUT)
@@ -117,6 +123,9 @@ regmap-vh-gen-check:
 $(OUT): $(TB) $(RTL_DIR)/home_inventory_wb.v $(RTL_DIR)/home_inventory_event_detector.v
 	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
+$(TOP_OUT): $(TOP_TB) $(RTL_DIR)/home_inventory_top.v
+	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+
 $(FIFO_OUT): $(FIFO_TB) $(RTL_DIR)/adc/adc_stream_fifo.v
 	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
@@ -133,4 +142,4 @@ $(F2F_OUT): $(F2F_TB) $(RTL_DIR)/adc/adc_frame_to_fifo.v
 	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 clean:
-	rm -f $(OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT)
+	rm -f $(OUT) $(TOP_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT)
