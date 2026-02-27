@@ -46,20 +46,29 @@ Role: capture a complete "frame" worth of words from the ADC serial stream.
   - `adc_sclk`, `adc_cs_n`, `adc_mosi` (driven elsewhere)
   - `adc_miso` (from ADC)
 - Params:
-  - `BITS_PER_WORD` (default 32, preferred for v1 so samples arrive sign-extended)
-  - `WORDS_PER_FRAME_WIRE` (default 10: RESPONSE/STATUS + 8 channels + CRC)
-  - `DROP_OUTPUT_CRC` (default 1 for v1)
-  - `HAS_STATUS_WORD` (default 1)
+  - `BITS_PER_WORD` (default 24; must be <= 32)
+  - `WORDS_PER_FRAME` (default 9; set to 10 if capturing ADS131M08 CRC word on-wire)
+  - `SCLK_DIV` (>= 2)
+  - `CPOL`, `CPHA` (SPI mode)
 - Outputs:
-  - `frame_valid` (pulse when a full wire frame has been captured)
-  - `frame_words_wire[0:WORDS_PER_FRAME_WIRE-1]` (packed to 32b, right-justified)
-  - `busy`, `err` (optional)
+  - `frame_valid` (pulse when a full frame has been captured)
+  - `frame_words_packed` (packed 32-bit slots; word0 in [31:0], word1 in [63:32], ...)
+  - `busy`
 
 Implementation strategy (v1):
 - Generate SCLK and CS in a simple deterministic way (or accept them from a shared SPI master).
 - Sample MISO on the correct edge (CPOL=0/CPHA=1 per `spec/ads131m08_interface.md`) — keep this selectable with parameters.
 
-### 3) `adc_frame_unpack_pack`
+### 3) `adc_streaming_ingest` (implemented)
+Role: small glue block that sequences an entire captured frame into a streaming FIFO.
+
+- Instantiates `adc_spi_frame_capture` + `adc_stream_fifo`.
+- Latches `frame_words_packed` on `frame_valid`, then pushes word0..wordN into FIFO.
+- Backpressure-safe: pauses pushes when FIFO is full.
+
+**Integration note:** this block does not drop CRC or reinterpret words. Choose `WORDS_PER_FRAME` appropriately at instantiation (e.g. 10 on-wire words for ADS131M08 with CRC enabled, then drop/ignore CRC in a downstream packer; or set it to 9 if CRC is disabled / captured elsewhere).
+
+### 4) `adc_frame_unpack_pack` (planned)
 - Input: `frame_words[]`
 - Output:
   - `status_word` (32b)
@@ -67,7 +76,7 @@ Implementation strategy (v1):
 
 This is where ADS131M08-specific assumptions live, but keep them minimal.
 
-### 4) `adc_stream_fifo`
+### 5) `adc_stream_fifo`
 - Interface: simple push/pop FIFO in **32-bit words**.
 - Push side: 9 words per frame.
 - Pop side: Wishbone `ADC_FIFO_DATA` reads.
@@ -76,7 +85,7 @@ Must provide:
 - `level_words` for `ADC_FIFO_STATUS.LEVEL_WORDS`
 - Sticky `overrun` for `ADC_FIFO_STATUS.OVERRUN` (W1C)
 
-### 5) `home_inventory_wb` integration
+### 6) `home_inventory_wb` integration
 - Map `ADC_CFG.NUM_CH`, `ADC_CMD.SNAPSHOT`, `ADC_RAW_CHx`, FIFO status/data.
 - Clear reserved bits on reads and ignore reserved bits on writes.
 
