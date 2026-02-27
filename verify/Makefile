@@ -9,6 +9,12 @@
 IVERILOG ?= iverilog
 VVP     ?= vvp
 
+# Build flags for simulation.
+#
+# -DSIM enables DV-only hooks in RTL (e.g., event-detector sample overrides)
+# without changing the regmap.
+IVERILOG_FLAGS ?= -g2012 -Wall -DSIM
+
 RTL_DIR := ../rtl
 
 TB      := wb_tb.v
@@ -121,25 +127,25 @@ regmap-vh-gen-check:
 	echo "OK: generated Verilog params include matches spec/regmap_v1.yaml"'
 
 $(OUT): $(TB) $(RTL_DIR)/home_inventory_wb.v $(RTL_DIR)/home_inventory_event_detector.v
-	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(TOP_OUT): $(TOP_TB) $(RTL_DIR)/home_inventory_top.v
-	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(FIFO_OUT): $(FIFO_TB) $(RTL_DIR)/adc/adc_stream_fifo.v
-	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(DRDY_OUT): $(DRDY_TB) $(RTL_DIR)/adc/adc_drdy_sync.v
-	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(SPI_OUT): $(SPI_TB) $(RTL_DIR)/adc/adc_spi_frame_capture.v
-	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(EVT_OUT): $(EVT_TB) $(RTL_DIR)/home_inventory_event_detector.v
-	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(F2F_OUT): $(F2F_TB) $(RTL_DIR)/adc/adc_frame_to_fifo.v
-	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 clean:
 	rm -f $(OUT) $(TOP_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT)

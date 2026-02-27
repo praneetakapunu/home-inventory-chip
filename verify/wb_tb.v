@@ -567,6 +567,67 @@ module wb_tb;
             $fatal(1);
         end
 
+`ifdef SIM
+        // -----------------------------------------------------------------
+        // Events: SIM override smoke
+        // -----------------------------------------------------------------
+        // Purpose: prove the DV-only override path works so future wiring can
+        // switch the event detector to real ADC frames without breaking tests.
+        //
+        // We force the internal SIM wires (declared in home_inventory_wb under
+        // `ifdef SIM) to inject a known sample stream.
+
+        // Clean slate.
+        wb_write32_sel(ADR_EVT_CFG, 32'h0000_0100, 4'b0010); // CLEAR_COUNTS
+        wb_write32_sel(ADR_EVT_CFG, 32'h0000_0200, 4'b0010); // CLEAR_HISTORY
+
+        // Enable only CH0 and set threshold to 100.
+        wb_write32(ADR_EVT_THRESH_CH0, 32'd100);
+        wb_write32(ADR_EVT_CFG, 32'h0000_0001);
+
+        // Turn on override + drive all channels.
+        force dut.sim_evt_override_en = 1'b1;
+        force dut.sim_evt_sample_ch0  = 32'd50;
+        force dut.sim_evt_sample_ch1  = 32'd0;
+        force dut.sim_evt_sample_ch2  = 32'd0;
+        force dut.sim_evt_sample_ch3  = 32'd0;
+        force dut.sim_evt_sample_ch4  = 32'd0;
+        force dut.sim_evt_sample_ch5  = 32'd0;
+        force dut.sim_evt_sample_ch6  = 32'd0;
+        force dut.sim_evt_sample_ch7  = 32'd0;
+
+        // Below threshold: no event.
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b1;
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b0;
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: SIM override below-threshold should not increment: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Above threshold: event increments.
+        force dut.sim_evt_sample_ch0 = 32'd150;
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b1;
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b0;
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd1) begin
+            $display("[tb] ERROR: SIM override above-threshold should increment to 1: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Release forced wires so the rest of the TB is not affected.
+        release dut.sim_evt_sample_valid;
+        release dut.sim_evt_override_en;
+        release dut.sim_evt_sample_ch0;
+        release dut.sim_evt_sample_ch1;
+        release dut.sim_evt_sample_ch2;
+        release dut.sim_evt_sample_ch3;
+        release dut.sim_evt_sample_ch4;
+        release dut.sim_evt_sample_ch5;
+        release dut.sim_evt_sample_ch6;
+        release dut.sim_evt_sample_ch7;
+`endif
+
         // -----------------------------------------------------------------
         // RO regs must ignore writes (events are RO)
         // -----------------------------------------------------------------
@@ -579,9 +640,11 @@ module wb_tb;
             end
         end
         // CH0 already incremented above; confirm write still didn't clobber it.
+        // Note: if SIM override smoke ran, we intentionally cleared counts and
+        // re-incremented to 1.
         wb_read32(ADR_EVT_COUNT_CH0, rdata);
-        if (rdata !== 32'd2) begin
-            $display("[tb] ERROR: EVT_COUNT_CH0 should ignore writes (preserve count=2): got 0x%08x", rdata);
+        if (rdata !== 32'd1) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 should ignore writes (preserve count=1): got 0x%08x", rdata);
             $fatal(1);
         end
 
