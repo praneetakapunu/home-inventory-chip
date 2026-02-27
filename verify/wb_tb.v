@@ -383,6 +383,23 @@ module wb_tb;
             $fatal(1);
         end
 
+        // Empty FIFO reads must return 0 and not alter state.
+        wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+        if (rdata[15:0] !== 16'd0) begin
+            $display("[tb] ERROR: FIFO level expected 0 after full drain: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_ADC_FIFO_DATA, rdata);
+        if (rdata !== 32'h0000_0000) begin
+            $display("[tb] ERROR: FIFO empty read should return 0: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+        if (rdata[15:0] !== 16'd0) begin
+            $display("[tb] ERROR: FIFO level changed after empty read: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
         // -----------------------------------------------------------------
         // Calibration
         // -----------------------------------------------------------------

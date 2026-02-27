@@ -90,10 +90,10 @@ Deliverable:
    - Firmware should clear with full-word write (`SEL=0xF`).
 
 Deliverable:
-- Wishbone DV smoke test that:
-  - drains 9 words and observes `LEVEL_WORDS` count down
-  - checks empty reads are stable
-  - checks `OVERRUN` W1C works
+- Wishbone DV smoke test (`verify/wb_tb.v`) that:
+  - drains FIFO words and observes `LEVEL_WORDS` count down
+  - checks empty reads return `0` and do not alter state
+  - checks sticky `OVERRUN` and W1C clear works (byte-lane masked)
 
 ---
 

@@ -49,6 +49,7 @@ This checks:
 - IRQ_EN write path + byte strobes
 - ADC_CFG reset + NUM_CH RW behavior
 - ADC_CMD readback=0 (W1P-style)
+- ADC FIFO: snapshot push behavior (9 words per frame), ordering, level decrement, sticky OVERRUN + W1C clear, and empty-read returns 0
 - Calibration reset values + byte strobe behavior
 - RO regs ignore writes (events block)
 - Event detector: threshold compare, per-channel enable edge semantics (first delta=0), multi-channel last_ts, and saturating counters
