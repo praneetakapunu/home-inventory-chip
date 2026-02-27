@@ -112,6 +112,32 @@ Short-term (v1): keep event detector instantiated inside `home_inventory_wb.v`.
 1) Replace the stub `evt_sample_valid` and `evt_sample_ch*` with real ADC frame samples.
 2) Keep `evt_ts_now = r_time_now` (Wishbone-domain monotonic timestamp) for v1.
 
+### Mechanical wiring checklist (for the eventual RTL change)
+
+This is the “do it without thinking” list for the commit that flips the detector from stub → real samples.
+
+Target files (expected):
+- `rtl/home_inventory_wb.v` (remove stub, drive `u_evt` from ADC frame)
+- `rtl/adc/adc_spi_frame_capture.v` (already exists)
+- `rtl/adc/adc_drdy_sync.v` (already exists)
+- `rtl/adc/adc_stream_fifo.v` (already exists; optional for event-detector path)
+- Harness filelists as needed (in `home-inventory-chip-openmpw`)
+
+Signals to create (naming suggestion, keep consistent):
+- `wire        adc_frame_valid;` — 1-cycle pulse when a complete frame has been captured
+- `wire [31:0] adc_frame_ch0;` .. `adc_frame_ch7;` — sign-extended samples
+
+Stub removal steps (inside `home_inventory_wb.v`):
+1) Delete/disable the deterministic pattern generator used for `evt_sample_ch*`.
+2) Replace:
+   - `evt_sample_valid = adc_snapshot_fire` → `evt_sample_valid = adc_frame_valid`
+   - `evt_sample_ch*` pattern → `evt_sample_ch* = adc_frame_ch*`
+3) Keep `evt_ts_now = r_time_now`.
+
+DV hook (so we don’t lose testability when the stub disappears):
+- Add a DV-only mode (guarded by `ifdef SIM`) that lets the testbench inject a synthetic `adc_frame_valid` + 8 sample words (bypassing SPI).
+  - Goal: keep `verify/wb_tb.v` able to trigger a known event without modeling the real ADC.
+
 This implies `home_inventory_wb.v` must see the decoded ADC frame signals. Two options:
 - Option A (preferred): instantiate ADC capture + unpack inside `home_inventory_wb.v` (still in wb clock domain) and produce:
   - `adc_frame_valid` (1-cycle pulse when a complete frame is ready)
