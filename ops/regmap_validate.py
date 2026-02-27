@@ -6,15 +6,23 @@ This is intentionally dependency-light (PyYAML only).
 Usage:
   python3 ops/regmap_validate.py --yaml spec/regmap_v1.yaml
 
-Checks:
+Hard checks (FAIL):
 - All register addresses are unique.
 - All register addresses are 32-bit word-aligned.
+- Block base addresses are 32-bit word-aligned.
 - Register and field access types are from an allowed set.
 - Reset values (when present) are valid 32-bit quantities.
 - Field bit ranges are sane (0..31, msb>=lsb).
 - Fields within a register do not overlap.
 - Field access is compatible with the parent register access.
 - When both register reset and field reset are provided, they must agree.
+
+Soft checks (WARN):
+- Register names should be globally unique.
+- Every register should have a description string.
+
+The WARN checks are printed but do not cause failure (so they can be rolled out
+incrementally without blocking tapeout).
 """
 
 from __future__ import annotations
@@ -73,12 +81,17 @@ def main() -> int:
     spec = _load_yaml(args.yaml)
 
     errs: List[str] = []
+    warns: List[str] = []
 
     addrs: List[Tuple[str, int]] = []
+    reg_names_global: Dict[str, str] = {}
 
     for blk in spec.get("blocks", []):
         bname = blk.get("name", "<unnamed>")
         base = _parse_int(blk.get("base", 0))
+
+        if base % 4 != 0:
+            errs.append(f"Block {bname}: base 0x{base:08X} not 32-bit aligned")
 
         for reg in blk.get("registers", []):
             rname = reg.get("name")
@@ -86,11 +99,25 @@ def main() -> int:
                 errs.append(f"Block {bname}: register missing name")
                 continue
 
+            fq = f"{bname}.{rname}"
+
+            # Soft check: global uniqueness of register names
+            prev = reg_names_global.get(rname)
+            if prev is None:
+                reg_names_global[rname] = fq
+            else:
+                warns.append(f"Register name reused: {rname!r} appears in {prev} and {fq}")
+
+            # Soft check: description present
+            desc = reg.get("desc")
+            if not (isinstance(desc, str) and desc.strip()):
+                warns.append(f"{fq}: missing/empty desc")
+
             # Access + reset validation
             racc = reg.get("access")
             if racc not in _ALLOWED_REG_ACCESS:
                 errs.append(
-                    f"{bname}.{rname}: invalid access {racc!r} (allowed: {', '.join(sorted(_ALLOWED_REG_ACCESS))})"
+                    f"{fq}: invalid access {racc!r} (allowed: {', '.join(sorted(_ALLOWED_REG_ACCESS))})"
                 )
 
             rreset = reg.get("reset", None)
@@ -101,19 +128,22 @@ def main() -> int:
                 try:
                     rr = _parse_int(rreset)
                     if not _check_u32(rr):
-                        errs.append(f"{bname}.{rname}: reset out of u32 range: {rreset!r}")
+                        errs.append(f"{fq}: reset out of u32 range: {rreset!r}")
                     rreset_int = rr
                 except Exception as e:
-                    errs.append(f"{bname}.{rname}: invalid reset {rreset!r}: {e}")
+                    errs.append(f"{fq}: invalid reset {rreset!r}: {e}")
                     rreset_int = None
 
             offset = _parse_int(reg.get("offset", 0))
+            if offset % 4 != 0:
+                errs.append(f"{fq}: offset 0x{offset:08X} not 32-bit aligned")
+
             addr = base + offset
 
             if addr % 4 != 0:
-                errs.append(f"{bname}.{rname}: address 0x{addr:08X} not 32-bit aligned")
+                errs.append(f"{fq}: address 0x{addr:08X} not 32-bit aligned")
 
-            addrs.append((f"{bname}.{rname}", addr))
+            addrs.append((fq, addr))
 
             # Fields
             used_mask = 0
@@ -125,32 +155,30 @@ def main() -> int:
                 facc = f.get("access")
                 if facc not in _ALLOWED_FIELD_ACCESS:
                     errs.append(
-                        f"{bname}.{rname}.{fname}: invalid access {facc!r} (allowed: {', '.join(sorted(_ALLOWED_FIELD_ACCESS))})"
+                        f"{fq}.{fname}: invalid access {facc!r} (allowed: {', '.join(sorted(_ALLOWED_FIELD_ACCESS))})"
                     )
                 else:
                     if racc in _ALLOWED_REG_ACCESS and facc not in allowed_field_acc:
-                        errs.append(
-                            f"{bname}.{rname}.{fname}: field access {facc!r} incompatible with reg access {racc!r}"
-                        )
+                        errs.append(f"{fq}.{fname}: field access {facc!r} incompatible with reg access {racc!r}")
 
                 bits = f.get("bits")
                 if not (isinstance(bits, list) and len(bits) == 2):
-                    errs.append(f"{bname}.{rname}.{fname}: bits must be [msb, lsb]")
+                    errs.append(f"{fq}.{fname}: bits must be [msb, lsb]")
                     continue
                 msb, lsb = int(bits[0]), int(bits[1])
 
                 if not (0 <= lsb <= 31 and 0 <= msb <= 31):
-                    errs.append(f"{bname}.{rname}.{fname}: bit range out of 0..31: {msb}:{lsb}")
+                    errs.append(f"{fq}.{fname}: bit range out of 0..31: {msb}:{lsb}")
                     continue
                 if msb < lsb:
-                    errs.append(f"{bname}.{rname}.{fname}: msb<lsb: {msb}:{lsb}")
+                    errs.append(f"{fq}.{fname}: msb<lsb: {msb}:{lsb}")
                     continue
 
                 width = msb - lsb + 1
                 mask = ((1 << width) - 1) << lsb
 
                 if used_mask & mask:
-                    errs.append(f"{bname}.{rname}: field overlap at {fname} ({msb}:{lsb})")
+                    errs.append(f"{fq}: field overlap at {fname} ({msb}:{lsb})")
                 used_mask |= mask
 
                 # Reset validation (field reset must fit the field width)
@@ -161,11 +189,11 @@ def main() -> int:
                 try:
                     fr = _parse_int(fres)
                     if not _check_u32(fr):
-                        errs.append(f"{bname}.{rname}.{fname}: reset out of u32 range: {fres!r}")
+                        errs.append(f"{fq}.{fname}: reset out of u32 range: {fres!r}")
                         continue
                     if fr >= (1 << width):
                         errs.append(
-                            f"{bname}.{rname}.{fname}: reset 0x{fr:X} does not fit in field width {width} ({msb}:{lsb})"
+                            f"{fq}.{fname}: reset 0x{fr:X} does not fit in field width {width} ({msb}:{lsb})"
                         )
                         continue
 
@@ -174,10 +202,10 @@ def main() -> int:
                         r_field = _extract_bits(rreset_int, msb, lsb)
                         if r_field != fr:
                             errs.append(
-                                f"{bname}.{rname}.{fname}: field reset 0x{fr:X} disagrees with reg reset bits 0x{r_field:X}"
+                                f"{fq}.{fname}: field reset 0x{fr:X} disagrees with reg reset bits 0x{r_field:X}"
                             )
                 except Exception as e:
-                    errs.append(f"{bname}.{rname}.{fname}: invalid reset {fres!r}: {e}")
+                    errs.append(f"{fq}.{fname}: invalid reset {fres!r}: {e}")
 
     # Uniqueness of addresses
     seen: Dict[int, str] = {}
@@ -186,6 +214,11 @@ def main() -> int:
             errs.append(f"Address collision: 0x{addr:08X} used by {seen[addr]} and {name}")
         else:
             seen[addr] = name
+
+    if warns:
+        print("regmap_validate: WARN")
+        for w in warns:
+            print("- " + w)
 
     if errs:
         print("regmap_validate: FAIL")
