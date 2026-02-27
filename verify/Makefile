@@ -26,11 +26,14 @@ SPI_OUT  := adc_spi_frame_capture_tb.out
 EVT_TB   := event_detector_tb.v
 EVT_OUT  := event_detector_tb.out
 
-.PHONY: all sim fifo-sim drdy-sim spi-sim evt-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
+F2F_TB   := adc_frame_to_fifo_tb.v
+F2F_OUT  := adc_frame_to_fifo_tb.out
+
+.PHONY: all sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
 # One command to run the whole smoke suite (what humans should run locally).
-all: regmap-check regmap-gen-check sim fifo-sim drdy-sim spi-sim evt-sim
+all: regmap-check regmap-gen-check sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim
 
 sim: $(OUT)
 	$(VVP) $(OUT)
@@ -46,6 +49,9 @@ spi-sim: $(SPI_OUT)
 
 evt-sim: $(EVT_OUT)
 	$(VVP) $(EVT_OUT)
+
+f2f-sim: $(F2F_OUT)
+	$(VVP) $(F2F_OUT)
 
 # Pure-Python consistency check (no Verilog simulator required).
 regmap-check:
@@ -123,5 +129,8 @@ $(SPI_OUT): $(SPI_TB) $(RTL_DIR)/adc/adc_spi_frame_capture.v
 $(EVT_OUT): $(EVT_TB) $(RTL_DIR)/home_inventory_event_detector.v
 	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
+$(F2F_OUT): $(F2F_TB) $(RTL_DIR)/adc/adc_frame_to_fifo.v
+	$(IVERILOG) -g2012 -Wall -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+
 clean:
-	rm -f $(OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT)
+	rm -f $(OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT)
