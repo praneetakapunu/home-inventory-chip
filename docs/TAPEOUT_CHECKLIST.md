@@ -12,6 +12,8 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 
 ## 1) Repo / build hygiene
 - [ ] Canonical RTL filelist exists and is used by CI
+- [ ] Low-disk "sanity" suite is green (should run even when OpenLane is blocked by disk):
+  - [ ] `bash ops/preflight_low_disk.sh` (IP repo)
 - [ ] `iverilog` (or equivalent) compile check is green for:
   - [ ] chip-inventory IP (`rtl/`)
   - [ ] harness integration repo (Caravel user project)
@@ -41,6 +43,9 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 
 ## 4) Bring-up readiness (FW-facing)
 - [ ] Bring-up sequence document exists and is realistic
+  - Suggested starting points:
+    - `docs/BRINGUP_SEQUENCE.md`
+    - `docs/ADC_FW_INIT_SEQUENCE.md`
 - [ ] Minimal FW register pokes documented for:
   - [ ] reset sanity
   - [ ] enable capture
