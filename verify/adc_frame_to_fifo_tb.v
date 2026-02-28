@@ -2,10 +2,11 @@
 //
 // Directed testbench for adc_frame_to_fifo push sequencer.
 //
-// Checks:
-// - Pushes WORDS_OUT words in-order after frame_valid.
-// - Honors push_ready backpressure.
-// - Pulses frame_dropped if a new frame_valid arrives while busy.
+// Checks (v1):
+// - Presents WORDS_OUT words in-order (word0..word(WORDS_OUT-1)).
+// - Advances at 1 word/cycle while busy.
+// - Implements drop-on-full: if push_ready==0, the word is dropped (still advances).
+// - Has a 1-frame skid buffer; a third overlapping frame is dropped (frame_dropped pulses).
 //
 `timescale 1ns/1ps
 `default_nettype none
@@ -47,11 +48,8 @@ module adc_frame_to_fifo_tb;
   initial clk = 1'b0;
   always #5 clk = ~clk;
 
-  integer i;
-  integer push_count;
-
   // Helpers
-  task pack_frame_incrementing;
+  task automatic pack_frame_incrementing;
     integer w;
     begin
       // word0 in [31:0], word1 in [63:32], ...
@@ -61,15 +59,27 @@ module adc_frame_to_fifo_tb;
     end
   endtask
 
-  task expect_push_word;
-    input [31:0] expected;
+  task automatic pulse_frame_valid;
     begin
-      if (push_data !== expected) begin
-        $display("FAIL: push_data mismatch. expected=%h got=%h time=%0t", expected, push_data, $time);
+      frame_valid <= 1'b1;
+      @(posedge clk);
+      frame_valid <= 1'b0;
+    end
+  endtask
+
+  task automatic expect_word;
+    input [31:0] exp;
+    begin
+      if (push_data !== exp) begin
+        $display("FAIL: push_data mismatch exp=%h got=%h time=%0t", exp, push_data, $time);
         $fatal(1);
       end
     end
   endtask
+
+  integer i;
+  integer accepted;
+  integer word_idx;
 
   initial begin
     $display("adc_frame_to_fifo_tb: start");
@@ -79,120 +89,118 @@ module adc_frame_to_fifo_tb;
     frame_valid = 1'b0;
     frame_words_packed = {32*WORDS_IN{1'b0}};
     push_ready = 1'b0;
-    push_count = 0;
 
     repeat (4) @(posedge clk);
     rst = 1'b0;
     @(posedge clk);
 
-    // Load a known frame.
+    // ------------------------------------------------------------------
+    // Test 1: no stalls, accept all WORDS_OUT words
+    // ------------------------------------------------------------------
     pack_frame_incrementing();
-
-    // Fire frame_valid for 1 cycle.
-    frame_valid <= 1'b1;
-    @(posedge clk);
-    frame_valid <= 1'b0;
-
-    // Apply backpressure for a couple cycles, then allow pushes.
-    // During backpressure, push_valid should remain asserted while busy.
-    repeat (2) begin
-      push_ready <= 1'b0;
-      @(posedge clk);
-      if (busy !== 1'b1) begin
-        $display("FAIL: expected busy during push sequence (backpressure) time=%0t", $time);
-        $fatal(1);
-      end
-      if (push_valid !== 1'b1) begin
-        $display("FAIL: expected push_valid asserted while busy time=%0t", $time);
-        $fatal(1);
-      end
-    end
-
-    // Now drain with intermittent stalls.
-    for (i = 0; i < WORDS_OUT; i = i + 1) begin
-      // Sometimes stall.
-      if (i == 3 || i == 6) begin
-        push_ready <= 1'b0;
-        @(posedge clk);
-        if (push_valid !== 1'b1) begin
-          $display("FAIL: expected push_valid asserted during stall time=%0t", $time);
-          $fatal(1);
-        end
-      end
-
-      push_ready <= 1'b1;
-      @(posedge clk);
-      if (push_valid !== 1'b1) begin
-        $display("FAIL: expected push_valid when ready time=%0t", $time);
-        $fatal(1);
-      end
-      expect_push_word(32'hA000_0000 + i);
-      push_count = push_count + 1;
-    end
-
-    // After last word accepted, busy should drop within 1 cycle.
     push_ready <= 1'b1;
-    @(posedge clk);
-    if (busy !== 1'b0) begin
-      $display("FAIL: expected busy deasserted after final push time=%0t", $time);
-      $fatal(1);
-    end
+    pulse_frame_valid();
 
-    if (push_count !== WORDS_OUT) begin
-      $display("FAIL: expected %0d pushes, saw %0d", WORDS_OUT, push_count);
-      $fatal(1);
-    end
+    accepted = 0;
+    word_idx = 0;
 
-    // Check frame_dropped behavior.
-    // Start a frame, then attempt to start another before done.
-    push_count = 0;
-    pack_frame_incrementing();
-
-    frame_valid <= 1'b1;
-    @(posedge clk);
-    frame_valid <= 1'b0;
-
-    // While busy, pulse frame_valid again; should drop.
-    // Hold push_ready low so we don't accidentally advance the sequencer while
-    // we're checking for the drop pulse.
-    push_ready <= 1'b0;
-    @(posedge clk);
+    // Busy should assert shortly after frame_valid (same or next cycle).
+    if (!busy) @(posedge clk);
     if (busy !== 1'b1) begin
-      $display("FAIL: expected busy before drop test time=%0t", $time);
+      $display("FAIL: expected busy asserted after frame_valid time=%0t", $time);
       $fatal(1);
     end
-    frame_valid <= 1'b1;
-    @(posedge clk);
-    frame_valid <= 1'b0;
 
-    // frame_dropped is a 1-cycle pulse; it may occur on the same cycle as the
-    // rejected frame_valid or the immediately following cycle depending on
-    // sampling. Accept either, but require it to be observed.
+    while (busy) begin
+      if (push_valid !== 1'b1) begin
+        $display("FAIL: expected push_valid while busy time=%0t", $time);
+        $fatal(1);
+      end
+      expect_word(32'hA000_0000 + word_idx);
+      if (push_ready) accepted = accepted + 1;
+      word_idx = word_idx + 1;
+      @(posedge clk);
+    end
+
+    if (word_idx !== WORDS_OUT) begin
+      $display("FAIL: expected %0d presented words, saw %0d", WORDS_OUT, word_idx);
+      $fatal(1);
+    end
+    if (accepted !== WORDS_OUT) begin
+      $display("FAIL: expected %0d accepted pushes, saw %0d", WORDS_OUT, accepted);
+      $fatal(1);
+    end
+
+    // ------------------------------------------------------------------
+    // Test 2: stalls cause drops; still advances 1 word/cycle
+    // ------------------------------------------------------------------
+    pack_frame_incrementing();
+    accepted = 0;
+    word_idx = 0;
+
+    // Stall for first 2 words, then accept, then stall once mid-frame.
+    push_ready <= 1'b0;
+    pulse_frame_valid();
+
+    if (!busy) @(posedge clk);
+    while (busy) begin
+      if (push_valid !== 1'b1) begin
+        $display("FAIL: expected push_valid while busy time=%0t", $time);
+        $fatal(1);
+      end
+      expect_word(32'hA000_0000 + word_idx);
+
+      // Ready pattern by word index (since we advance 1/cycle):
+      // drop words 0,1 and 4; accept the rest.
+      if (word_idx == 0 || word_idx == 1 || word_idx == 4) push_ready = 1'b0;
+      else push_ready = 1'b1;
+
+      if (push_ready) accepted = accepted + 1;
+      word_idx = word_idx + 1;
+      @(posedge clk);
+    end
+
+    if (word_idx !== WORDS_OUT) begin
+      $display("FAIL: expected %0d presented words (stall test), saw %0d", WORDS_OUT, word_idx);
+      $fatal(1);
+    end
+    if (accepted !== (WORDS_OUT - 3)) begin
+      $display("FAIL: expected %0d accepted pushes (stall test), saw %0d", WORDS_OUT-3, accepted);
+      $fatal(1);
+    end
+
+    // ------------------------------------------------------------------
+    // Test 3: 1-frame skid buffer, then drop on third overlap
+    // ------------------------------------------------------------------
+    push_ready <= 1'b0; // ensure we stay busy for overlap checks
+    pack_frame_incrementing();
+    pulse_frame_valid();
+
+    // One extra overlapping frame should be buffered (no drop pulse).
+    @(posedge clk);
+    pulse_frame_valid();
+
+    // Third overlapping frame should be dropped.
+    @(posedge clk);
+    pulse_frame_valid();
+
     begin : drop_check
       integer k;
       reg seen_drop;
       seen_drop = 1'b0;
-      for (k = 0; k < 3; k = k + 1) begin
+      for (k = 0; k < 5; k = k + 1) begin
         if (frame_dropped) seen_drop = 1'b1;
         @(posedge clk);
       end
       if (!seen_drop) begin
-        $display("FAIL: expected frame_dropped pulse (not observed) time=%0t", $time);
+        $display("FAIL: expected frame_dropped pulse on 3rd overlap (not observed) time=%0t", $time);
         $fatal(1);
       end
     end
 
-    // Drain the first frame quickly.
+    // Let it run out.
     push_ready <= 1'b1;
-    while (busy) begin
-      @(posedge clk);
-      if (push_valid && push_ready) push_count = push_count + 1;
-    end
-
-    if (push_count !== WORDS_OUT) begin
-      $display("FAIL: expected %0d pushes in drop test, saw %0d", WORDS_OUT, push_count);
-      $fatal(1);
-    end
+    while (busy) @(posedge clk);
 
     $display("adc_frame_to_fifo_tb: PASS");
     $finish;

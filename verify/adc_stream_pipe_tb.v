@@ -90,20 +90,23 @@ module adc_stream_pipe_tb;
 
   // Scoreboard
   integer pop_count;
-  reg [31:0] expected_word [0:WORDS_OUT-1];
+  localparam integer TOTAL_WORDS = 2*WORDS_OUT;
+  reg [31:0] expected_word [0:TOTAL_WORDS-1];
 
-  task load_expected;
+  task automatic load_expected;
+    input integer start_idx;
+    input [31:0] base;
     integer i;
     begin
-      // Word0 = 32'h1000, word1 = 32'h1001, ... for easy checking.
+      // Word0 = base+0, word1 = base+1, ... for easy checking.
       for (i = 0; i < WORDS_OUT; i = i + 1) begin
-        expected_word[i] = 32'h1000 + i;
+        expected_word[start_idx + i] = base + i;
       end
 
       // Pack WORDS_IN words; only first WORDS_OUT should be pushed.
       frame_words_packed = {32*WORDS_IN{1'b0}};
       for (i = 0; i < WORDS_IN; i = i + 1) begin
-        frame_words_packed[32*i +: 32] = 32'h1000 + i;
+        frame_words_packed[32*i +: 32] = base + i;
       end
     end
   endtask
@@ -123,8 +126,8 @@ module adc_stream_pipe_tb;
       else                    fifo_pop_ready <= 1'b0;
 
       if (fifo_pop_valid && fifo_pop_ready) begin
-        if (pop_count >= WORDS_OUT) begin
-          $display("ERROR: popped more than WORDS_OUT words");
+        if (pop_count >= TOTAL_WORDS) begin
+          $display("ERROR: popped more than expected TOTAL_WORDS=%0d", TOTAL_WORDS);
           $fatal(1);
         end
         if (fifo_pop_data !== expected_word[pop_count]) begin
@@ -144,23 +147,46 @@ module adc_stream_pipe_tb;
     @(negedge rst);
     repeat (2) @(posedge clk);
 
-    load_expected();
+    // Prepare 2 frames worth of expected data.
+    load_expected(0*WORDS_OUT, 32'h1000);
 
-    // Present a 1-cycle frame_valid pulse
+    // Present a 1-cycle frame_valid pulse (frame 0)
     @(posedge clk);
     frame_valid <= 1'b1;
     @(posedge clk);
     frame_valid <= 1'b0;
 
-    // While busy, attempt another frame to ensure drop behavior is sensible.
-    // (This should get dropped if the sequencer is still draining.)
+    // While busy, present a second frame; with the 1-frame skid buffer this
+    // should be accepted and drained after frame 0.
+    load_expected(1*WORDS_OUT, 32'h2000);
     repeat (2) @(posedge clk);
     frame_valid <= 1'b1;
     @(posedge clk);
     frame_valid <= 1'b0;
 
+    // Third overlapping frame should be dropped.
+    repeat (2) @(posedge clk);
+    frame_valid <= 1'b1;
+    @(posedge clk);
+    frame_valid <= 1'b0;
+
+    // Observe a frame_dropped pulse within a few cycles.
+    begin : drop_check
+      integer k;
+      reg seen_drop;
+      seen_drop = 1'b0;
+      for (k = 0; k < 10; k = k + 1) begin
+        if (frame_dropped) seen_drop = 1'b1;
+        @(posedge clk);
+      end
+      if (!seen_drop) begin
+        $display("ERROR: expected frame_dropped pulse for 3rd overlapping frame");
+        $fatal(1);
+      end
+    end
+
     // Run until we've observed all expected pops.
-    wait (pop_count == WORDS_OUT);
+    wait (pop_count == TOTAL_WORDS);
 
     // FIFO should eventually drain to empty.
     repeat (10) @(posedge clk);

@@ -4,12 +4,14 @@
 // FIFO push beats (1 word per accepted cycle).
 //
 // v1 intent:
-// - Latch a completed frame (frame_valid pulse) and then push WORDS_OUT words
-//   in-order into the downstream FIFO.
-// - Downstream FIFO provides standard ready/valid backpressure.
-// - If a new frame_valid arrives while we're still draining the previous frame,
-//   the new frame is ignored and frame_dropped pulses (integration may choose
-//   to treat this as an overrun condition).
+// - Latch a completed frame (frame_valid pulse) and then attempt to push
+//   WORDS_OUT words in-order into the downstream FIFO (1 word/cycle).
+// - If the FIFO is full (push_ready==0), the word is dropped (drop-on-full).
+// - Includes a 1-frame skid buffer: if a new frame_valid arrives while we're
+//   still draining the current frame, we queue exactly one pending frame.
+// - If more than one additional frame arrives while both current+pending are
+//   occupied, frame_dropped pulses (integration may choose to treat this as an
+//   overrun condition).
 //
 // This is a wiring primitive used by the ADC streaming path described in:
 //   docs/ADC_STREAM_CONTRACT.md
@@ -41,12 +43,17 @@ module adc_frame_to_fifo #(
     // Latch only the words we will ever push (word0..word(WORDS_OUT-1)).
     reg [32*WORDS_OUT-1:0] latched_words;
 
+    // 1-frame skid buffer so back-to-back frame_valid pulses aren't dropped.
+    // (If a third frame arrives while both current+pending are occupied, we drop it.)
+    reg                   pending_valid;
+    reg [32*WORDS_OUT-1:0] pending_words;
+
     // Push sequencing
     localparam integer IDX_W = (WORDS_OUT <= 2) ? 1 : $clog2(WORDS_OUT);
     reg                  active;
     reg [IDX_W-1:0]       idx;
 
-    assign busy = active;
+    assign busy = active | pending_valid;
 
     // Present current word.
     // Word0 is [31:0], word1 is [63:32], ...
@@ -55,30 +62,46 @@ module adc_frame_to_fifo #(
 
     always @(posedge clk) begin
         if (rst) begin
-            latched_words <= {32*WORDS_OUT{1'b0}};
-            active        <= 1'b0;
-            idx           <= {IDX_W{1'b0}};
-            frame_dropped <= 1'b0;
+            latched_words  <= {32*WORDS_OUT{1'b0}};
+            pending_valid  <= 1'b0;
+            pending_words  <= {32*WORDS_OUT{1'b0}};
+            active         <= 1'b0;
+            idx            <= {IDX_W{1'b0}};
+            frame_dropped  <= 1'b0;
         end else begin
             frame_dropped <= 1'b0;
 
-            // Frame accept / drop policy
+            // Frame accept / buffering policy
             if (frame_valid) begin
                 if (!active) begin
+                    // Idle: accept immediately as the current frame.
                     latched_words <= frame_words_packed[32*WORDS_OUT-1:0];
                     active        <= 1'b1;
                     idx           <= {IDX_W{1'b0}};
+                end else if (!pending_valid) begin
+                    // Busy: buffer exactly one upcoming frame.
+                    pending_words <= frame_words_packed[32*WORDS_OUT-1:0];
+                    pending_valid <= 1'b1;
                 end else begin
-                    // Can't accept a new frame until we're done pushing this one.
+                    // Can't accept more than one pending frame.
                     frame_dropped <= 1'b1;
                 end
             end
 
-            // Drive push handshakes while active.
-            if (active && push_ready) begin
+            // Push sequencing while active.
+            // v1 policy: 1 word/cycle. If push_ready==0, the word is dropped.
+            if (active) begin
                 if (idx == WORDS_OUT-1) begin
-                    active <= 1'b0;
-                    idx    <= {IDX_W{1'b0}};
+                    if (pending_valid) begin
+                        // Immediately start pushing the pending frame next.
+                        latched_words <= pending_words;
+                        pending_valid <= 1'b0;
+                        idx           <= {IDX_W{1'b0}};
+                        active        <= 1'b1;
+                    end else begin
+                        active <= 1'b0;
+                        idx    <= {IDX_W{1'b0}};
+                    end
                 end else begin
                     idx <= idx + 1'b1;
                 end

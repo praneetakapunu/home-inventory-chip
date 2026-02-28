@@ -132,7 +132,8 @@ regmap-vh-gen-check:
 	rm -f $$TMP; \
 	echo "OK: generated Verilog params include matches spec/regmap_v1.yaml"'
 
-$(OUT): $(TB) $(RTL_DIR)/home_inventory_wb.v $(RTL_DIR)/home_inventory_event_detector.v
+$(OUT): $(TB) $(RTL_DIR)/home_inventory_wb.v $(RTL_DIR)/home_inventory_event_detector.v \
+	$(RTL_DIR)/adc/adc_stream_fifo.v $(RTL_DIR)/adc/adc_frame_to_fifo.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(TOP_OUT): $(TOP_TB) $(RTL_DIR)/home_inventory_top.v

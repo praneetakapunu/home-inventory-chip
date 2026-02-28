@@ -157,11 +157,12 @@ Sequencer behavior (normative):
 - Latch the packed frame (`frame_words_packed`) on `frame_valid`.
 - Set `push_idx = 0`.
 - While `push_idx < 9`:
-  - if `adc_fifo_push_ready`:
-    - drive `adc_fifo_push_valid=1` with the next word
-    - increment `push_idx`
-  - else:
-    - keep `adc_fifo_push_valid=1` (or retry) until ready
+  - drive `adc_fifo_push_valid=1` with the next word
+  - if `adc_fifo_push_ready==1`, the FIFO accepts the word
+  - if `adc_fifo_push_ready==0` (full), the word is **dropped** (drop-on-full)
+  - increment `push_idx` every cycle (regardless of `push_ready`)
+
+**Back-to-back frames:** for v1 robustness, the shared helper `adc_frame_to_fifo.v` includes a **1-frame skid buffer** (it can accept one additional `frame_valid` while busy). If more frames arrive before it finishes pushing, it will assert `frame_dropped`.
 
 Normative behavior when FIFO becomes full mid-frame:
 - subsequent words are dropped by the FIFO’s drop-on-full policy
