@@ -177,8 +177,9 @@ These are the semantics firmware will rely on:
   - Does **not** clear thresholds or enable bits.
 
 - `EVT_CFG.CLEAR_HISTORY` (W1P):
-  - Clears per-channel timestamp history (and any overflow indicator, if implemented).
-  - Clears `EVT_LAST_TS*` fields.
+  - Clears per-channel timestamp history.
+  - Clears **global** `EVT_LAST_TS`.
+  - Clears per-channel `EVT_LAST_TS_CHx`.
   - Clears `EVT_LAST_DELTA_CHx` to 0.
 
 - Readbacks:
