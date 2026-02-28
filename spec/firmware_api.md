@@ -13,6 +13,75 @@ Source-of-truth for addresses/fields: `spec/regmap_v1.yaml` (and the human-reada
 - **Endianness**: byte lanes follow little-endian Wishbone convention.
 - **Writes must honor byte-enables** (`wbs_sel_i[3:0]`).
 
+## Reference C snippets (drop-in)
+
+These are **illustrative** and intended to make bring-up firmware less error-prone.
+They assume you have a memory-mapped Wishbone window (e.g. via Caravel house-keeping SPI loader or a CPU).
+
+```c
+#include <stdint.h>
+#include <stdbool.h>
+
+// Base of this block in your SoC address space.
+// (Project-specific: set this to your Wishbone bridge mapping.)
+#ifndef HICH_WB_BASE
+#define HICH_WB_BASE (0x00000000u)
+#endif
+
+static inline void wb_write32(uint32_t byte_addr, uint32_t data) {
+  volatile uint32_t *p = (volatile uint32_t *)(HICH_WB_BASE + byte_addr);
+  *p = data;
+}
+
+static inline uint32_t wb_read32(uint32_t byte_addr) {
+  volatile uint32_t *p = (volatile uint32_t *)(HICH_WB_BASE + byte_addr);
+  return *p;
+}
+
+// Addresses (byte addresses). Keep in sync with spec/regmap_v1.yaml.
+enum {
+  ADR_ID               = 0x00000000u,
+  ADR_VERSION          = 0x00000004u,
+  ADR_CTRL             = 0x00000100u,
+  ADR_TIME_NOW         = 0x0000010Cu,
+  ADR_ADC_CFG          = 0x00000200u,
+  ADR_ADC_CMD          = 0x00000204u,
+  ADR_ADC_FIFO_STATUS  = 0x00000208u,
+  ADR_ADC_FIFO_DATA    = 0x0000020Cu,
+  ADR_ADC_RAW_CH0      = 0x00000210u,
+  ADR_ADC_SNAPSHOT_CNT = 0x00000230u,
+  ADR_EVT_CFG          = 0x00000444u,
+  ADR_EVT_THRESH_CH0   = 0x00000480u,
+};
+
+// Bit helpers
+#define BIT(x) (1u << (x))
+
+// CTRL
+#define CTRL_ENABLE  BIT(0)
+#define CTRL_START   BIT(1)  // W1P
+
+// ADC_CMD
+#define ADC_CMD_SNAPSHOT BIT(0)  // W1P
+
+// ADC_FIFO_STATUS
+#define ADC_FIFO_LEVEL_MASK   (0xFFFFu)
+#define ADC_FIFO_OVERRUN_BIT  (16u)
+#define ADC_FIFO_OVERRUN      BIT(ADC_FIFO_OVERRUN_BIT) // W1C
+
+// EVT_CFG
+#define EVT_CFG_CLEAR_COUNTS  BIT(8)  // W1P
+#define EVT_CFG_CLEAR_HISTORY BIT(9)  // W1P
+
+static inline uint32_t adc_raw_addr(uint32_t ch) {
+  return ADR_ADC_RAW_CH0 + 4u * ch;
+}
+
+static inline uint32_t evt_thresh_addr(uint32_t ch) {
+  return ADR_EVT_THRESH_CH0 + 4u * ch;
+}
+```
+
 ### Read/modify/write recommendation
 
 When updating a multi-bit field in a RW register:
@@ -74,6 +143,29 @@ Timeout guidance:
 - On silicon: use a conservative loop with a software counter.
 
 ## ADC streaming FIFO mode (preferred)
+
+### Read one complete frame (9 words) helper
+
+```c
+typedef struct {
+  uint32_t status;
+  uint32_t ch[8];
+} adc_frame_t;
+
+// Returns true on success; false on timeout.
+static inline bool adc_read_frame(adc_frame_t *out, uint32_t timeout_iters) {
+  while (timeout_iters--) {
+    uint32_t st = wb_read32(ADR_ADC_FIFO_STATUS);
+    uint32_t level = st & ADC_FIFO_LEVEL_MASK;
+    if (level >= 9u) break;
+  }
+  if ((wb_read32(ADR_ADC_FIFO_STATUS) & ADC_FIFO_LEVEL_MASK) < 9u) return false;
+
+  out->status = wb_read32(ADR_ADC_FIFO_DATA);
+  for (uint32_t i = 0; i < 8u; i++) out->ch[i] = wb_read32(ADR_ADC_FIFO_DATA);
+  return true;
+}
+```
 
 Registers:
 - `ADC_FIFO_STATUS` @ `0x0000_0208`
