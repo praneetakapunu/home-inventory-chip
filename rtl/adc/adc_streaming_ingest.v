@@ -7,21 +7,29 @@
 //   other consumer) can drain ADC frames as a word stream.
 // - Keep the capture block generic (adc_spi_frame_capture) and keep FIFO logic
 //   generic (adc_stream_fifo). This module owns the sequencing needed to push
-//   an entire captured frame into the FIFO over multiple cycles.
+//   a captured frame into the FIFO over multiple cycles.
+//
+// v1 policy alignment (normative): docs/ADC_STREAM_CONTRACT.md
+// - Drop-on-full: if the FIFO is full, attempted pushes are dropped and the
+//   FIFO's sticky overrun flag asserts.
+// - Back-to-back frames: a 1-frame skid buffer is provided by adc_frame_to_fifo.
 //
 // Notes:
 // - This module does *not* interpret ADC words (no channel mapping). It simply
 //   forwards the captured 32-bit packed words in order: word0, word1, ...
-// - Backpressure: if the FIFO is full, pushing pauses until space is available.
-//   A frame may therefore take multiple cycles to drain into the FIFO.
-// - If the FIFO depth is smaller than WORDS_PER_FRAME, overrun is possible when
-//   firmware does not drain fast enough. The FIFO exposes a sticky overrun flag.
+// - This module exposes the FIFO level + sticky overrun flag so the regbank can
+//   implement ADC_FIFO_STATUS/ADC_FIFO_DATA semantics.
 //
 `default_nettype none
 
 module adc_streaming_ingest #(
     parameter int unsigned BITS_PER_WORD   = 24,
     parameter int unsigned WORDS_PER_FRAME = 9,
+
+    // If the on-wire frame contains extra words (e.g., ADS131M08 OUTPUT_CRC),
+    // set WORDS_OUT < WORDS_PER_FRAME to drop the tail.
+    parameter int unsigned WORDS_OUT       = WORDS_PER_FRAME,
+
     parameter int unsigned SCLK_DIV        = 4,
     parameter bit          CPOL            = 1'b0,
     parameter bit          CPHA            = 1'b1,
@@ -55,7 +63,7 @@ module adc_streaming_ingest #(
     // ---------------------------------------------------------------------
     // SPI framed capture
     // ---------------------------------------------------------------------
-    wire                          frame_valid;
+    wire                           frame_valid;
     wire [32*WORDS_PER_FRAME-1:0]  frame_words_packed;
 
     adc_spi_frame_capture #(
@@ -78,12 +86,39 @@ module adc_streaming_ingest #(
     );
 
     // ---------------------------------------------------------------------
-    // FIFO
+    // Frame -> FIFO push sequencer (drop-on-full)
     // ---------------------------------------------------------------------
+    wire        push_valid;
+    wire [31:0] push_data;
     wire        push_ready;
-    reg         push_valid;
-    reg  [31:0] push_data;
 
+    wire        push_seq_busy;
+    wire        frame_dropped;
+
+    // Synthesis-time guardrails.
+    initial begin
+        if (WORDS_OUT < 1) $fatal(1, "WORDS_OUT must be >= 1");
+        if (WORDS_OUT > WORDS_PER_FRAME) $fatal(1, "WORDS_OUT must be <= WORDS_PER_FRAME");
+    end
+
+    adc_frame_to_fifo #(
+        .WORDS_IN(WORDS_PER_FRAME),
+        .WORDS_OUT(WORDS_OUT)
+    ) u_frame_to_fifo (
+        .clk(clk),
+        .rst(rst),
+        .frame_valid(frame_valid),
+        .frame_words_packed(frame_words_packed),
+        .push_valid(push_valid),
+        .push_data(push_data),
+        .push_ready(push_ready),
+        .busy(push_seq_busy),
+        .frame_dropped(frame_dropped)
+    );
+
+    // ---------------------------------------------------------------------
+    // FIFO (drop-on-full via push_valid && !push_ready)
+    // ---------------------------------------------------------------------
     adc_stream_fifo #(
         .DEPTH_WORDS(FIFO_DEPTH_WORDS)
     ) u_fifo (
@@ -100,53 +135,12 @@ module adc_streaming_ingest #(
         .overrun_clear(fifo_overrun_clear)
     );
 
-    // ---------------------------------------------------------------------
-    // Push sequencer
-    // ---------------------------------------------------------------------
-    localparam int unsigned WORD_IDX_W = (WORDS_PER_FRAME < 2) ? 1 : $clog2(WORDS_PER_FRAME);
-
-    reg [32*WORDS_PER_FRAME-1:0] frame_hold;
-    reg [WORD_IDX_W-1:0]         word_idx;
-    reg                          have_frame;
-
-    wire [31:0] hold_word = frame_hold[32*word_idx +: 32];
-
-    always @(posedge clk) begin
-        if (rst) begin
-            frame_hold <= '0;
-            word_idx   <= '0;
-            have_frame <= 1'b0;
-            push_valid <= 1'b0;
-            push_data  <= 32'h0;
-        end else begin
-            // default
-            push_valid <= 1'b0;
-
-            // Latch a completed capture.
-            // If we're still draining a prior frame, we currently drop the new one.
-            // In v1, upstream should avoid starting a new capture until drained.
-            if (frame_valid && !have_frame) begin
-                frame_hold <= frame_words_packed;
-                word_idx   <= '0;
-                have_frame <= 1'b1;
-            end
-
-            // Drain the held frame into the FIFO, one word per cycle (when ready).
-            if (have_frame) begin
-                if (push_ready) begin
-                    push_valid <= 1'b1;
-                    push_data  <= hold_word;
-
-                    if (word_idx == WORDS_PER_FRAME-1) begin
-                        have_frame <= 1'b0;
-                        word_idx   <= '0;
-                    end else begin
-                        word_idx <= word_idx + {{(WORD_IDX_W-1){1'b0}},1'b1};
-                    end
-                end
-            end
-        end
-    end
+    // NOTE: frame_dropped indicates the push sequencer had to drop a whole frame
+    // because more than 1 back-to-back frame arrived while busy. For v1, the
+    // regbank may optionally OR this into an overrun condition.
+    // (We don't wire it here because overrun_sticky is owned by the FIFO.)
+    wire _unused_frame_dropped = frame_dropped;
+    wire _unused_push_seq_busy = push_seq_busy;
 
 endmodule
 
