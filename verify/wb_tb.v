@@ -437,10 +437,28 @@ module wb_tb;
         // -----------------------------------------------------------------
         // Events: config path + counter/timestamp behavior via ADC snapshot stub
         // -----------------------------------------------------------------
-        // Program a low threshold so each snapshot "hits".
-        wb_write32(ADR_EVT_THRESH_CH0, 32'h0000_0000);
+        // -----------------------------------------------------------------
+        // Events: config path + counter/timestamp behavior
+        // -----------------------------------------------------------------
+        // IMPORTANT: this test intentionally does *not* depend on the ADC stub
+        // SNAPSHOT sample source.
+        //
+        // Rationale: we want these event-detector semantics tests to remain
+        // valid when the RTL wiring switches from SNAPSHOT-stub samples to the
+        // real ADC frame stream.
+        //
+        // Approach:
+        // - Under `SIM, force the DV-only override wires in home_inventory_wb
+        //   to inject a known sample stream.
+        // - In non-SIM builds, fall back to the SNAPSHOT-stub behavior.
 
-        // Enable only CH0.
+`ifdef SIM
+        // Clean slate.
+        wb_write32_sel(ADR_EVT_CFG, 32'h0000_0100, 4'b0010); // CLEAR_COUNTS
+        wb_write32_sel(ADR_EVT_CFG, 32'h0000_0200, 4'b0010); // CLEAR_HISTORY
+
+        // Program threshold and enable only CH0.
+        wb_write32(ADR_EVT_THRESH_CH0, 32'd100);
         wb_write32(ADR_EVT_CFG, 32'h0000_0001);
         wb_read32(ADR_EVT_CFG, rdata);
         if (rdata[7:0] !== 8'h01) begin
@@ -448,11 +466,120 @@ module wb_tb;
             $fatal(1);
         end
 
-        // Take a reference TIME_NOW so timestamp expectations stay stable
-        // even if earlier parts of this test took extra cycles.
+        // Enable override and drive all channels.
+        force dut.sim_evt_override_en = 1'b1;
+        force dut.sim_evt_sample_ch1  = 32'd0;
+        force dut.sim_evt_sample_ch2  = 32'd0;
+        force dut.sim_evt_sample_ch3  = 32'd0;
+        force dut.sim_evt_sample_ch4  = 32'd0;
+        force dut.sim_evt_sample_ch5  = 32'd0;
+        force dut.sim_evt_sample_ch6  = 32'd0;
+        force dut.sim_evt_sample_ch7  = 32'd0;
+
+        // Take a reference TIME_NOW so timestamp expectations stay stable.
         wb_read32(ADR_TIME_NOW, base_sc);
 
-        // First snapshot after enable: count increments, delta must be 0, timestamps update.
+        // Below threshold: no event.
+        force dut.sim_evt_sample_ch0  = 32'd50;
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b1;
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b0;
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 below-threshold should stay 0: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // First above-threshold sample: count increments, delta must be 0.
+        force dut.sim_evt_sample_ch0 = 32'd150;
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b1;
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b0;
+
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd1) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 after first event: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after first event should be 0: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_TS_CH0, ts1);
+        if (ts1 < base_sc) begin
+            $display("[tb] ERROR: EVT_LAST_TS_CH0 moved backwards: got 0x%08x base 0x%08x", ts1, base_sc);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_TS, rdata);
+        if (rdata !== ts1) begin
+            $display("[tb] ERROR: EVT_LAST_TS after first event: got 0x%08x exp 0x%08x", rdata, ts1);
+            $fatal(1);
+        end
+
+        // Second above-threshold sample: delta should match TIME_NOW difference.
+        wb_read32(ADR_TIME_NOW, base_sc);
+        repeat (3) @(negedge clk);
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b1;
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b0;
+
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd2) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 after second event: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_TS_CH0, ts2);
+        if (ts2 <= ts1) begin
+            $display("[tb] ERROR: EVT_LAST_TS_CH0 not monotonic: ts1=0x%08x ts2=0x%08x", ts1, ts2);
+            $fatal(1);
+        end
+        if (ts2 < base_sc) begin
+            $display("[tb] ERROR: EVT_LAST_TS_CH0 before event base: ts2=0x%08x base=0x%08x", ts2, base_sc);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
+        if (rdata !== (ts2 - ts1)) begin
+            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 mismatch: got 0x%08x exp 0x%08x", rdata, (ts2 - ts1));
+            $fatal(1);
+        end
+
+        // Disable then re-enable: next event should reset delta to 0 again.
+        wb_write32(ADR_EVT_CFG, 32'h0000_0000);
+        wb_write32(ADR_EVT_CFG, 32'h0000_0001);
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b1;
+        @(negedge clk); force dut.sim_evt_sample_valid = 1'b0;
+
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd3) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 after re-enable event: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after re-enable should be 0: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_TS_CH0, ts3);
+        if (ts3 <= ts2) begin
+            $display("[tb] ERROR: EVT_LAST_TS_CH0 after re-enable not monotonic: ts2=0x%08x ts3=0x%08x", ts2, ts3);
+            $fatal(1);
+        end
+
+        // Release forced wires before continuing.
+        release dut.sim_evt_sample_valid;
+        release dut.sim_evt_override_en;
+        release dut.sim_evt_sample_ch0;
+        release dut.sim_evt_sample_ch1;
+        release dut.sim_evt_sample_ch2;
+        release dut.sim_evt_sample_ch3;
+        release dut.sim_evt_sample_ch4;
+        release dut.sim_evt_sample_ch5;
+        release dut.sim_evt_sample_ch6;
+        release dut.sim_evt_sample_ch7;
+`else
+        // Non-SIM fallback: drive events via ADC snapshot stub.
+        wb_write32(ADR_EVT_THRESH_CH0, 32'h0000_0000);
+        wb_write32(ADR_EVT_CFG, 32'h0000_0001);
+        wb_read32(ADR_TIME_NOW, base_sc);
+
         wb_write32(ADR_ADC_CMD, 32'h0000_0001);
         wb_read32(ADR_EVT_COUNT_CH0, rdata);
         if (rdata !== 32'd1) begin
@@ -469,58 +596,16 @@ module wb_tb;
             $display("[tb] ERROR: EVT_LAST_TS_CH0 moved backwards: got 0x%08x base 0x%08x", ts1, base_sc);
             $fatal(1);
         end
-        wb_read32(ADR_EVT_LAST_TS, rdata);
-        if (rdata !== ts1) begin
-            $display("[tb] ERROR: EVT_LAST_TS after first snapshot: got 0x%08x exp 0x%08x", rdata, ts1);
-            $fatal(1);
-        end
 
-        // Second snapshot: delta should match the TIME_NOW difference.
         wb_read32(ADR_TIME_NOW, base_sc);
         wb_write32(ADR_ADC_CMD, 32'h0000_0001);
-        wb_read32(ADR_EVT_COUNT_CH0, rdata);
-        if (rdata !== 32'd2) begin
-            $display("[tb] ERROR: EVT_COUNT_CH0 after second snapshot: got 0x%08x", rdata);
-            $fatal(1);
-        end
         wb_read32(ADR_EVT_LAST_TS_CH0, ts2);
-        if (ts2 <= ts1) begin
-            $display("[tb] ERROR: EVT_LAST_TS_CH0 not monotonic: ts1=0x%08x ts2=0x%08x", ts1, ts2);
-            $fatal(1);
-        end
-        if (ts2 < base_sc) begin
-            $display("[tb] ERROR: EVT_LAST_TS_CH0 before snapshot base: ts2=0x%08x base=0x%08x", ts2, base_sc);
-            $fatal(1);
-        end
         wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
-        if (rdata == 32'd0) begin
-            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after second snapshot should be >0: got 0x%08x", rdata);
-            $fatal(1);
-        end
         if (rdata !== (ts2 - ts1)) begin
             $display("[tb] ERROR: EVT_LAST_DELTA_CH0 mismatch: got 0x%08x exp 0x%08x", rdata, (ts2 - ts1));
             $fatal(1);
         end
-
-        // Disable then re-enable: next event should reset delta to 0 again.
-        wb_write32(ADR_EVT_CFG, 32'h0000_0000);
-        wb_write32(ADR_EVT_CFG,  32'h0000_0001);
-        wb_write32(ADR_ADC_CMD,  32'h0000_0001);
-        wb_read32(ADR_EVT_COUNT_CH0, rdata);
-        if (rdata !== 32'd3) begin
-            $display("[tb] ERROR: EVT_COUNT_CH0 after re-enable snapshot: got 0x%08x", rdata);
-            $fatal(1);
-        end
-        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
-        if (rdata !== 32'd0) begin
-            $display("[tb] ERROR: EVT_LAST_DELTA_CH0 after re-enable should be 0: got 0x%08x", rdata);
-            $fatal(1);
-        end
-        wb_read32(ADR_EVT_LAST_TS_CH0, ts3);
-        if (ts3 <= ts2) begin
-            $display("[tb] ERROR: EVT_LAST_TS_CH0 after re-enable not monotonic: ts2=0x%08x ts3=0x%08x", ts2, ts3);
-            $fatal(1);
-        end
+`endif
 
         // -----------------------------------------------------------------
         // EVT_CFG clear controls (byte-lane masked W1P)
@@ -567,67 +652,6 @@ module wb_tb;
             $fatal(1);
         end
 
-`ifdef SIM
-        // -----------------------------------------------------------------
-        // Events: SIM override smoke
-        // -----------------------------------------------------------------
-        // Purpose: prove the DV-only override path works so future wiring can
-        // switch the event detector to real ADC frames without breaking tests.
-        //
-        // We force the internal SIM wires (declared in home_inventory_wb under
-        // `ifdef SIM) to inject a known sample stream.
-
-        // Clean slate.
-        wb_write32_sel(ADR_EVT_CFG, 32'h0000_0100, 4'b0010); // CLEAR_COUNTS
-        wb_write32_sel(ADR_EVT_CFG, 32'h0000_0200, 4'b0010); // CLEAR_HISTORY
-
-        // Enable only CH0 and set threshold to 100.
-        wb_write32(ADR_EVT_THRESH_CH0, 32'd100);
-        wb_write32(ADR_EVT_CFG, 32'h0000_0001);
-
-        // Turn on override + drive all channels.
-        force dut.sim_evt_override_en = 1'b1;
-        force dut.sim_evt_sample_ch0  = 32'd50;
-        force dut.sim_evt_sample_ch1  = 32'd0;
-        force dut.sim_evt_sample_ch2  = 32'd0;
-        force dut.sim_evt_sample_ch3  = 32'd0;
-        force dut.sim_evt_sample_ch4  = 32'd0;
-        force dut.sim_evt_sample_ch5  = 32'd0;
-        force dut.sim_evt_sample_ch6  = 32'd0;
-        force dut.sim_evt_sample_ch7  = 32'd0;
-
-        // Below threshold: no event.
-        @(negedge clk); force dut.sim_evt_sample_valid = 1'b1;
-        @(negedge clk); force dut.sim_evt_sample_valid = 1'b0;
-        wb_read32(ADR_EVT_COUNT_CH0, rdata);
-        if (rdata !== 32'd0) begin
-            $display("[tb] ERROR: SIM override below-threshold should not increment: got 0x%08x", rdata);
-            $fatal(1);
-        end
-
-        // Above threshold: event increments.
-        force dut.sim_evt_sample_ch0 = 32'd150;
-        @(negedge clk); force dut.sim_evt_sample_valid = 1'b1;
-        @(negedge clk); force dut.sim_evt_sample_valid = 1'b0;
-        wb_read32(ADR_EVT_COUNT_CH0, rdata);
-        if (rdata !== 32'd1) begin
-            $display("[tb] ERROR: SIM override above-threshold should increment to 1: got 0x%08x", rdata);
-            $fatal(1);
-        end
-
-        // Release forced wires so the rest of the TB is not affected.
-        release dut.sim_evt_sample_valid;
-        release dut.sim_evt_override_en;
-        release dut.sim_evt_sample_ch0;
-        release dut.sim_evt_sample_ch1;
-        release dut.sim_evt_sample_ch2;
-        release dut.sim_evt_sample_ch3;
-        release dut.sim_evt_sample_ch4;
-        release dut.sim_evt_sample_ch5;
-        release dut.sim_evt_sample_ch6;
-        release dut.sim_evt_sample_ch7;
-`endif
-
         // -----------------------------------------------------------------
         // RO regs must ignore writes (events are RO)
         // -----------------------------------------------------------------
@@ -639,12 +663,10 @@ module wb_tb;
                 $fatal(1);
             end
         end
-        // CH0 already incremented above; confirm write still didn't clobber it.
-        // Note: if SIM override smoke ran, we intentionally cleared counts and
-        // re-incremented to 1.
+        // CH0 should still be nonzero; confirm write didn't clobber it.
         wb_read32(ADR_EVT_COUNT_CH0, rdata);
-        if (rdata !== 32'd1) begin
-            $display("[tb] ERROR: EVT_COUNT_CH0 should ignore writes (preserve count=1): got 0x%08x", rdata);
+        if (rdata == 32'd0) begin
+            $display("[tb] ERROR: EVT_COUNT_CH0 should ignore writes (preserve nonzero count): got 0x%08x", rdata);
             $fatal(1);
         end
 
