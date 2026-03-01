@@ -47,11 +47,14 @@ INGEST_OUT := adc_streaming_ingest_tb.out
 OVERRUN_TB  := adc_stream_overrun_tb.v
 OVERRUN_OUT := adc_stream_overrun_tb.out
 
-.PHONY: all sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
+UNPACK_TB  := adc_soc_frame_unpack_tb.v
+UNPACK_OUT := adc_soc_frame_unpack_tb.out
+
+.PHONY: all sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
 # One command to run the whole smoke suite (what humans should run locally).
-all: regmap-check regmap-gen-check sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim
+all: regmap-check regmap-gen-check sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim
 
 sim: $(OUT)
 	$(VVP) $(OUT)
@@ -82,6 +85,9 @@ ingest-sim: $(INGEST_OUT)
 
 overrun-sim: $(OVERRUN_OUT)
 	$(VVP) $(OVERRUN_OUT)
+
+unpack-sim: $(UNPACK_OUT)
+	$(VVP) $(UNPACK_OUT)
 
 # Pure-Python consistency check (no Verilog simulator required).
 regmap-check:
@@ -179,5 +185,8 @@ $(INGEST_OUT): $(INGEST_TB) \
 $(OVERRUN_OUT): $(OVERRUN_TB) $(RTL_DIR)/adc/adc_frame_to_fifo.v $(RTL_DIR)/adc/adc_stream_fifo.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
+$(UNPACK_OUT): $(UNPACK_TB) $(RTL_DIR)/adc/adc_soc_frame_unpack.v
+	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+
 clean:
-	rm -f $(OUT) $(TOP_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT) $(PIPE_OUT) $(INGEST_OUT) $(OVERRUN_OUT)
+	rm -f $(OUT) $(TOP_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT) $(PIPE_OUT) $(INGEST_OUT) $(OVERRUN_OUT) $(UNPACK_OUT)

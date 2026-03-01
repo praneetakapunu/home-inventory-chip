@@ -57,6 +57,14 @@ Define a single internal strobe:
 Define 8 sample wires:
 - `adc_frame_ch0..adc_frame_ch7` : **32-bit sign-extended** samples derived from the ADS131M08 24-bit channel words.
 
+**Recommended helper (to prevent off-by-one wiring bugs):**
+- Use `rtl/adc/adc_soc_frame_unpack.v` to unpack `frame_words_packed` into:
+  - `status_word` (word0)
+  - `ch0..ch7` (word1..8, sign-extended to 32b per `BITS_PER_WORD`)
+- This keeps the “STATUS + CH0..CH7” indexing rule identical between:
+  - FIFO streaming (docs/ADC_STREAM_CONTRACT.md)
+  - Event detector integration (this doc)
+
 **Exact mapping (ADS131M08 framing assumption, v1):**
 - Wire-level ADS131M08 frames are 10 words (last word = OUTPUT_CRC).
   For v1, we **drop OUTPUT_CRC** and treat the internal "frame" as 9 words: STATUS + CH0..CH7.
