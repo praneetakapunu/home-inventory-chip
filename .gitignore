@@ -10,3 +10,7 @@ private/
 
 # Local secrets / creds (keep out of git)
 **/*_creds.json
+
+# Python cache
+**/__pycache__/
+**/*.pyc
