@@ -1,4 +1,3 @@
-// home_inventory_regmap.h
 //
 // AUTO-GENERATED FILE. DO NOT EDIT BY HAND.
 // Generated from: spec/regmap_v1.yaml

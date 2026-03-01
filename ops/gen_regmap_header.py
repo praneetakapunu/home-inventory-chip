@@ -51,7 +51,7 @@ def _collect_registers(spec: Dict[str, Any]) -> List[Tuple[str, int, Dict[str, A
     return out
 
 
-def _emit(spec_path: Path, out_name: str, spec: Dict[str, Any]) -> str:
+def _emit(spec_path: Path, spec: Dict[str, Any]) -> str:
     regs = _collect_registers(spec)
     regs_sorted = sorted(regs, key=lambda t: t[1])
 
@@ -63,7 +63,6 @@ def _emit(spec_path: Path, out_name: str, spec: Dict[str, Any]) -> str:
     gen_from = "spec/regmap_v1.yaml" if spec_path.name == "regmap_v1.yaml" else spec_path.as_posix()
 
     lines += [
-        f"// {out_name}",
         "//",
         "// AUTO-GENERATED FILE. DO NOT EDIT BY HAND.",
         f"// Generated from: {gen_from}",
@@ -155,7 +154,7 @@ def main() -> int:
     if spec.get("bus", {}).get("type") != "wishbone":
         raise SystemExit("Only wishbone bus supported by this generator")
 
-    text = _emit(spec_path, out_path.name, spec)
+    text = _emit(spec_path, spec)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(text + "\n", encoding="utf-8")
     return 0
