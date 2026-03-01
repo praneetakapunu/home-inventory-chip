@@ -38,6 +38,9 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
   - [ ] Wishbone: byte-enable policy (supported vs explicitly ignored)
   - [ ] ADC DRDY sync: edge pulse behavior is correct + no double-pulses
   - [ ] FIFO: push/pop, level reporting, overrun sticky
+  - [ ] ADC streaming contract (see `docs/ADC_STREAM_CONTRACT.md`):
+    - [ ] One capture produces **9 FIFO words** (STATUS + CH0..CH7) in-order
+    - [ ] Overrun behavior matches v1 policy (16-depth FIFO, drop-on-full, sticky OVERRUN W1C)
 - [ ] Regmap consistency gate is green (`make -C verify regmap-check`)
 - [ ] Known limitations listed in `docs/KNOWN_LIMITATIONS.md` (and match reality)
 
