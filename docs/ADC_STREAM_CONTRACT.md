@@ -48,9 +48,32 @@ For ADS131M08 bring-up we assume 24-bit samples.
 
 (Formatting details: `spec/fixed_point.md`.)
 
+## Recommended integration wrapper (`adc_streaming_ingest`)
+
+Module: `rtl/adc/adc_streaming_ingest.v`
+
+For v1, the preferred wiring is to instantiate **one** glue block that already bundles:
+- `adc_spi_frame_capture` (SPI framed capture)
+- `adc_frame_to_fifo` (push sequencer + 1-frame skid buffer)
+- `adc_stream_fifo` (word FIFO with sticky overrun)
+
+This reduces wiring drift in `home_inventory_wb.v` and makes DV/FW tests more deterministic.
+
+**ADS131M08 suggested parameters (v1):**
+- `BITS_PER_WORD = 32` (MODE.WLENGTH=32b sign-extend)
+- `WORDS_PER_FRAME = 10` (STATUS + CH0..CH7 + OUTPUT_CRC)
+- `WORDS_OUT = 9` (drop OUTPUT_CRC)
+- `FIFO_DEPTH_WORDS = 16` (firmware-visible depth defined in this contract)
+
+The regbank then only needs to map:
+- `pop_valid/pop_data/pop_ready` ↔ `ADC_FIFO_DATA` reads
+- `fifo_level_words` + `fifo_overrun_sticky` + `fifo_overrun_clear` ↔ `ADC_FIFO_STATUS`
+
 ## Capture block interface (`adc_spi_frame_capture`)
 
 Module: `rtl/adc/adc_spi_frame_capture.v`
+
+If you choose not to use `adc_streaming_ingest`, the contract below still applies.
 
 For ADS131M08 bring-up, instantiate this block with:
 - `BITS_PER_WORD = 32` (MODE.WLENGTH=32b sign-extend)
