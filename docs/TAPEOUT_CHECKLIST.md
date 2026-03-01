@@ -5,6 +5,7 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 > Scope: OpenMPW (Caravel user project) submission with the **home-inventory** user project IP.
 
 ## 0) Decisions locked (pre-freeze)
+- [ ] Target OpenMPW shuttle + **submission cutoff date** chosen and recorded (`docs/DASHBOARD.md`, `docs/TIMELINE.md`)
 - [ ] Top-level intent and boundaries clear (what v1 does / does not do)
 - [ ] External ADC part locked (done: ADS131M08)
 - [ ] SPI framing assumptions documented (DRDY, words-per-frame, CRC policy)
