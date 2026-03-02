@@ -128,6 +128,11 @@ blocks:
             access: w1c
             reset: null
             desc: Sticky FIFO overrun (FIFO full when a new word arrived). Write 1 to clear.
+          - name: CAPTURE_BUSY
+            bits: [17, 17]
+            access: ro
+            reset: null
+            desc: 1 when the real ADC ingest block is actively capturing a frame. 0 in stub mode.
 
       - name: ADC_FIFO_DATA
         offset: 0x00C

@@ -101,7 +101,8 @@ Each channel word is a sign-extended 32-bit value with the **native ADC sample w
 |---:|---|---|
 | 15:0 | `LEVEL_WORDS` | Current FIFO fill level in 32-bit words. |
 | 16 | `OVERRUN` | Sticky FIFO overrun. Write 1 to clear (W1C; byte-lane masked via `wbs_sel_i`). |
-| 31:17 | — | Reserved (read as 0). |
+| 17 | `CAPTURE_BUSY` | 1 when the *real* ADC ingest block is actively capturing a frame. In the bring-up stub path, this always reads 0. |
+| 31:18 | — | Reserved (read as 0). |
 
 ## 0x0000_0300 — Calibration
 

@@ -114,6 +114,8 @@ package home_inventory_regmap_pkg;
   localparam logic [31:0] HOMEINV_ADC_FIFO_STATUS_LEVEL_WORDS_MASK = 32'h0000FFFF;
   localparam int unsigned HOMEINV_ADC_FIFO_STATUS_OVERRUN_BIT = 16;
   localparam logic [31:0] HOMEINV_ADC_FIFO_STATUS_OVERRUN_MASK = (32'h1 << HOMEINV_ADC_FIFO_STATUS_OVERRUN_BIT);
+  localparam int unsigned HOMEINV_ADC_FIFO_STATUS_CAPTURE_BUSY_BIT = 17;
+  localparam logic [31:0] HOMEINV_ADC_FIFO_STATUS_CAPTURE_BUSY_MASK = (32'h1 << HOMEINV_ADC_FIFO_STATUS_CAPTURE_BUSY_BIT);
 
   // EVT_CFG fields
   localparam int unsigned HOMEINV_EVT_CFG_EVT_EN_LSB  = 0;

@@ -138,9 +138,9 @@ module home_inventory_wb (
     // owns the capture + internal FIFO. Firmware sees the *same* regmap-level
     // ADC_FIFO_STATUS/ADC_FIFO_DATA behavior.
 
-`ifdef USE_REAL_ADC_INGEST
-    wire adc_capture_busy;
+wire adc_capture_busy;
 
+`ifdef USE_REAL_ADC_INGEST
     adc_streaming_ingest #(
         .FIFO_DEPTH_WORDS(ADC_FIFO_DEPTH)
     ) u_adc_ingest (
@@ -185,6 +185,8 @@ module home_inventory_wb (
         .overrun_sticky(adc_fifo_overrun_sticky),
         .overrun_clear(adc_fifo_overrun_clear)
     );
+
+    assign adc_capture_busy = 1'b0;
 `endif
 
     // Align address to 32-bit word boundary for decode.
@@ -408,7 +410,7 @@ module home_inventory_wb (
             // ADC
             ADR_ADC_CFG:        rd_data = {28'h0, r_adc_num_ch};
             ADR_ADC_CMD:        rd_data = 32'h0; // write-only pulse bits
-            ADR_ADC_FIFO_STATUS: rd_data = {15'h0, adc_fifo_overrun_sticky, {{(16-ADC_FIFO_LEVEL_W){1'b0}}, adc_fifo_level_words}};
+            ADR_ADC_FIFO_STATUS: rd_data = {14'h0, adc_capture_busy, adc_fifo_overrun_sticky, {{(16-ADC_FIFO_LEVEL_W){1'b0}}, adc_fifo_level_words}};
             ADR_ADC_FIFO_DATA:   rd_data = adc_fifo_pop_valid ? adc_fifo_pop_data : 32'h0;
             ADR_ADC_RAW_CH0:    rd_data = r_adc_raw[0];
             ADR_ADC_RAW_CH1:    rd_data = r_adc_raw[1];
