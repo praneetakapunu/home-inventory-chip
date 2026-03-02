@@ -213,12 +213,77 @@ Because W1C respects byte enables, firmware should **avoid partial-lane writes**
 
 ## Event detector
 
-Registers (selected):
-- `EVT_CFG` @ `0x0000_0444` bit[7:0] `EVT_EN`
-- `EVT_THRESH_CHx` @ `0x0000_0480 + 4*x`
+This block is intended to let firmware cheaply detect “interesting” activity (threshold compares) without streaming every sample.
+Normative register semantics: `docs/EVENT_DETECTOR_SPEC.md` + `spec/regmap_v1.yaml`.
 
-Enable rule:
+Registers (selected):
+- `EVT_CFG` @ `0x0000_0444`
+  - bit[7:0] `EVT_EN` (RW)
+  - bit8 `CLEAR_COUNTS` (W1P)
+  - bit9 `CLEAR_HISTORY` (W1P)
+- `EVT_COUNT_CHx` @ `0x0000_0400 + 4*x` (RO)
+- `EVT_LAST_DELTA_CHx` @ `0x0000_0420 + 4*x` (RO)
+- `EVT_LAST_TS` @ `0x0000_0440` (RO)
+- `EVT_LAST_TS_CHx` @ `0x0000_0448 + 4*x` (RO)
+- `EVT_THRESH_CHx` @ `0x0000_0480 + 4*x` (RW)
+
+### Enable/clear rules (v1)
+
 - Transition `EVT_EN[x]` from 0→1 clears that channel’s timestamp history; the first event after enabling will report `EVT_LAST_DELTA_CHx = 0`.
+- `CLEAR_COUNTS` clears all `EVT_COUNT_CH0..7` (timestamps unaffected).
+- `CLEAR_HISTORY` clears `EVT_LAST_TS`, `EVT_LAST_TS_CHx`, and `EVT_LAST_DELTA_CHx` (counts unaffected).
+
+### Reference C snippet: configure + poll
+
+```c
+static inline uint32_t evt_count_addr(uint32_t ch) {
+  return 0x00000400u + 4u * ch;
+}
+static inline uint32_t evt_last_delta_addr(uint32_t ch) {
+  return 0x00000420u + 4u * ch;
+}
+static inline uint32_t evt_last_ts_ch_addr(uint32_t ch) {
+  return 0x00000448u + 4u * ch;
+}
+
+// Configure a simple per-channel threshold and enable mask.
+static inline void evt_configure(uint32_t en_mask, const int32_t thresh[8]) {
+  // Program thresholds first so the enable-edge doesn’t immediately “detect” against a stale default.
+  for (uint32_t ch = 0; ch < 8u; ch++) {
+    wb_write32(evt_thresh_addr(ch), (uint32_t)thresh[ch]);
+  }
+
+  // Optional: clear prior state (if reconfiguring live).
+  wb_write32(ADR_EVT_CFG, EVT_CFG_CLEAR_COUNTS | EVT_CFG_CLEAR_HISTORY);
+
+  // Enable selected channels (0→1 edges clear history per-channel).
+  wb_write32(ADR_EVT_CFG, (en_mask & 0xFFu));
+}
+
+// Example “poll”: detect if any channel saw an event since last time.
+// (In v1 there is no IRQ; firmware can poll counts or timestamps.)
+static inline bool evt_any_fired(uint32_t prev_count[8], uint32_t *fired_ch_mask) {
+  uint32_t mask = 0;
+  for (uint32_t ch = 0; ch < 8u; ch++) {
+    uint32_t c = wb_read32(evt_count_addr(ch));
+    if (c != prev_count[ch]) {
+      prev_count[ch] = c;
+      mask |= BIT(ch);
+    }
+  }
+  if (fired_ch_mask) *fired_ch_mask = mask;
+  return (mask != 0);
+}
+
+// When a channel fires, firmware can read:
+// - EVT_LAST_DELTA_CHx: how long since last event on that channel (sample ticks)
+// - EVT_LAST_TS_CHx: timestamp of last event on that channel
+// - EVT_LAST_TS: timestamp of most recent event (any channel)
+```
+
+Notes:
+- Prefer writing thresholds *before* setting `EVT_EN` to avoid a spurious “immediate detect” against reset threshold values.
+- In v1, event semantics are level-compare (`sample >= threshold`), so if the signal stays above threshold, firmware may see counts increment every sample tick. If we need edge/crossing semantics later, we should add an `EVT_MODE` register (without moving existing addresses).
 
 ## Reserved bits and unknown addresses
 
