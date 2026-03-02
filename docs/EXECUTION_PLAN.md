@@ -64,7 +64,7 @@ Pick *one* of these and land it as a small, reviewable commit:
        - Harness: RTL compile-check passes after wiring
 
 ## Blockers (must be explicit)
-- None.
+- **Cannot push to GitHub from this environment right now**: `git push` fails with `Could not resolve host: github.com` (DNS/network issue). Local commit exists: `6741476`.
 
 ## Notes / setup
 - DV toolchain notes: `docs/SIM_TOOLCHAIN.md`
