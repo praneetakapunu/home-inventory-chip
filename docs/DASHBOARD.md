@@ -32,18 +32,11 @@ Baseline dates: see `docs/TIMELINE.md` (baseline start 2026-02-25).
 ## Target OpenMPW shuttle (lock record)
 **Status:** TBD
 
-When Praneet picks the shuttle, lock the fields below (copy/paste from the official source link).
-
-- Program / foundry / PDK:
-- Shuttle name/number:
-- Submission cutoff (date + time + timezone):
-- Precheck deadline (if different):
-- Expected silicon delivery window:
-- Source link (official schedule/announcement):
+Single source-of-truth for the shuttle choice: `docs/SHUTTLE_LOCK_RECORD.md`
 
 Shuttle-pick checklist: `docs/SHUTTLE_SELECTION.md`
 
-Once chosen, **treat the cutoff as a fixed constraint** and mirror the dates into `docs/TIMELINE.md` + `docs/TAPEOUT_CHECKLIST.md`.
+Once chosen, **treat the cutoff as a fixed constraint** and re-baseline `docs/TIMELINE.md` + `docs/TAPEOUT_CHECKLIST.md` accordingly.
 
 High level:
 1) Spec/acceptance frozen (v1)

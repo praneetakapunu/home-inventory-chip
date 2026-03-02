@@ -15,11 +15,7 @@ This is a *working* schedule. If we drift by >3 days on any milestone, we should
   - shuttle lock record filled in `docs/DASHBOARD.md` (name + cutoff + source link)
   - `docs/TAPEOUT_CHECKLIST.md` updated if any shuttle-specific constraints exist
 
-Locked fields (copy from official source):
-- Shuttle name/number:
-- Submission cutoff (date + time + timezone):
-- Precheck deadline (if different):
-- Source link:
+Locked fields live in: `docs/SHUTTLE_LOCK_RECORD.md` (single source)
 
 ### M0 — v1 freeze tag (spec/regmap/tests stable)
 - Target: **2026-03-01** (baseline)
