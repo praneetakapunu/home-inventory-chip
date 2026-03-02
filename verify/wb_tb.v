@@ -274,10 +274,29 @@ module wb_tb;
             $display("[tb] ERROR: ADC_CFG reset mismatch: got 0x%08x", rdata);
             $fatal(1);
         end
-        wb_write32(ADR_ADC_CFG, 32'h0000_0004); // NUM_CH=4
+
+        // Reserved-bit masking: only NUM_CH[3:0] is writable in v1.
+        wb_write32(ADR_ADC_CFG, 32'hFFFF_FFFF);
         wb_read32(ADR_ADC_CFG, rdata);
-        if (rdata[3:0] !== 4'h4) begin
+        if (rdata !== 32'h0000_000F) begin
+            $display("[tb] ERROR: ADC_CFG reserved-bit mask mismatch: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Program a sane value (NUM_CH=4).
+        wb_write32(ADR_ADC_CFG, 32'h0000_0004);
+        wb_read32(ADR_ADC_CFG, rdata);
+        if (rdata !== 32'h0000_0004) begin
             $display("[tb] ERROR: ADC_CFG NUM_CH mismatch: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Byte strobe must not allow reserved bits to leak in.
+        // Try to set upper byte to 0xAA (reserved) while keeping NUM_CH=4.
+        wb_write32_sel(ADR_ADC_CFG, 32'hAA00_0000, 4'b1000);
+        wb_read32(ADR_ADC_CFG, rdata);
+        if (rdata !== 32'h0000_0004) begin
+            $display("[tb] ERROR: ADC_CFG reserved-bit strobe mask mismatch: got 0x%08x", rdata);
             $fatal(1);
         end
 
