@@ -30,6 +30,7 @@ These are the things we can run repeatedly without needing a full OpenLane setup
 Baseline dates: see `docs/TIMELINE.md` (baseline start 2026-02-25).
 
 **Target OpenMPW shuttle (TBD):** _Praneet to pick shuttle name + submission cutoff._
+- Shuttle-pick checklist: `docs/SHUTTLE_SELECTION.md`
 - Once chosen, record it here + in `docs/TIMELINE.md`, and treat that cutoff as the fixed constraint.
 
 High level:

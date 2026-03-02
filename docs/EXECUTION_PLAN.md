@@ -7,13 +7,12 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 
 ## Next 2 hours (progress-tick target)
 Pick *one* of these and land it as a small, reviewable commit:
-1) **Event detector integration wiring plan** ✅ (see `docs/EVENT_DETECTOR_INTEGRATION_PLAN.md`)
-   - Specify exact signal sources (sample stream(s) + timestamp source)
-   - Specify which registers expose enable/clear/threshold semantics
-   - Add a “done when” checklist item so we can close it.
-2) **ADC streaming end-to-end wiring plan** ✅ (see `docs/ADC_STREAM_CONTRACT.md`)
-   - Specify the signal contract between `adc_spi_frame_capture` → `adc_stream_fifo` → regbank pop
-   - Define a minimal acceptance smoke (DV + FW) for “we can capture one frame and drain it”.
+1) **Shuttle selection rubric + lock fields** ✅ (see `docs/SHUTTLE_SELECTION.md`)
+   - Document the exact fields we must lock (shuttle name, cutoff date/time/tz, source link)
+   - Add a simple rubric so we can pick an aggressive-but-realistic shuttle.
+2) **ADC streaming end-to-end wiring (RTL)**
+   - Wire real `adc_streaming_ingest` path into `home_inventory_wb` behind a build flag.
+   - Keep SNAPSHOT stub path for bring-up until the real ADC pins are available in the harness.
 
 ## Next 48 hours (Madhuri)
 1) Submission mechanics: keep harness repo integrated and green on **low-disk** checks
