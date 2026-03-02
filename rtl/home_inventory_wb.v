@@ -31,6 +31,15 @@ module home_inventory_wb (
     output wire        ctrl_enable,
     output wire        ctrl_start,
     output wire [2:0]  irq_en
+
+`ifdef USE_REAL_ADC_INGEST
+    ,
+    // Real ADC SPI pins (only present when USE_REAL_ADC_INGEST is defined).
+    output wire        adc_sclk,
+    output wire        adc_cs_n,
+    output wire        adc_mosi,
+    input  wire        adc_miso
+`endif
 );
 
     // ---------------------------------------------------------------------
@@ -123,7 +132,41 @@ module home_inventory_wb (
     // ---------------------------------------------------------------------
     // ADC FIFO implementation
     // ---------------------------------------------------------------------
+    // Default (no defines): local FIFO populated by the stub SNAPSHOT path.
+    //
+    // If USE_REAL_ADC_INGEST is defined, we swap in adc_streaming_ingest, which
+    // owns the capture + internal FIFO. Firmware sees the *same* regmap-level
+    // ADC_FIFO_STATUS/ADC_FIFO_DATA behavior.
 
+`ifdef USE_REAL_ADC_INGEST
+    wire adc_capture_busy;
+
+    adc_streaming_ingest #(
+        .FIFO_DEPTH_WORDS(ADC_FIFO_DEPTH)
+    ) u_adc_ingest (
+        .clk(wb_clk_i),
+        .rst(wb_rst_i),
+
+        .start(adc_snapshot_fire),
+
+        .adc_sclk(adc_sclk),
+        .adc_cs_n(adc_cs_n),
+        .adc_mosi(adc_mosi),
+        .adc_miso(adc_miso),
+
+        .pop_valid(adc_fifo_pop_valid),
+        .pop_data(adc_fifo_pop_data),
+        .pop_ready(adc_fifo_pop_ready),
+
+        .capture_busy(adc_capture_busy),
+        .fifo_overrun_sticky(adc_fifo_overrun_sticky),
+        .fifo_overrun_clear(adc_fifo_overrun_clear),
+        .fifo_level_words(adc_fifo_level_words)
+    );
+
+    // When running real ingest, the local FIFO push interface is unused.
+    assign adc_fifo_push_ready = 1'b0;
+`else
     adc_stream_fifo #(
         .DEPTH_WORDS(ADC_FIFO_DEPTH)
     ) u_adc_fifo (
@@ -142,6 +185,7 @@ module home_inventory_wb (
         .overrun_sticky(adc_fifo_overrun_sticky),
         .overrun_clear(adc_fifo_overrun_clear)
     );
+`endif
 
     // Align address to 32-bit word boundary for decode.
     // Caravel/Wishbone masters sometimes present byte addresses; we treat
@@ -195,6 +239,7 @@ module home_inventory_wb (
     wire [31:0] evt_sample_ch6_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd6;
     wire [31:0] evt_sample_ch7_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd7;
 
+`ifndef USE_REAL_ADC_INGEST
     // Stub ADC "SoC frame" for FIFO population: STATUS + CH0..CH7 (9 words).
     // Packed with word0 at [31:0], word1 at [63:32], etc.
     wire [31:0] adc_stub_status_word = 32'h0000_0000;
@@ -250,6 +295,11 @@ module home_inventory_wb (
 
     assign adc_fifo_push_valid = adc_push_valid_sel;
     assign adc_fifo_push_data  = adc_push_data_sel;
+`else
+    // Real ingest owns the FIFO; this push interface is unused.
+    assign adc_fifo_push_valid = 1'b0;
+    assign adc_fifo_push_data  = 32'h0;
+`endif
 
 `ifdef SIM
     (* keep *) wire        sim_evt_override_en   = 1'b0;

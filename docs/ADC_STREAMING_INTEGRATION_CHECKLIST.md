@@ -34,8 +34,10 @@ Acceptance criteria for *streaming enabled* builds:
    - `adc_status_word[31:0]` (or constant 0)
    - `adc_ch_raw[0..7][31:0]` (sign-extended / right-justified)
 
-2. Keep an explicit top-level flag/parameter:
-   - `ENABLE_ADC_STREAMING` (default: 0 until validated)
+2. Keep an explicit build-time flag so we can compile both paths:
+   - `USE_REAL_ADC_INGEST` (default: **off**)
+     - When enabled, `rtl/home_inventory_wb.v` instantiates `adc_streaming_ingest` and exposes ADC SPI pins on the Wishbone block.
+     - When disabled, the existing SNAPSHOT stub continues to populate the firmware-visible FIFO.
 
 3. Update `rtl/` modules so a *streaming-enabled* build still compiles cleanly even if the upstream ADC is stubbed.
 
