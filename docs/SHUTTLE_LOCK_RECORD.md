@@ -8,12 +8,14 @@ Why this file exists:
 
 ## Locked fields (copy/paste from official source)
 
+- **Last verified (UTC):** TBD
 - **Program / foundry / PDK:** OpenMPW / Sky130A
 - **Shuttle name/number:** TBD
 - **Submission cutoff (date + time + timezone):** TBD
 - **Precheck deadline (if different):** TBD
 - **Expected silicon delivery window:** TBD
 - **Source link (official schedule / announcement):** TBD
+- **Source excerpt (copy/paste):** TBD
 
 ## Notes
 - If the official schedule changes, update this file and then re-baseline `docs/TIMELINE.md`.

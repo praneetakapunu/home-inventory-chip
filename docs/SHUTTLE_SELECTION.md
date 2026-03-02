@@ -14,6 +14,7 @@ Record these **exact fields** once Praneet chooses a target shuttle:
 - **Link to the official schedule page / announcement:**
 
 Once chosen, copy the values into:
+- `docs/SHUTTLE_LOCK_RECORD.md` (**single source**) — include **Last verified (UTC)** + a short **source excerpt**
 - `docs/DASHBOARD.md` (top-level status)
 - `docs/TIMELINE.md` (milestone dates)
 - `docs/TAPEOUT_CHECKLIST.md` (gates keyed off the cutoff)
