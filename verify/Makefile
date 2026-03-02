@@ -50,11 +50,14 @@ OVERRUN_OUT := adc_stream_overrun_tb.out
 UNPACK_TB  := adc_soc_frame_unpack_tb.v
 UNPACK_OUT := adc_soc_frame_unpack_tb.out
 
-.PHONY: all sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
+WB_ADC_OVERRIDE_TB  := wb_adc_fifo_override_tb.v
+WB_ADC_OVERRIDE_OUT := wb_adc_fifo_override_tb.out
+
+.PHONY: all sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
 # One command to run the whole smoke suite (what humans should run locally).
-all: regmap-check regmap-gen-check sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim
+all: regmap-check regmap-gen-check sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim
 
 sim: $(OUT)
 	$(VVP) $(OUT)
@@ -88,6 +91,9 @@ overrun-sim: $(OVERRUN_OUT)
 
 unpack-sim: $(UNPACK_OUT)
 	$(VVP) $(UNPACK_OUT)
+
+wb-adc-override-sim: $(WB_ADC_OVERRIDE_OUT)
+	$(VVP) $(WB_ADC_OVERRIDE_OUT)
 
 # Pure-Python consistency check (no Verilog simulator required).
 regmap-check:
@@ -188,5 +194,9 @@ $(OVERRUN_OUT): $(OVERRUN_TB) $(RTL_DIR)/adc/adc_frame_to_fifo.v $(RTL_DIR)/adc/
 $(UNPACK_OUT): $(UNPACK_TB) $(RTL_DIR)/adc/adc_soc_frame_unpack.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
+$(WB_ADC_OVERRIDE_OUT): $(WB_ADC_OVERRIDE_TB) $(RTL_DIR)/home_inventory_wb.v $(RTL_DIR)/home_inventory_event_detector.v \
+	$(RTL_DIR)/adc/adc_stream_fifo.v $(RTL_DIR)/adc/adc_frame_to_fifo.v
+	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+
 clean:
-	rm -f $(OUT) $(TOP_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT) $(PIPE_OUT) $(INGEST_OUT) $(OVERRUN_OUT) $(UNPACK_OUT)
+	rm -f $(OUT) $(TOP_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT) $(PIPE_OUT) $(INGEST_OUT) $(OVERRUN_OUT) $(UNPACK_OUT) $(WB_ADC_OVERRIDE_OUT)

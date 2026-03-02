@@ -230,9 +230,26 @@ module home_inventory_wb (
         .frame_dropped()
     );
 
-    // Today: only the stub SNAPSHOT path drives the firmware-visible FIFO.
-    assign adc_fifo_push_valid = adc_stub_push_valid;
-    assign adc_fifo_push_data  = adc_stub_push_data;
+    // Today: the stub SNAPSHOT path drives the firmware-visible FIFO.
+    //
+    // DV hook: in simulation, allow a testbench/cocotb to override the FIFO
+    // push stream *without* changing the regmap or adding top-level ports.
+    // This is the simplest way to emulate a "real" ADC streaming path before
+    // we fully wire adc_streaming_ingest into this regbank.
+`ifdef SIM
+    (* keep *) wire        sim_adc_fifo_override_en  = 1'b0;
+    (* keep *) wire        sim_adc_fifo_push_valid   = 1'b0;
+    (* keep *) wire [31:0] sim_adc_fifo_push_data    = 32'h0;
+
+    wire        adc_push_valid_sel = sim_adc_fifo_override_en ? sim_adc_fifo_push_valid : adc_stub_push_valid;
+    wire [31:0] adc_push_data_sel  = sim_adc_fifo_override_en ? sim_adc_fifo_push_data  : adc_stub_push_data;
+`else
+    wire        adc_push_valid_sel = adc_stub_push_valid;
+    wire [31:0] adc_push_data_sel  = adc_stub_push_data;
+`endif
+
+    assign adc_fifo_push_valid = adc_push_valid_sel;
+    assign adc_fifo_push_data  = adc_push_data_sel;
 
 `ifdef SIM
     (* keep *) wire        sim_evt_override_en   = 1'b0;
