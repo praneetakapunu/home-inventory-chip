@@ -1,6 +1,6 @@
 # Home Inventory Chip — Project Dashboard
 
-**Last updated:** 2026-03-01 (UTC)
+**Last updated:** 2026-03-02 (UTC)
 
 ## Objective
 Deliver a taped-out **digital** chip (open-source tools) + a demo system that demonstrates a practical **home inventory management** path.
@@ -29,9 +29,21 @@ These are the things we can run repeatedly without needing a full OpenLane setup
 ## Milestones / schedule
 Baseline dates: see `docs/TIMELINE.md` (baseline start 2026-02-25).
 
-**Target OpenMPW shuttle (TBD):** _Praneet to pick shuttle name + submission cutoff._
-- Shuttle-pick checklist: `docs/SHUTTLE_SELECTION.md`
-- Once chosen, record it here + in `docs/TIMELINE.md`, and treat that cutoff as the fixed constraint.
+## Target OpenMPW shuttle (lock record)
+**Status:** TBD
+
+When Praneet picks the shuttle, lock the fields below (copy/paste from the official source link).
+
+- Program / foundry / PDK:
+- Shuttle name/number:
+- Submission cutoff (date + time + timezone):
+- Precheck deadline (if different):
+- Expected silicon delivery window:
+- Source link (official schedule/announcement):
+
+Shuttle-pick checklist: `docs/SHUTTLE_SELECTION.md`
+
+Once chosen, **treat the cutoff as a fixed constraint** and mirror the dates into `docs/TIMELINE.md` + `docs/TAPEOUT_CHECKLIST.md`.
 
 High level:
 1) Spec/acceptance frozen (v1)

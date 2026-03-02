@@ -12,8 +12,14 @@ This is a *working* schedule. If we drift by >3 days on any milestone, we should
 ### M-1 — Pick target OpenMPW shuttle
 - Target: **TBD (Praneet)**
 - Exit criteria:
-  - shuttle name + submission cutoff date recorded in `docs/DASHBOARD.md`
+  - shuttle lock record filled in `docs/DASHBOARD.md` (name + cutoff + source link)
   - `docs/TAPEOUT_CHECKLIST.md` updated if any shuttle-specific constraints exist
+
+Locked fields (copy from official source):
+- Shuttle name/number:
+- Submission cutoff (date + time + timezone):
+- Precheck deadline (if different):
+- Source link:
 
 ### M0 — v1 freeze tag (spec/regmap/tests stable)
 - Target: **2026-03-01** (baseline)
