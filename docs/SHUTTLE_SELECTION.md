@@ -18,6 +18,30 @@ Once chosen, copy the values into:
 - `docs/TIMELINE.md` (milestone dates)
 - `docs/TAPEOUT_CHECKLIST.md` (gates keyed off the cutoff)
 
+### Copy/paste lock record (fill this in)
+
+Keep this block in the PR description when we lock the shuttle, then copy it into the
+docs listed above.
+
+```text
+Program / foundry / PDK:
+Shuttle name/number:
+
+Submission cutoff:
+  date:
+  time:
+  timezone:
+
+Precheck deadline (if different):
+  date:
+  time:
+  timezone:
+
+Expected silicon delivery window:
+Source-of-truth link:
+Notes:
+```
+
 ## Where to find the schedule (source of truth)
 
 Use *at least one* of these sources and paste the link when we lock the shuttle:
@@ -45,13 +69,45 @@ Evaluate these constraints:
 - **Scope:** does v1 really need analog / special IO beyond Caravel defaults?
 - **Risk:** schedule slip risk if we pick something too aggressive.
 
+### Quick scoring heuristic (simple, not scientific)
+
+Score each candidate shuttle 0–2 in each category (higher is better):
+
+- **Tooling readiness**
+  - 0: cannot run `mpw-precheck` end-to-end in a reproducible way
+  - 1: can run precheck sometimes / with manual steps / with known flakiness
+  - 2: can run precheck reliably (CI or one-liner) with current disk + environment
+- **Time runway to cutoff**
+  - 0: < 4 weeks
+  - 1: 4–8 weeks
+  - 2: > 8 weeks
+- **Integration risk** (harness + pinout + wrapper + signoff)
+  - 0: lots of unknowns (pin plan, clocking, hard IP assumptions, etc.)
+  - 1: some unknowns, but bounded
+  - 2: mostly known / already integrated + tested
+
+Prefer the earliest shuttle that scores **≥ 5** total *without* requiring new hardware,
+heroics, or “we'll fix disk later” optimism.
+
 Decision rule (v1):
 - If we cannot reliably run mpw-precheck end-to-end today, pick a shuttle far enough out
   that we can first eliminate the tooling/disk blockers.
+
+### Minimum “we can commit to a cutoff” checklist
+
+Before we say “yes” to a specific cutoff, we should be able to do these in a clean clone:
+
+- IP repo (`chip-inventory`):
+  - `bash ops/preflight_low_disk.sh` (or equivalent) passes
+- Harness repo (`home-inventory-chip-openmpw`):
+  - `make sync-ip-filelist`
+  - `make rtl-compile-check`
+
+If any item above is blocked (disk, missing dependency, broken script), record it in
+`docs/EXECUTION_PLAN.md` → **Blockers** with the exact failing command + error.
 
 ## Action items (to close this TBD)
 
 - [ ] Praneet: choose target shuttle + cutoff.
 - [ ] Madhuri: paste the locked fields into `docs/DASHBOARD.md` + `docs/TIMELINE.md`.
 - [ ] Madhuri: update `docs/TAPEOUT_CHECKLIST.md` so the checklist is keyed to that cutoff.
-
