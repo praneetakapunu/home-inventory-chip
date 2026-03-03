@@ -160,7 +160,12 @@ $(OUT): $(TB) $(RTL_DIR)/home_inventory_wb.v $(RTL_DIR)/home_inventory_event_det
 	$(RTL_DIR)/adc/adc_stream_fifo.v $(RTL_DIR)/adc/adc_frame_to_fifo.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
-$(TOP_OUT): $(TOP_TB) $(RTL_DIR)/home_inventory_top.v
+$(TOP_OUT): $(TOP_TB) \
+	$(RTL_DIR)/home_inventory_top.v \
+	$(RTL_DIR)/home_inventory_wb.v \
+	$(RTL_DIR)/home_inventory_event_detector.v \
+	$(RTL_DIR)/adc/adc_stream_fifo.v \
+	$(RTL_DIR)/adc/adc_frame_to_fifo.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(FIFO_OUT): $(FIFO_TB) $(RTL_DIR)/adc/adc_stream_fifo.v
