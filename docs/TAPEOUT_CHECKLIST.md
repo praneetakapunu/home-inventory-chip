@@ -10,6 +10,15 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 - [ ] External ADC part locked (done: ADS131M08)
 - [ ] SPI framing assumptions documented (DRDY, words-per-frame, CRC policy)
 - [ ] Regmap v1 frozen (addresses + reset values)
+  - [ ] `spec/regmap_v1.yaml` + `spec/regmap.md` updated together (no drift)
+  - [ ] Regenerated derived artifacts committed:
+    - [ ] `bash ops/regmap_update.sh`
+    - [ ] `fw/include/home_inventory_regmap.h`
+    - [ ] `rtl/include/home_inventory_regmap_pkg.sv`
+    - [ ] `rtl/include/regmap_params.vh`
+  - [ ] Consistency gates green:
+    - [ ] `make -C verify regmap-check`
+    - [ ] `make -C verify regmap-gen-check`
 
 ## 1) Repo / build hygiene
 - [ ] Canonical RTL filelist exists and is used by CI
