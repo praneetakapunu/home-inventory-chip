@@ -47,6 +47,10 @@ Confirm these docs are consistent:
 - `docs/TAPEOUT_CHECKLIST.md`
 - `docs/SHUTTLE_LOCK_RECORD.md`
 
+Optional helper (non-strict until we actually lock a shuttle):
+- `bash ops/check_shuttle_lock_record.sh`
+- After locking (no TBDs), you can enforce it with: `bash ops/check_shuttle_lock_record.sh --strict`
+
 ## Done when
 - shuttle lock record is filled (no TBDs) and includes last-verified + excerpt
 - timeline/checklist updated to match
