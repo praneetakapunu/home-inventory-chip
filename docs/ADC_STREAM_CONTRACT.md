@@ -44,7 +44,7 @@ All words are pushed into the FIFO in-order.
 ### Sample formatting
 
 Each channel word is a **sign-extended 32-bit** value with the native ADC width right-justified.
-For ADS131M08 bring-up we assume 24-bit samples.
+For ADS131M08 bring-up we assume 24-bit samples (sign-extended to 32-bit in the SoC FIFO stream).
 
 (Formatting details: `spec/fixed_point.md`.)
 
@@ -60,7 +60,7 @@ For v1, the preferred wiring is to instantiate **one** glue block that already b
 This reduces wiring drift in `home_inventory_wb.v` and makes DV/FW tests more deterministic.
 
 **ADS131M08 suggested parameters (v1):**
-- `BITS_PER_WORD = 32` (MODE.WLENGTH=32b sign-extend)
+- `BITS_PER_WORD = 24` (24-bit conversion words; sign-extend to 32b in `adc_frame_to_fifo`)
 - `WORDS_PER_FRAME = 10` (STATUS + CH0..CH7 + OUTPUT_CRC)
 - `WORDS_OUT = 9` (drop OUTPUT_CRC)
 - `FIFO_DEPTH_WORDS = 16` (firmware-visible depth defined in this contract)
@@ -76,7 +76,7 @@ Module: `rtl/adc/adc_spi_frame_capture.v`
 If you choose not to use `adc_streaming_ingest`, the contract below still applies.
 
 For ADS131M08 bring-up, instantiate this block with:
-- `BITS_PER_WORD = 32` (MODE.WLENGTH=32b sign-extend)
+- `BITS_PER_WORD = 24` (24-bit words; sign-extend downstream)
 - `WORDS_PER_FRAME = 10` (STATUS + 8 channels + output CRC)
 
 The integration layer then **drops the final CRC word** and only pushes 9 words to the firmware FIFO/event detector.

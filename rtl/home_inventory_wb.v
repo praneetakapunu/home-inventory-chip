@@ -141,7 +141,14 @@ module home_inventory_wb (
 wire adc_capture_busy;
 
 `ifdef USE_REAL_ADC_INGEST
+    // ADS131M08 wire framing assumptions (v1):
+    // - 24-bit words on the wire
+    // - 10 words per conversion frame (STATUS + CH0..CH7 + OUTPUT_CRC)
+    // - drop OUTPUT_CRC in v1 (WORDS_OUT=9)
     adc_streaming_ingest #(
+        .BITS_PER_WORD(24),
+        .WORDS_PER_FRAME(10),
+        .WORDS_OUT(9),
         .FIFO_DEPTH_WORDS(ADC_FIFO_DEPTH)
     ) u_adc_ingest (
         .clk(wb_clk_i),
