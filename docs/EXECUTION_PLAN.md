@@ -49,7 +49,7 @@ Pick *one* of these and land it as a small, reviewable commit:
    - Spec: `docs/EVENT_DETECTOR_SPEC.md` ✅
    - RTL: `rtl/home_inventory_event_detector.v` + `verify/event_detector_tb.v` ✅
    - Integration wiring plan (next):
-     - **Timestamp source**: define `ts_now` origin (likely a free-running counter in wb clock domain)
+     - **Timestamp source**: define `ts_now` origin (v1: free-running counter in wb clock domain; see `docs/TIMESTAMP_SOURCE.md`)
      - **Sample sources**: enumerate candidates + selection mux
        - raw ADC channel sample(s)
        - filtered/decimated channel(s) (future)
