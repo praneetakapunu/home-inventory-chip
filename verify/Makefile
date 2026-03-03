@@ -23,6 +23,9 @@ OUT     := wb_tb.out
 TOP_TB  := top_tb.v
 TOP_OUT := top_tb.out
 
+REAL_ADC_TB  := real_adc_compile_tb.v
+REAL_ADC_OUT := real_adc_compile_tb.out
+
 FIFO_TB  := adc_stream_fifo_tb.v
 FIFO_OUT := adc_stream_fifo_tb.out
 
@@ -53,17 +56,20 @@ UNPACK_OUT := adc_soc_frame_unpack_tb.out
 WB_ADC_OVERRIDE_TB  := wb_adc_fifo_override_tb.v
 WB_ADC_OVERRIDE_OUT := wb_adc_fifo_override_tb.out
 
-.PHONY: all sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
+.PHONY: all sim top-sim real-adc-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
 # One command to run the whole smoke suite (what humans should run locally).
-all: regmap-check regmap-gen-check sim top-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim
+all: regmap-check regmap-gen-check sim top-sim real-adc-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim
 
 sim: $(OUT)
 	$(VVP) $(OUT)
 
 top-sim: $(TOP_OUT)
 	$(VVP) $(TOP_OUT)
+
+real-adc-sim: $(REAL_ADC_OUT)
+	$(VVP) $(REAL_ADC_OUT)
 
 fifo-sim: $(FIFO_OUT)
 	$(VVP) $(FIFO_OUT)
@@ -167,6 +173,16 @@ $(TOP_OUT): $(TOP_TB) \
 	$(RTL_DIR)/adc/adc_stream_fifo.v \
 	$(RTL_DIR)/adc/adc_frame_to_fifo.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+
+$(REAL_ADC_OUT): $(REAL_ADC_TB) \
+	$(RTL_DIR)/home_inventory_top.v \
+	$(RTL_DIR)/home_inventory_wb.v \
+	$(RTL_DIR)/home_inventory_event_detector.v \
+	$(RTL_DIR)/adc/adc_streaming_ingest.v \
+	$(RTL_DIR)/adc/adc_spi_frame_capture.v \
+	$(RTL_DIR)/adc/adc_frame_to_fifo.v \
+	$(RTL_DIR)/adc/adc_stream_fifo.v
+	$(IVERILOG) $(IVERILOG_FLAGS) -DUSE_REAL_ADC_INGEST -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(FIFO_OUT): $(FIFO_TB) $(RTL_DIR)/adc/adc_stream_fifo.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
