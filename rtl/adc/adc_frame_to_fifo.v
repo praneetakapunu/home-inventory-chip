@@ -21,7 +21,17 @@
 
 module adc_frame_to_fifo #(
     parameter integer WORDS_IN  = 10,  // packed frame words provided
-    parameter integer WORDS_OUT = 9    // words to push to FIFO (e.g. drop CRC)
+    parameter integer WORDS_OUT = 9,   // words to push to FIFO (e.g. drop CRC)
+
+    // Optional sign-extension policy for captured words.
+    // Rationale: some ADCs (incl. ADS131M08 in default 24-bit mode) provide
+    // two's-complement conversion samples that must be sign-extended to 32b.
+    // The capture block zero-extends into 32b slots; this sequencer can
+    // re-apply sign-extension on a per-word-index range.
+    parameter bit     SIGN_EXTEND_EN        = 1'b0,
+    parameter integer SIGN_EXTEND_BITS      = 24,
+    parameter integer SIGN_EXTEND_START_IDX = 1,
+    parameter integer SIGN_EXTEND_END_IDX   = WORDS_OUT-1
 ) (
     input  wire                     clk,
     input  wire                     rst,
@@ -43,6 +53,20 @@ module adc_frame_to_fifo #(
     // Latch only the words we will ever push (word0..word(WORDS_OUT-1)).
     reg [32*WORDS_OUT-1:0] latched_words;
 
+    // Parameter sanity (elaboration-time).
+    initial begin
+        if (WORDS_IN < 1) $fatal(1, "adc_frame_to_fifo: WORDS_IN must be >= 1");
+        if (WORDS_OUT < 1) $fatal(1, "adc_frame_to_fifo: WORDS_OUT must be >= 1");
+        if (WORDS_OUT > WORDS_IN) $fatal(1, "adc_frame_to_fifo: WORDS_OUT must be <= WORDS_IN");
+
+        if (SIGN_EXTEND_EN) begin
+            if (SIGN_EXTEND_BITS < 1)  $fatal(1, "adc_frame_to_fifo: SIGN_EXTEND_BITS must be >= 1");
+            if (SIGN_EXTEND_BITS > 32) $fatal(1, "adc_frame_to_fifo: SIGN_EXTEND_BITS must be <= 32");
+            if (SIGN_EXTEND_START_IDX < 0) $fatal(1, "adc_frame_to_fifo: SIGN_EXTEND_START_IDX must be >= 0");
+            if (SIGN_EXTEND_END_IDX < SIGN_EXTEND_START_IDX) $fatal(1, "adc_frame_to_fifo: SIGN_EXTEND_END_IDX must be >= SIGN_EXTEND_START_IDX");
+        end
+    end
+
     // 1-frame skid buffer so back-to-back frame_valid pulses aren't dropped.
     // (If a third frame arrives while both current+pending are occupied, we drop it.)
     reg                   pending_valid;
@@ -57,7 +81,16 @@ module adc_frame_to_fifo #(
 
     // Present current word.
     // Word0 is [31:0], word1 is [63:32], ...
-    assign push_data  = latched_words[32*idx +: 32];
+    wire [31:0] cur_word = latched_words[32*idx +: 32];
+
+    // Optional sign-extension for a range of words.
+    // NOTE: We interpret the lower SIGN_EXTEND_BITS as a signed two's-complement value.
+    wire in_signext_range = (idx >= SIGN_EXTEND_START_IDX[IDX_W-1:0]) && (idx <= SIGN_EXTEND_END_IDX[IDX_W-1:0]);
+    wire sign_bit = (SIGN_EXTEND_BITS >= 1) ? cur_word[SIGN_EXTEND_BITS-1] : 1'b0;
+    wire [31:0] signext_word = (SIGN_EXTEND_BITS >= 32) ? cur_word
+        : {{(32-SIGN_EXTEND_BITS){sign_bit}}, cur_word[SIGN_EXTEND_BITS-1:0]};
+
+    assign push_data  = (SIGN_EXTEND_EN && in_signext_range) ? signext_word : cur_word;
     assign push_valid = active;
 
     always @(posedge clk) begin

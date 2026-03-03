@@ -103,7 +103,14 @@ module adc_streaming_ingest #(
 
     adc_frame_to_fifo #(
         .WORDS_IN(WORDS_PER_FRAME),
-        .WORDS_OUT(WORDS_OUT)
+        .WORDS_OUT(WORDS_OUT),
+
+        // v1 policy for ADS131M08 default 24-bit conversion data:
+        // sign-extend channel words (word1..word8) to 32b; keep STATUS word0 as-is.
+        .SIGN_EXTEND_EN(BITS_PER_WORD < 32),
+        .SIGN_EXTEND_BITS(BITS_PER_WORD),
+        .SIGN_EXTEND_START_IDX(1),
+        .SIGN_EXTEND_END_IDX(WORDS_OUT-1)
     ) u_frame_to_fifo (
         .clk(clk),
         .rst(rst),

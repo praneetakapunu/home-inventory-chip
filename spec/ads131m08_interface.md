@@ -41,7 +41,13 @@ Important nuance:
 - Commands/responses/register words are **16 bits of real data**, MSB-aligned and padded with zeros to 24/32-bit word sizes.
 - Conversion data are nominally **24-bit two’s complement**.
 
-**v1 baseline:** use `MODE.WLENGTH[1:0] = 11b` so conversion samples appear as signed 32-bit values on DOUT, keeping the digital path 32-bit-clean.
+**v1 baseline (pragmatic, matches current RTL):** keep the ADS131M08 in its **default 24-bit word length** and perform **sign-extension in RTL** for channel words.
+
+Rationale:
+- Our current v1 SPI capture RTL drives MOSI low (NULL commands only), so it does **not** program `MODE.WLENGTH`.
+- Keeping the on-wire word length at 24 avoids a dependency on early firmware-side ADC register programming.
+
+Note: we may still choose to program `MODE.WLENGTH` to a 32-bit sign-extended mode later, but it is not required for the v1 streaming contract.
 
 ## SPI framing (datasheet-verified)
 SPI communication is performed in **frames** consisting of several words.
@@ -98,7 +104,8 @@ We define one captured ADC frame as:
 We **do not** currently expose the output CRC to firmware in v1. (We may optionally verify CRC in RTL later, but it is not required to get first silicon bring-up.)
 
 ### Sample bit width
-- Store raw samples at their native width (24-bit) but present them to firmware as **signed 32-bit**.
+- Treat conversion data as **24-bit two’s complement** on the wire.
+- Present them to firmware as **signed 32-bit** by **sign-extending in RTL** (word1..word8). The STATUS word is not sign-extended.
 
 ## Streaming FIFO contract (normative for v1)
 When streaming is enabled, hardware pushes words into a FIFO which firmware drains via Wishbone.
@@ -154,6 +161,6 @@ Minimum tests:
   - `decisions/009-ads131m08-word-length-and-crc.md`
 
 ## TODOs (must close before tapeout)
-- [x] Lock `MODE.WLENGTH[1:0] = 11b` for **32-bit sign-extended** conversion words (reflected in `docs/ADC_FW_INIT_SEQUENCE.md`).
+- [x] Lock the v1 **sample width policy**: ADC outputs 24-bit two’s complement; RTL sign-extends to 32-bit for firmware.
 - [ ] Confirm clocking plan for ADC on the OpenMPW harness/PCB (`CLKIN` source).
   - Working notes live in: `docs/ADC_CLOCKING_PLAN.md`

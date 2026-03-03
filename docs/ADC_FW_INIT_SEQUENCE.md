@@ -174,7 +174,7 @@ void adc_bringup(void) {
 ```
 
 Notes:
-- Treat channel samples as **signed** (`int32_t`). With `WLENGTH=11b`, the ADC data are already sign-extended by the ADS131M08.
+- Treat channel samples as **signed** (`int32_t`). In the v1 baseline, the ADS131M08 may be in its default 24-bit mode; the RTL sign-extends channel words to 32-bit before they hit the FIFO.
 - If you see `FIFO_OVERRUN`, don’t trust gaps in the stream: drain + clear + restart capture.
 
 ## Error handling / debug checklist
@@ -189,8 +189,10 @@ Notes:
 
 ## ADS131M08 register bit policy (v1)
 These are the ADS131M08-side bit choices we are standardizing on for v1 bring-up:
-- `MODE.WLENGTH[1:0] = 11b` → **32-bit words with sign-extension** for 24-bit ADC conversion data
-- `MODE.RX_CRC_EN = 0` → **no input CRC**
+- **Do not require early ADS131M08 register programming** for basic streaming bring-up.
+  - In particular, we do **not** rely on `MODE.WLENGTH` being changed to 32-bit.
+  - Baseline assumption: conversion data are 24-bit two’s complement; RTL sign-extends to 32-bit for firmware.
+- `MODE.RX_CRC_EN = 0` → **no input CRC** (we also do not generate input CRC in v1 RTL)
 - `MODE.DRDY_FMT = 0` → **level-style DRDY** (avoid pulse gotchas)
 - Output CRC word is always present on DOUT; v1 RTL streaming **drops** it.
 
