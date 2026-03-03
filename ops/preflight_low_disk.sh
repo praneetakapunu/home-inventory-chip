@@ -32,6 +32,21 @@ need_cmd python3
 need_cmd iverilog
 need_cmd vvp
 
+banner "Disk space (informational)"
+# This suite is meant to be low-disk, but we still want an explicit log line
+# for CI/debugging. Fail only when the workspace is critically low.
+#
+# Threshold chosen to avoid false negatives while still catching "everything is
+# about to fail" situations.
+DF_LINE=$(df -Pk . | tail -n 1)
+# shellcheck disable=SC2086
+set -- $DF_LINE
+AVAIL_KB=${4:-0}
+echo "df -h ."; df -h . | sed -n '1,2p'
+if [[ "$AVAIL_KB" -lt $((2*1024*1024)) ]]; then
+  echo "WARNING: low free space: ${AVAIL_KB} KB available (< 2 GiB). Some flows may fail." >&2
+fi
+
 # Print versions for reproducibility/debugging in CI logs.
 (iverilog -V 2>/dev/null || iverilog -v 2>/dev/null || true) | sed -n '1,2p' || true
 (python3 --version 2>/dev/null || true)
