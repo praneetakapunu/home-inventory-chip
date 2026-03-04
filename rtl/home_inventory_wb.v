@@ -154,7 +154,9 @@ wire adc_capture_busy;
         .clk(wb_clk_i),
         .rst(wb_rst_i),
 
-        .start(adc_snapshot_fire),
+        // Real ingest starts on CTRL.START (W1P). This matches the firmware
+        // bring-up sequence in docs/ADC_FW_INIT_SEQUENCE.md.
+        .start(ctrl_start),
 
         .adc_sclk(adc_sclk),
         .adc_cs_n(adc_cs_n),
