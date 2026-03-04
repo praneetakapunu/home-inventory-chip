@@ -55,6 +55,11 @@ fi
 banner "RTL compile/elaboration (iverilog)"
 bash ops/rtl_compile_check.sh
 
+banner "Shuttle lock record (informational)"
+# This is intentionally non-strict: it should not block preflight before the
+# shuttle is chosen, but it provides a clear log line in CI and local runs.
+bash ops/check_shuttle_lock_record.sh
+
 banner "Regmap + smoke sims (make -C verify all)"
 make -C verify all
 
