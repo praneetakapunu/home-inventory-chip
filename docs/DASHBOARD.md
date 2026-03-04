@@ -33,6 +33,9 @@ Baseline dates: see `docs/TIMELINE.md` (baseline start 2026-02-25).
 **Status:** TBD
 
 Single source-of-truth for the shuttle choice: `docs/SHUTTLE_LOCK_RECORD.md`
+Sanity check helper:
+- `bash ops/check_shuttle_lock_record.sh` (status)
+- `bash ops/check_shuttle_lock_record.sh --strict` (fails if not fully locked)
 
 Shuttle-pick checklist: `docs/SHUTTLE_SELECTION.md`
 

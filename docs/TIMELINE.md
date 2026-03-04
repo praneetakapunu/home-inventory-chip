@@ -12,8 +12,12 @@ This is a *working* schedule. If we drift by >3 days on any milestone, we should
 ### M-1 — Pick target OpenMPW shuttle
 - Target: **TBD (Praneet)**
 - Exit criteria:
-  - shuttle lock record filled in `docs/DASHBOARD.md` (name + cutoff + source link)
-  - `docs/TAPEOUT_CHECKLIST.md` updated if any shuttle-specific constraints exist
+  - `docs/SHUTTLE_LOCK_RECORD.md` filled (no TBDs) and includes:
+    - **Last verified (UTC)**
+    - **source link** + **copy/paste excerpt**
+    - cutoff **date + time + timezone**
+  - `bash ops/check_shuttle_lock_record.sh --strict` passes
+  - `docs/TAPEOUT_CHECKLIST.md` updated for any shuttle-specific constraints (precheck deadline, submission mechanics)
 
 Locked fields live in: `docs/SHUTTLE_LOCK_RECORD.md` (single source)
 
