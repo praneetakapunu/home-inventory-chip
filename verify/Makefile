@@ -220,4 +220,5 @@ $(WB_ADC_OVERRIDE_OUT): $(WB_ADC_OVERRIDE_TB) $(RTL_DIR)/home_inventory_wb.v $(R
 	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 clean:
-	rm -f $(OUT) $(TOP_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT) $(PIPE_OUT) $(INGEST_OUT) $(OVERRUN_OUT) $(UNPACK_OUT) $(WB_ADC_OVERRIDE_OUT)
+	rm -f $(OUT) $(TOP_OUT) $(REAL_ADC_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT) $(PIPE_OUT) $(INGEST_OUT) $(OVERRUN_OUT) $(UNPACK_OUT) $(WB_ADC_OVERRIDE_OUT)
+	rm -f *.vcd *.fst *.log *.dump
