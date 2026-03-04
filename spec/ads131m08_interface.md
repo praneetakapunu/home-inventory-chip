@@ -26,7 +26,9 @@ Optional / board-dependent:
 ## SPI electrical/clocking (datasheet-verified)
 ### SPI mode
 - **CPOL = 0, CPHA = 1**
+- **MSB-first**
 - **CS transitions must occur while SCLK is low**
+- **Hold CS low for the entire frame** (all words)
 
 (From datasheet timing diagram.)
 
@@ -60,7 +62,19 @@ Practical consequence:
 - To continuously read data, firmware typically issues a **NULL command** each frame; the response word then contains the **STATUS register**.
 
 ### Typical “data collection” frame structure
-For “most commands”, the datasheet describes a **10-word** frame:
+For “most commands”, the datasheet describes a **10-word** frame.
+
+**Normative v1 framing assumption:** one conversion readout = **one 10-word SPI frame** with CS held low throughout.
+- For 24-bit word length, this is **240 SCLK cycles per frame**.
+- For 32-bit word length, this is **320 SCLK cycles per frame**.
+
+We treat “word boundaries” as purely clock-count based (no byte lanes on the wire). The RTL must count bits and re-pack into 24/32-bit words.
+
+If firmware ever changes the ADC word length (to 32-bit), RTL must either:
+- be configured to match, or
+- reject/flag unexpected word-length (preferred for debug).
+
+For now, v1 capture assumes **24-bit words on the wire** (see earlier section).
 - **DIN (host → ADC)**:
   1) `COMMAND`
   2) `INPUT_CRC` if enabled, else `0`
@@ -105,7 +119,18 @@ We **do not** currently expose the output CRC to firmware in v1. (We may optiona
 
 ### Sample bit width
 - Treat conversion data as **24-bit two’s complement** on the wire.
-- Present them to firmware as **signed 32-bit** by **sign-extending in RTL** (word1..word8). The STATUS word is not sign-extended.
+- Present them to firmware as **signed 32-bit** by **sign-extending in RTL** (word1..word8).
+- The STATUS word is **zero-extended** (do not sign-extend).
+
+### Word/byte ordering (firmware-visible)
+Because the Wishbone FIFO is a **32-bit word stream**, firmware sees already-packed 32-bit integers.
+
+Normative v1 rules:
+- `ADC_FIFO_DATA` returns a **native 32-bit word** per read.
+- For channel samples, bit [31:24] replicates bit [23] of the ADC sample (sign extension).
+- No byte swapping is performed in hardware; software should treat each popped word as host-endian 32-bit.
+
+(If we later add a DMA/USB packet format, that packet format must define endianness explicitly; this spec only defines the on-chip reg/FIFO contract.)
 
 ## Streaming FIFO contract (normative for v1)
 When streaming is enabled, hardware pushes words into a FIFO which firmware drains via Wishbone.
