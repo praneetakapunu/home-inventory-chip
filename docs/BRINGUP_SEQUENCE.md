@@ -80,6 +80,14 @@ Bring-up acceptance:
 Read:
 - `ADC_FIFO_STATUS` @ `0x0000_0208`
 
+### 7.1 Make the FIFO fill (capture trigger)
+How frames are generated depends on the build:
+- **Stub/snapshot build** (no `USE_REAL_ADC_INGEST`): each `ADC_CMD.SNAPSHOT=1` (Step 6) also generates **one 9-word stub frame** into the FIFO.
+- **Real ingest build** (`USE_REAL_ADC_INGEST`): write `CTRL.START=1` (Step 4) to request a **one-shot capture** into the FIFO.
+
+Then poll `ADC_FIFO_STATUS.LEVEL_WORDS` until it is non-zero.
+
+### 7.2 Drain the FIFO
 If `LEVEL_WORDS > 0`, drain:
 - repeatedly read `ADC_FIFO_DATA` @ `0x0000_020C` until `LEVEL_WORDS == 0`
 

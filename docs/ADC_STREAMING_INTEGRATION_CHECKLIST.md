@@ -38,7 +38,7 @@ The Wishbone block (`rtl/home_inventory_wb.v`) now supports two FIFO population 
   - Words are pushed into the shared `adc_stream_fifo` instance.
 
 - With `USE_REAL_ADC_INGEST` defined:
-  - `ADC_CMD.SNAPSHOT` triggers `adc_streaming_ingest.start`.
+  - `CTRL.START` triggers `adc_streaming_ingest.start` (one-shot capture request).
   - `adc_streaming_ingest` owns capture + FIFO buffering internally and exposes a **regmap-compatible** pop interface (`ADC_FIFO_STATUS/ADC_FIFO_DATA`).
   - The Wishbone module’s port list conditionally exposes the ADC SPI pins:
     - `adc_sclk`, `adc_cs_n`, `adc_mosi`, `adc_miso`

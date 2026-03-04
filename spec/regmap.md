@@ -56,6 +56,10 @@ Two usage models exist:
 1) **Snapshot (bring-up)**: firmware triggers `ADC_CMD.SNAPSHOT` and then reads `ADC_RAW_CHx`.
 2) **Streaming (preferred)**: hardware pushes per-frame words into a small FIFO which firmware drains via `ADC_FIFO_DATA`.
 
+Capture trigger note (build-dependent):
+- In the **stub** build (no `USE_REAL_ADC_INGEST`), each `ADC_CMD.SNAPSHOT=1` also generates **one** FIFO frame (useful for bring-up).
+- In the **real ingest** build (`USE_REAL_ADC_INGEST`), FIFO capture is requested via `CTRL.START=1` (one-shot capture request).
+
 ### Streaming FIFO packing (normative)
 When streaming is enabled, each captured ADC frame is pushed to the FIFO as:
 - Word 0: `ADC_STATUS_WORD` (raw ADC status if available; otherwise 0)
