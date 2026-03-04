@@ -47,14 +47,16 @@ Status:
 
 ## Parameterization for ADS131M08 bring-up (recommended v1)
 
-ADS131M08 wire frame is 10x 32-bit words:
+ADS131M08 produces 24-bit channel words on the wire.
+
+For v1 we treat each SPI “word” as **24 bits** and capture a 10-word frame:
 - STATUS/RESPONSE + CH0..CH7 + OUTPUT_CRC
 
 For v1 we expose a **SoC frame** of 9 words (CRC dropped).
 
-Recommended instantiation:
+Recommended instantiation (matches `rtl/home_inventory_wb.v` today):
 
-- `BITS_PER_WORD   = 32`
+- `BITS_PER_WORD   = 24`
 - `WORDS_PER_FRAME = 10`
 - `WORDS_OUT       = 9`  (drops OUTPUT_CRC)
 - `CPOL/CPHA` per the chosen SPI mode (current default in RTL: `CPOL=0`, `CPHA=1`)
@@ -67,10 +69,18 @@ Note: `adc_streaming_ingest` itself can be used with deeper FIFOs in DV, but the
 
 Inside the Wishbone block (single-clock v1), the regbank should:
 
-1) Instantiate `adc_streaming_ingest`.
+1) Instantiate `adc_streaming_ingest` (or keep the stub FIFO path for bring-up).
 2) Drive `.start` from the existing `ADC_CMD.SNAPSHOT` pulse (until continuous streaming is added).
 3) Connect `.pop_*` to the existing `ADC_FIFO_DATA` pop-on-read semantics.
 4) Connect `.fifo_level_words` and `.fifo_overrun_*` to `ADC_FIFO_STATUS`.
+
+### Build-time selection (stub vs real ingest)
+
+`rtl/home_inventory_wb.v` supports swapping between:
+- **stub SNAPSHOT FIFO** (default, no defines)
+- **real ADC ingest** (`adc_streaming_ingest`) when `USE_REAL_ADC_INGEST` is defined
+
+The intent is that firmware sees identical register semantics in both modes; only the FIFO producer changes.
 
 If/when the event detector is switched from the current stub to real ADC data:
 - Tap the unpacked channel words from the packed frame **before** the FIFO (or reconstruct them from the first 9 popped words).

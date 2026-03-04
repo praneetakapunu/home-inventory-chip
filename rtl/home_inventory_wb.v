@@ -288,8 +288,8 @@ wire adc_capture_busy;
     //
     // DV hook: in simulation, allow a testbench/cocotb to override the FIFO
     // push stream *without* changing the regmap or adding top-level ports.
-    // This is the simplest way to emulate a "real" ADC streaming path before
-    // we fully wire adc_streaming_ingest into this regbank.
+    // This remains useful even after real ingest wiring exists (it lets DV
+    // inject corner cases / long streams deterministically).
 `ifdef SIM
     (* keep *) wire        sim_adc_fifo_override_en  = 1'b0;
     (* keep *) wire        sim_adc_fifo_push_valid   = 1'b0;
