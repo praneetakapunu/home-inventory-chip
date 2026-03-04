@@ -50,6 +50,7 @@ Confirm these docs are consistent:
 Optional helper (non-strict until we actually lock a shuttle):
 - `bash ops/check_shuttle_lock_record.sh`
 - After locking (no TBDs), you can enforce it with: `bash ops/check_shuttle_lock_record.sh --strict`
+  - strict mode also sanity-checks that the **Source link** looks like an http(s) URL and that the key fields exist
 
 ## Done when
 - shuttle lock record is filled (no TBDs) and includes last-verified + excerpt
