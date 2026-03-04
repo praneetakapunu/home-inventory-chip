@@ -27,25 +27,34 @@ Acceptance criteria for *streaming enabled* builds:
 
 ---
 
-## Phase A — RTL wiring (no functional change, compile only)
+## Phase A — RTL wiring (compile + selectable data source)
 
-1. **Plumb named signals** from the ADC interface block to the Wishbone regblock:
-   - `adc_frame_valid`
-   - `adc_status_word[31:0]` (or constant 0)
-   - `adc_ch_raw[0..7][31:0]` (sign-extended / right-justified)
+**Status:** implemented.
 
-2. Keep an explicit build-time flag so we can compile both paths:
-   - `USE_REAL_ADC_INGEST` (default: **off**)
-     - When enabled, `rtl/home_inventory_wb.v` instantiates `adc_streaming_ingest` and exposes ADC SPI pins on the Wishbone block.
-     - When disabled, the existing SNAPSHOT stub continues to populate the firmware-visible FIFO.
+The Wishbone block (`rtl/home_inventory_wb.v`) now supports two FIFO population modes behind a single build flag:
 
-3. Update `rtl/` modules so a *streaming-enabled* build still compiles cleanly even if the upstream ADC is stubbed.
+- Default (**no** `USE_REAL_ADC_INGEST`):
+  - `ADC_CMD.SNAPSHOT` triggers a deterministic **stub** frame generator.
+  - Words are pushed into the shared `adc_stream_fifo` instance.
 
-Deliverable: `make -C verify rtl-compile-check` (or equivalent) passes.
+- With `USE_REAL_ADC_INGEST` defined:
+  - `ADC_CMD.SNAPSHOT` triggers `adc_streaming_ingest.start`.
+  - `adc_streaming_ingest` owns capture + FIFO buffering internally and exposes a **regmap-compatible** pop interface (`ADC_FIFO_STATUS/ADC_FIFO_DATA`).
+  - The Wishbone module’s port list conditionally exposes the ADC SPI pins:
+    - `adc_sclk`, `adc_cs_n`, `adc_mosi`, `adc_miso`
+
+Why we keep it this way:
+- Firmware/DV see *one* stable FIFO + regmap interface, while the underlying data source can be swapped at build time.
+- Harness integration can guard the real ADC GPIO exposure to avoid accidental pad usage.
+
+Deliverable:
+- `make -C verify rtl-compile-check` (or equivalent) passes with and without `USE_REAL_ADC_INGEST`.
 
 ---
 
 ## Phase B — Frame packer (unit-testable in isolation)
+
+**Status:** implemented inside `rtl/adc/adc_streaming_ingest.v`.
 
 1. Implement a frame packer with a simple handshake:
    - input: one-cycle `frame_valid` + stable word bundle
