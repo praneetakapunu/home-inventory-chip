@@ -14,6 +14,18 @@ fi
 
 OUT=${OUT:-/tmp/home_inventory_rtl.out}
 
-iverilog -g2012 -Wall -Irtl -o "$OUT" -s home_inventory_top -f rtl/ip_home_inventory.f
+# Compile/elaborate the default (stub ADC) configuration.
+iverilog -g2012 -Wall -Irtl -o "${OUT}" \
+  -s home_inventory_top \
+  -f rtl/ip_home_inventory.f
 
-echo "OK: RTL compiles + elaborates (top=home_inventory_top). Output: $OUT"
+echo "OK: RTL compiles + elaborates (stub ADC). Output: ${OUT}"
+
+# Compile/elaborate the real ADC ingest configuration (still tool-light).
+# This catches accidental breakage in the optional ADC wiring early.
+OUT_REAL="${OUT%.out}.real_adc.out"
+iverilog -g2012 -Wall -Irtl -DUSE_REAL_ADC_INGEST -o "${OUT_REAL}" \
+  -s home_inventory_top \
+  -f rtl/ip_home_inventory.f
+
+echo "OK: RTL compiles + elaborates (USE_REAL_ADC_INGEST). Output: ${OUT_REAL}"
