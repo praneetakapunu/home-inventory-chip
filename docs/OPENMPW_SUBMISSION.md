@@ -69,6 +69,13 @@ High-level gates:
 ## Fast local loop (no PDK/OpenLane) — do this *first*
 Before downloading big toolchains, keep a tiny “does it compile?” loop that exercises the wrapper + filelists.
 
+This is the “continuous readiness” loop we can keep green even on tight disk:
+- IP repo: `bash ops/preflight_low_disk.sh`
+- Harness repo: `make sync-ip-filelist` + `make rtl-compile-check`
+
+If these are green, we’re not *taped out*, but we are steadily reducing integration risk while we sort out
+PDK/OpenLane disk needs.
+
 Suggested pattern in the harness repo:
 
 ```bash
@@ -113,8 +120,31 @@ make user_project_wrapper
 make precheck
 ```
 
-If disk space becomes a blocker for full OpenLane runs, **do not thrash**; record the exact failure and required free space in:
+## Disk budgeting (don’t guess)
+OpenLane/precheck setup is the first place we can get stuck on disk. Don’t “try a bunch of times” and fill the disk.
+
+Do this *before* running heavy steps:
+
+```bash
+df -h
+```
+
+Then after each large setup step (usually in the harness repo), measure what changed:
+
+```bash
+# from home-inventory-chip-openmpw/
+du -sh . | cat
+# or inspect the usual suspects
+for d in .git submodules dependencies openlane pdks docker_cache; do
+  [ -d "$d" ] && du -sh "$d"
+done
+```
+
+If disk space becomes a blocker for full OpenLane runs, **do not thrash**; record the exact failure (command + error)
+*and* the current free space in:
 - `chip-inventory/docs/EXECUTION_PLAN.md` → `## Blockers`
+
+That keeps the project honest: we can keep RTL/DV/integration moving while we plan a disk fix.
 
 ## References
 - Caravel user project docs: https://caravel-user-project.readthedocs.io/
