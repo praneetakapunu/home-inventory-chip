@@ -148,7 +148,7 @@ Timeout guidance:
 
 ```c
 typedef struct {
-  uint32_t status;
+  uint32_t status;  // Opaque v1 payload; see docs/ADC_STATUS_WORD_POLICY.md
   uint32_t ch[8];
 } adc_frame_t;
 

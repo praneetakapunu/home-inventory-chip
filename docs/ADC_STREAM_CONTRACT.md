@@ -12,6 +12,8 @@ Source-of-truth for firmware-visible behavior:
 - `spec/regmap_v1.yaml`
 - Human-readable summary: `spec/regmap.md`
 
+STATUS word semantics policy (v1): `docs/ADC_STATUS_WORD_POLICY.md`
+
 ## Clocks and domains
 
 v1 assumes a **single clock domain** for the streaming path:
