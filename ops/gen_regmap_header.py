@@ -39,6 +39,19 @@ def _load_yaml(path: Path) -> Dict[str, Any]:
     return data
 
 
+def _parse_int_maybe(x: Any) -> int | None:
+    """Parse an int that may be encoded as int or hex-string; return None for null."""
+    if x is None:
+        return None
+    if isinstance(x, int):
+        return int(x)
+    if isinstance(x, str):
+        s = x.strip().lower()
+        base = 16 if s.startswith("0x") else 10
+        return int(s, base)
+    raise TypeError(f"Expected int|str|null, got: {type(x)}")
+
+
 def _collect_registers(spec: Dict[str, Any]) -> List[Tuple[str, int, Dict[str, Any]]]:
     out: List[Tuple[str, int, Dict[str, Any]]] = []
     for blk in spec.get("blocks", []):
@@ -89,6 +102,20 @@ def _emit(spec_path: Path, spec: Dict[str, Any]) -> str:
     lines += ["// -----------------------------", "// Registers (byte offsets)", "// -----------------------------"]
     for name, addr, _reg in regs_sorted:
         lines.append(f"#define {PREFIX}_REG_{name:<16} {_hex32(addr)}")
+
+    # Register reset defines (only when reset is specified in YAML)
+    lines += [
+        "",
+        "// -----------------------------",
+        "// Register reset values",
+        "// -----------------------------",
+        "// NOTE: Many RO registers are hard-tied in RTL, so YAML uses reset: null.",
+    ]
+    for name, _addr, reg in regs_sorted:
+        r = _parse_int_maybe(reg.get("reset"))
+        if r is None:
+            continue
+        lines.append(f"#define {PREFIX}_REG_{name}_RESET{' ' * max(1, 9 - len(name))}{_hex32(r)}")
 
     # Field defines
     lines += [
