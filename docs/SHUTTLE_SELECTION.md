@@ -72,6 +72,9 @@ Evaluate these constraints:
 
 ### Quick scoring heuristic (simple, not scientific)
 
+Score each candidate shuttle 0–2 in each category (higher is better).
+Also record the cutoff **both in local timezone and UTC** so we can’t misread the deadline.
+
 Score each candidate shuttle 0–2 in each category (higher is better):
 
 - **Tooling readiness**
@@ -106,6 +109,11 @@ Before we say “yes” to a specific cutoff, we should be able to do these in a
 
 If any item above is blocked (disk, missing dependency, broken script), record it in
 `docs/EXECUTION_PLAN.md` → **Blockers** with the exact failing command + error.
+
+## Template (to make comparisons fast)
+
+- Copy/paste checklist + scoring sheet: `docs/shuttle_scoring_template.md`
+  - Goal: when we talk about “OpenMPW-XX”, we can point to a filled-in sheet with UTC dates.
 
 ## Action items (to close this TBD)
 
