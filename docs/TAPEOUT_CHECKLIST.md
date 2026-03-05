@@ -44,20 +44,33 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
   - [ ] All async inputs enumerated
   - [ ] All clock domains listed (incl. Wishbone)
   - [ ] Reset deassertion strategy documented (sync/async per domain)
-- [ ] Directed smoke tests cover:
-  - [ ] Wishbone regblock: reset values + R/W paths
-  - [ ] Wishbone: byte-enable policy (supported vs explicitly ignored)
-  - [ ] ADC DRDY sync: edge pulse behavior is correct + no double-pulses
-  - [ ] FIFO: push/pop, level reporting, overrun sticky
-  - [ ] Event detector:
-    - [ ] Threshold/enable semantics work (count increments only on hits)
-    - [ ] Timestamp monotonic + delta behavior is sane
-    - [ ] CLEAR_COUNTS and CLEAR_HISTORY work (W1P, byte-lane masked)
+
+- [ ] **One-command regression is green (IP repo)**
+  - [ ] `make -C verify all`
+
+- [ ] **Regmap consistency gates are green** (no simulator needed)
+  - [ ] `make -C verify regmap-check`
+  - [ ] `make -C verify regmap-gen-check`
+
+- [ ] **Directed sims are green** (requires `iverilog`)
+  - [ ] Wishbone regblock (`make -C verify sim`)
+    - [ ] reset values + R/W paths
+    - [ ] byte-enable policy (supported vs explicitly ignored)
+  - [ ] ADC DRDY sync (`make -C verify drdy-sim`)
+    - [ ] edge pulse behavior is correct + no double-pulses
+  - [ ] ADC streaming FIFO (`make -C verify fifo-sim`)
+    - [ ] push/pop, level reporting, overrun sticky
+  - [ ] SPI frame capture (`make -C verify spi-sim`)
+  - [ ] Event detector (`make -C verify evt-sim`)
+    - [ ] threshold/enable semantics work (count increments only on hits)
+    - [ ] timestamp monotonic + delta behavior is sane
+    - [ ] `CLEAR_COUNTS` and `CLEAR_HISTORY` work (W1P, byte-lane masked)
     - [ ] DV-only sample injection path still works (`sim_evt_*` override; see `docs/EVENT_DETECTOR_INTEGRATION_PLAN.md`)
-  - [ ] ADC streaming contract (see `docs/ADC_STREAM_CONTRACT.md`):
-    - [ ] One capture produces **9 FIFO words** (STATUS + CH0..CH7) in-order
-    - [ ] Overrun behavior matches v1 policy (16-depth FIFO, drop-on-full, sticky OVERRUN W1C)
-- [ ] Regmap consistency gate is green (`make -C verify regmap-check`)
+
+- [ ] ADC streaming contract (see `docs/ADC_STREAM_CONTRACT.md`):
+  - [ ] One capture produces **9 FIFO words** (STATUS + CH0..CH7) in-order
+  - [ ] Overrun behavior matches v1 policy (16-depth FIFO, drop-on-full, sticky OVERRUN W1C)
+
 - [ ] Known limitations listed in `docs/KNOWN_LIMITATIONS.md` (and match reality)
 
 ## 4) Bring-up readiness (FW-facing)
