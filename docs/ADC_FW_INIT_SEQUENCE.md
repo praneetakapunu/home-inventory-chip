@@ -43,6 +43,7 @@ Write `CTRL.ENABLE=1` @ `0x0000_0100`.
 The FIFO status is visible in `ADC_FIFO_STATUS` @ `0x0000_0208`:
 - `LEVEL_WORDS[15:0]`: number of 32-bit words currently in FIFO
 - `OVERRUN[16]`: sticky; W1C
+- `CAPTURE_BUSY[17]`: 1 when the real ADC ingest block is actively capturing (0 in stub mode)
 
 Do:
 1) If `OVERRUN=1`, clear it by writing `1` to bit 16.
@@ -68,7 +69,8 @@ Write `CTRL.START=1` once.
 - This is a *pulse* request; reads return 0.
 
 Expectation:
-- If the ADC SPI capture path is active, frames begin appearing in the FIFO.
+- If the ADC SPI capture path is active, `ADC_FIFO_STATUS.CAPTURE_BUSY` may briefly assert during frame capture.
+- Frames begin appearing in the FIFO (`LEVEL_WORDS` increases).
 
 ### 6) Drain frames + validate packing
 Each captured frame contributes **9 FIFO words**, in order:
@@ -115,9 +117,10 @@ This snippet is deliberately boring: it’s meant to be copy/paste-able into wha
 #define REG_ADC_CMD         0x0204u
 #define   ADC_CMD_SNAPSHOT  (1u << 0)   // W1P
 
-#define REG_FIFO_STATUS     0x0208u
-#define   FIFO_LEVEL_MASK   0xFFFFu
-#define   FIFO_OVERRUN      (1u << 16)  // W1C
+#define REG_FIFO_STATUS       0x0208u
+#define   FIFO_LEVEL_MASK     0xFFFFu
+#define   FIFO_OVERRUN        (1u << 16)  // W1C
+#define   FIFO_CAPTURE_BUSY   (1u << 17)  // RO (0 in stub mode)
 
 #define REG_FIFO_DATA       0x020Cu
 
