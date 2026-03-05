@@ -19,7 +19,9 @@ This is a *working* schedule. If we drift by >3 days on any milestone, we should
   - `bash ops/check_shuttle_lock_record.sh --strict` passes
   - `docs/TAPEOUT_CHECKLIST.md` updated for any shuttle-specific constraints (precheck deadline, submission mechanics)
 
-Locked fields live in: `docs/SHUTTLE_LOCK_RECORD.md` (single source)
+Locked fields live in: `docs/SHUTTLE_LOCK_RECORD.md` (single source).
+
+Once locked, also fill in the **Derived deadlines** section in the lock record so the rest of this timeline can be planned backwards from the cutoff.
 
 ### M0 — v1 freeze tag (spec/regmap/tests stable)
 - Target: **2026-03-01** (baseline)

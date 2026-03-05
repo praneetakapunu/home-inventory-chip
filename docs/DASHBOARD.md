@@ -1,6 +1,6 @@
 # Home Inventory Chip — Project Dashboard
 
-**Last updated:** 2026-03-02 (UTC)
+**Last updated:** 2026-03-05 (UTC)
 
 ## Objective
 Deliver a taped-out **digital** chip (open-source tools) + a demo system that demonstrates a practical **home inventory management** path.
