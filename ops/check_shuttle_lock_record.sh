@@ -85,6 +85,26 @@ else
       echo "ERROR: missing 'Source excerpt' line" >&2
       exit 1
     fi
+
+    # Ensure the canonical formatting block has explicit date/time/timezone values.
+    # This prevents ambiguous cutoffs like "Mar 12" without a timezone.
+    require_nonempty() {
+      local key="$1"
+      local val
+      val=$(awk -F': ' -v k="$key" '
+        $0 ~ "^  "k":" {sub(/^  "k": */, "", $0); print $0; exit}
+      ' "$RECORD" || true)
+
+      if [[ -z "$val" ]]; then
+        echo "ERROR: '$key' is missing or empty in canonical cutoff block" >&2
+        echo "  Expected a line like:  $key: <value>" >&2
+        exit 1
+      fi
+    }
+
+    require_nonempty "date"
+    require_nonempty "time"
+    require_nonempty "timezone"
   fi
 
   echo "Shuttle lock record status: LOCKED (no 'TBD' placeholders found)"
