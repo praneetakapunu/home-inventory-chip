@@ -5,8 +5,8 @@
 //
 // Purpose:
 // - Provide a stable cocotb-friendly hook for future ADC bring-up work.
-// - Prove the FIFO pop semantics and status register behavior work with an
-//   external word stream.
+// - Prove the FIFO pop semantics, empty-read behavior, and W1C overrun clear
+//   behavior work with an external word stream.
 //
 // Run via:
 //   make -C verify wb-adc-override-sim
@@ -68,12 +68,16 @@ module wb_adc_fifo_override_tb;
         end
     endtask
 
-    task automatic wb_write32(input [31:0] adr, input [31:0] data);
+    task automatic wb_write32_sel(
+        input [31:0] adr,
+        input [31:0] data,
+        input [3:0]  sel
+    );
         begin
             @(negedge clk);
             wbs_adr_i = adr;
             wbs_dat_i = data;
-            wbs_sel_i = 4'hF;
+            wbs_sel_i = sel;
             wbs_we_i  = 1'b1;
             wbs_cyc_i = 1'b1;
             wbs_stb_i = 1'b1;
@@ -84,6 +88,12 @@ module wb_adc_fifo_override_tb;
 
             @(negedge clk);
             wb_idle();
+        end
+    endtask
+
+    task automatic wb_write32(input [31:0] adr, input [31:0] data);
+        begin
+            wb_write32_sel(adr, data, 4'hF);
         end
     endtask
 
@@ -134,6 +144,7 @@ module wb_adc_fifo_override_tb;
     endtask
 
     reg [31:0] rdata;
+    integer i;
 
     initial begin
         $display("[tb] start wb_adc_fifo_override_tb");
@@ -149,6 +160,13 @@ module wb_adc_fifo_override_tb;
         wb_read32(ADR_ADC_FIFO_STATUS, rdata);
         if (rdata[15:0] !== 16'd0) begin
             $display("[tb] ERROR: expected FIFO level 0 after reset, got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Empty read must return 0 (and not underflow).
+        wb_read32(ADR_ADC_FIFO_DATA, rdata);
+        if (rdata !== 32'h0000_0000) begin
+            $display("[tb] ERROR: expected FIFO_DATA=0 when empty, got 0x%08x", rdata);
             $fatal(1);
         end
 
@@ -187,6 +205,49 @@ module wb_adc_fifo_override_tb;
         wb_read32(ADR_ADC_FIFO_STATUS, rdata);
         if (rdata[15:0] !== 16'd0) begin
             $display("[tb] ERROR: expected FIFO level 0 after drain, got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Empty read again must return 0.
+        wb_read32(ADR_ADC_FIFO_DATA, rdata);
+        if (rdata !== 32'h0000_0000) begin
+            $display("[tb] ERROR: expected FIFO_DATA=0 when empty (post-drain), got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // -----------------------------------------------------------------
+        // Overrun behavior + W1C clear semantics (byte-lane masking)
+        // -----------------------------------------------------------------
+        // FIFO depth in home_inventory_wb is small (localparam ADC_FIFO_DEPTH=16).
+        // Push 17 words; the last should be dropped and set sticky OVERRUN.
+        for (i = 0; i < 17; i = i + 1) begin
+            sim_push_word(32'hBEEF_0000 + i[31:0]);
+        end
+
+        wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+        if (rdata[15:0] !== 16'd16) begin
+            $display("[tb] ERROR: expected FIFO level 16 when full, got 0x%08x", rdata);
+            $fatal(1);
+        end
+        if (rdata[16] !== 1'b1) begin
+            $display("[tb] ERROR: expected OVERRUN sticky (bit16)=1 after overflow attempt, got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Attempt clear with the wrong byte-lane select: should NOT clear.
+        // OVERRUN lives in bit[16], which is byte lane 2 -> wbs_sel_i[2] (SEL=0x4).
+        wb_write32_sel(ADR_ADC_FIFO_STATUS, 32'h0001_0000, 4'h1);
+        wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+        if (rdata[16] !== 1'b1) begin
+            $display("[tb] ERROR: OVERRUN cleared unexpectedly with wrong SEL, got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Clear with correct select.
+        wb_write32_sel(ADR_ADC_FIFO_STATUS, 32'h0001_0000, 4'h4);
+        wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+        if (rdata[16] !== 1'b0) begin
+            $display("[tb] ERROR: expected OVERRUN cleared with SEL=0x4 W1C, got 0x%08x", rdata);
             $fatal(1);
         end
 
