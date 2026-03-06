@@ -62,6 +62,28 @@ If this fails, fix the wrapper wiring / filelist **before** attempting precheck/
 - Addressing is byte-addressed Wishbone; registers are 32-bit aligned; see:
   - `chip-inventory/spec/regmap_v1.yaml`
 
+## Optional: enabling real ADC ingest (USE_REAL_ADC_INGEST)
+By default, the Wishbone block uses a **stub ADC snapshot path** that feeds a small FIFO so firmware + DV can make progress without real pins.
+
+If you want to exercise the real SPI capture + FIFO path in simulation/bring-up, compile the IP RTL with:
+- `-DUSE_REAL_ADC_INGEST`
+
+What this changes:
+- `home_inventory_wb` *adds* ADC SPI ports (only when the define is present):
+  - `adc_sclk`, `adc_cs_n`, `adc_mosi`, `adc_miso`
+- Internally, `home_inventory_wb` instantiates `rtl/adc/adc_streaming_ingest.v` and routes `CTRL.START` into the capture `start` pulse.
+
+Harness expectations:
+- Wrapper modules must conditionally expose/wire these pins when `USE_REAL_ADC_INGEST` is enabled.
+- For purely tool-light compile sanity (no ADC model), it is OK to:
+  - leave `adc_miso` tied low, and
+  - leave `adc_sclk/cs_n/mosi` unconnected (or routed to dummy wires)
+  as long as port lists match under the same compile-time define.
+
+Fast sanity checks:
+- IP repo already compiles both configurations via: `bash ops/rtl_compile_check.sh`
+- Harness repo should ideally support a matching `make rtl-compile-check REAL_ADC=1` (or equivalent) so wrapper drift is caught early.
+
 ## Common failure modes
 - **Stale filelist in harness**: run `make sync-ip-filelist`.
 - **Include path issues** (`regmap_params.vh` etc): ensure the harness compile includes `rtl/include` in the IP filelist and/or Icarus include paths.
