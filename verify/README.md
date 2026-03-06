@@ -15,6 +15,9 @@ sudo apt-get update && sudo apt-get install -y iverilog
 Run:
 
 ```sh
+# See available targets
+make -C verify help
+
 # One command (recommended)
 make -C verify all
 

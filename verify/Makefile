@@ -56,8 +56,28 @@ UNPACK_OUT := adc_soc_frame_unpack_tb.out
 WB_ADC_OVERRIDE_TB  := wb_adc_fifo_override_tb.v
 WB_ADC_OVERRIDE_OUT := wb_adc_fifo_override_tb.out
 
-.PHONY: all sim top-sim real-adc-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
+.PHONY: help all sim top-sim real-adc-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
+
+help:
+	@echo "Targets:" \
+	 && echo "  make -C verify all                 # full smoke suite (recommended)" \
+	 && echo "  make -C verify regmap-check        # YAML ↔ RTL consistency" \
+	 && echo "  make -C verify regmap-gen-check    # generated artifacts up-to-date" \
+	 && echo "  make -C verify sim                 # wb_tb" \
+	 && echo "  make -C verify top-sim             # top_tb" \
+	 && echo "  make -C verify real-adc-sim        # compiles with USE_REAL_ADC_INGEST" \
+	 && echo "  make -C verify fifo-sim            # adc_stream_fifo_tb" \
+	 && echo "  make -C verify drdy-sim            # adc_drdy_sync_tb" \
+	 && echo "  make -C verify spi-sim             # adc_spi_frame_capture_tb" \
+	 && echo "  make -C verify evt-sim             # event_detector_tb" \
+	 && echo "  make -C verify f2f-sim             # adc_frame_to_fifo_tb" \
+	 && echo "  make -C verify pipe-sim            # adc_stream_pipe_tb" \
+	 && echo "  make -C verify ingest-sim          # adc_streaming_ingest_tb" \
+	 && echo "  make -C verify overrun-sim         # adc_stream_overrun_tb" \
+	 && echo "  make -C verify unpack-sim          # adc_soc_frame_unpack_tb" \
+	 && echo "  make -C verify wb-adc-override-sim # wb_adc_fifo_override_tb" \
+	 && echo "  make -C verify clean"
 
 # One command to run the whole smoke suite (what humans should run locally).
 all: regmap-check regmap-gen-check sim top-sim real-adc-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim
