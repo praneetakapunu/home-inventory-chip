@@ -27,19 +27,23 @@ docs listed above.
 ```text
 Program / foundry / PDK:
 Shuttle name/number:
+Source-of-truth link:
+Last verified (UTC):
+Source excerpt (1–3 lines; paste from the schedule page):
 
 Submission cutoff:
-  date:
-  time:
-  timezone:
+  local date:
+  local time:
+  local timezone:
+  utc:
 
 Precheck deadline (if different):
-  date:
-  time:
-  timezone:
+  local date:
+  local time:
+  local timezone:
+  utc:
 
 Expected silicon delivery window:
-Source-of-truth link:
 Notes:
 ```
 
@@ -74,8 +78,6 @@ Evaluate these constraints:
 
 Score each candidate shuttle 0–2 in each category (higher is better).
 Also record the cutoff **both in local timezone and UTC** so we can’t misread the deadline.
-
-Score each candidate shuttle 0–2 in each category (higher is better):
 
 - **Tooling readiness**
   - 0: cannot run `mpw-precheck` end-to-end in a reproducible way

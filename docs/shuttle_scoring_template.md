@@ -8,11 +8,14 @@ Use this when comparing candidate OpenMPW shuttles.
 - Shuttle name/number:
 - Source-of-truth link:
 - Last verified (UTC):
+- Source excerpt (1–3 lines; paste from the schedule page):
+- Weeks until cutoff (approx):
 
 ### Submission cutoff
 
 - Local date/time/timezone:
 - UTC:
+- Notes on ambiguity (DST, “end of day”, etc.):
 
 ### Precheck deadline (if different)
 
