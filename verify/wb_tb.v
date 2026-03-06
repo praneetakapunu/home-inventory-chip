@@ -395,6 +395,17 @@ module wb_tb;
             $display("[tb] ERROR: FIFO overrun should still be set after drain: got 0x%08x", rdata);
             $fatal(1);
         end
+
+        // Byte-lane masking check: attempt to clear using the *wrong* lane (lane 0).
+        // The overrun flag must remain set.
+        wb_write32_sel(ADR_ADC_FIFO_STATUS, 32'h0001_0000, 4'b0001);
+        wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+        if (rdata[16] !== 1'b1) begin
+            $display("[tb] ERROR: FIFO overrun cleared despite wrong byte lane: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Proper clear: W1C bit[16] lives in byte lane 2.
         wb_write32_sel(ADR_ADC_FIFO_STATUS, 32'h0001_0000, 4'b0100);
         wb_read32(ADR_ADC_FIFO_STATUS, rdata);
         if (rdata[16] !== 1'b0) begin
