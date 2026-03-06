@@ -56,7 +56,10 @@ UNPACK_OUT := adc_soc_frame_unpack_tb.out
 WB_ADC_OVERRIDE_TB  := wb_adc_fifo_override_tb.v
 WB_ADC_OVERRIDE_OUT := wb_adc_fifo_override_tb.out
 
-.PHONY: help all sim top-sim real-adc-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
+WB_REAL_ADC_SMOKE_TB  := wb_real_adc_ingest_smoke_tb.v
+WB_REAL_ADC_SMOKE_OUT := wb_real_adc_ingest_smoke_tb.out
+
+.PHONY: help all sim top-sim real-adc-sim wb-real-adc-smoke-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
 help:
@@ -67,6 +70,7 @@ help:
 	 && echo "  make -C verify sim                 # wb_tb" \
 	 && echo "  make -C verify top-sim             # top_tb" \
 	 && echo "  make -C verify real-adc-sim        # compiles with USE_REAL_ADC_INGEST" \
+	 && echo "  make -C verify wb-real-adc-smoke-sim # wb + real ADC ingest FIFO pop semantics" \
 	 && echo "  make -C verify fifo-sim            # adc_stream_fifo_tb" \
 	 && echo "  make -C verify drdy-sim            # adc_drdy_sync_tb" \
 	 && echo "  make -C verify spi-sim             # adc_spi_frame_capture_tb" \
@@ -80,7 +84,7 @@ help:
 	 && echo "  make -C verify clean"
 
 # One command to run the whole smoke suite (what humans should run locally).
-all: regmap-check regmap-gen-check sim top-sim real-adc-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim
+all: regmap-check regmap-gen-check sim top-sim real-adc-sim wb-real-adc-smoke-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim
 
 sim: $(OUT)
 	$(VVP) $(OUT)
@@ -120,6 +124,9 @@ unpack-sim: $(UNPACK_OUT)
 
 wb-adc-override-sim: $(WB_ADC_OVERRIDE_OUT)
 	$(VVP) $(WB_ADC_OVERRIDE_OUT)
+
+wb-real-adc-smoke-sim: $(WB_REAL_ADC_SMOKE_OUT)
+	$(VVP) $(WB_REAL_ADC_SMOKE_OUT)
 
 # Pure-Python consistency check (no Verilog simulator required).
 regmap-check:
@@ -239,6 +246,15 @@ $(WB_ADC_OVERRIDE_OUT): $(WB_ADC_OVERRIDE_TB) $(RTL_DIR)/home_inventory_wb.v $(R
 	$(RTL_DIR)/adc/adc_stream_fifo.v $(RTL_DIR)/adc/adc_frame_to_fifo.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
+$(WB_REAL_ADC_SMOKE_OUT): $(WB_REAL_ADC_SMOKE_TB) \
+	$(RTL_DIR)/home_inventory_wb.v \
+	$(RTL_DIR)/home_inventory_event_detector.v \
+	$(RTL_DIR)/adc/adc_streaming_ingest.v \
+	$(RTL_DIR)/adc/adc_spi_frame_capture.v \
+	$(RTL_DIR)/adc/adc_frame_to_fifo.v \
+	$(RTL_DIR)/adc/adc_stream_fifo.v
+	$(IVERILOG) $(IVERILOG_FLAGS) -DUSE_REAL_ADC_INGEST -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+
 clean:
-	rm -f $(OUT) $(TOP_OUT) $(REAL_ADC_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT) $(PIPE_OUT) $(INGEST_OUT) $(OVERRUN_OUT) $(UNPACK_OUT) $(WB_ADC_OVERRIDE_OUT)
+	rm -f $(OUT) $(TOP_OUT) $(REAL_ADC_OUT) $(WB_REAL_ADC_SMOKE_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT) $(PIPE_OUT) $(INGEST_OUT) $(OVERRUN_OUT) $(UNPACK_OUT) $(WB_ADC_OVERRIDE_OUT)
 	rm -f *.vcd *.fst *.log *.dump
