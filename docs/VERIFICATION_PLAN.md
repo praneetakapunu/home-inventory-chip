@@ -24,6 +24,12 @@ From a clean checkout of **chip-inventory**:
   - `make -C verify spi-sim` (SPI frame capture)
   - `make -C verify drdy-sim` (DRDY sync)
   - `make -C verify fifo-sim` (stream FIFO)
+  - `make -C verify f2f-sim` (ADC frame → FIFO packing)
+  - `make -C verify ingest-sim` (end-to-end ingest: DRDY + SPI capture + FIFO)
+  - `make -C verify overrun-sim` (FIFO overrun sticky flag semantics)
+  - `make -C verify unpack-sim` (SoC-side frame unpacking helper)
+  - `make -C verify real-adc-sim` (compiles top with `USE_REAL_ADC_INGEST`)
+  - `make -C verify wb-real-adc-smoke-sim` (Wishbone + real ADC ingest smoke)
 
 ## Single source of truth (regmap)
 - **Source:** `spec/regmap_v1.yaml`
@@ -76,9 +82,25 @@ Checks:
 **Goal:** validate small RTL building blocks without needing the full ADC integration.
 
 Implemented by:
-- `verify/adc_spi_frame_capture_tb.v`
-- `verify/adc_drdy_sync_tb.v`
-- `verify/adc_stream_fifo_tb.v`
+- `verify/adc_spi_frame_capture_tb.v` (SPI mode + word capture)
+- `verify/adc_drdy_sync_tb.v` (CDC + edge detect)
+- `verify/adc_stream_fifo_tb.v` (FIFO core: push/pop/level)
+
+### 3.1) ADC pipeline + integration-ish unit tests (still fast)
+**Goal:** validate the *wiring* between blocks (frame → FIFO, FIFO overrun semantics) before harness integration.
+
+Implemented by:
+- `verify/adc_frame_to_fifo_tb.v` (frame packing order + CRC drop policy)
+- `verify/adc_stream_pipe_tb.v` (frame_to_fifo + fifo together)
+- `verify/adc_stream_overrun_tb.v` (sticky overrun behavior)
+- `verify/adc_streaming_ingest_tb.v` (DRDY-paced ingest: drdy_sync + spi_frame_capture + frame_to_fifo + fifo)
+
+### 3.2) Wishbone + real ADC ingest smoke
+**Goal:** prove the real ADC ingest path works through the Wishbone FIFO interface (pop semantics + status bits) when compiled with `USE_REAL_ADC_INGEST`.
+
+Implemented by:
+- `verify/real_adc_compile_tb.v` (compile/elaboration guard)
+- `verify/wb_real_adc_ingest_smoke_tb.v` (Wishbone-driven smoke)
 
 ### 4) Top-level integration sanity
 **Goal:** ensure the top can elaborate and placeholder outputs are stable (no accidental Xs).
