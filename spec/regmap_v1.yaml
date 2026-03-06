@@ -8,6 +8,12 @@
 # - All addresses are byte addresses (Wishbone wbs_adr_i).
 # - Registers are 32-bit, word-aligned; wbs_sel_i byte-enables must be honored on writes.
 # - Reserved bits must read as 0 and ignore writes.
+# - Access conventions used here (normative):
+#   - w1p: write-1-to-pulse. Reads return 0.
+#   - w1c: write-1-to-clear. **Only bits in selected byte lanes participate** (byte-lane masked
+#          by wbs_sel_i[3:0]). Firmware should generally clear sticky bits with full-word writes
+#          (wbs_sel_i=4'b1111) to avoid surprises.
+#   - ro_w1c: register is readable, but some fields may be w1c.
 #
 # This file is deliberately minimal and stable; prefer adding new registers over
 # redefining existing ones.
