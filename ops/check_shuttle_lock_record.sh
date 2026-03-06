@@ -4,7 +4,7 @@ set -euo pipefail
 # check_shuttle_lock_record.sh
 #
 # Purpose:
-#   Lightweight sanity check for the OpenMPW shuttle lock record.
+#   Lightweight sanity check for the shuttle lock record.
 #   Designed to be runnable even in low-disk environments.
 #
 # Behavior:
@@ -33,7 +33,13 @@ if [[ ! -f "$RECORD" ]]; then
 fi
 
 # Count any remaining TBD placeholders.
-TBD_COUNT=$(grep -n "\bTBD\b" "$RECORD" | wc -l | tr -d ' ')
+TBD_COUNT=$( (grep -n "\bTBD\b" "$RECORD" || true) | wc -l | tr -d ' ')
+
+# Read lock status (LOCKED vs PROPOSED) from the top of the file.
+# Expected line:
+#   **Lock status:** LOCKED
+LOCK_STATUS=$(grep -m1 -E "^\*\*Lock status:\*\*" "$RECORD" | sed -E 's/^\*\*Lock status:\*\* *//')
+LOCK_STATUS=${LOCK_STATUS:-"(missing)"}
 
 # Ensure the record includes a 'Last verified (UTC)' field.
 if ! grep -q "Last verified (UTC)" "$RECORD"; then
@@ -51,6 +57,7 @@ field_line() {
 
 if [[ "$TBD_COUNT" -gt 0 ]]; then
   echo "Shuttle lock record status: NOT LOCKED (contains $TBD_COUNT 'TBD' placeholders)"
+  echo "  Lock status line: $LOCK_STATUS"
   echo "  File: $RECORD"
   echo "  Tip: Once Praneet chooses a shuttle, fill the record and re-run with --strict."
   if [[ "$STRICT" -eq 1 ]]; then
@@ -58,6 +65,13 @@ if [[ "$TBD_COUNT" -gt 0 ]]; then
     exit 1
   fi
 else
+  # In strict mode, require an explicit LOCKED status (not merely 'no TBDs').
+  if [[ "$STRICT" -eq 1 && "$LOCK_STATUS" != "LOCKED" ]]; then
+    echo "ERROR: record has no TBDs, but is not explicitly LOCKED (Lock status: $LOCK_STATUS)" >&2
+    echo "  If this shuttle is confirmed, edit docs/SHUTTLE_LOCK_RECORD.md and set: **Lock status:** LOCKED" >&2
+    exit 1
+  fi
+
   # In strict mode, do a couple of additional lightweight sanity checks.
   if [[ "$STRICT" -eq 1 ]]; then
     LV_LINE=$(field_line "Last verified (UTC)")
@@ -107,6 +121,6 @@ else
     require_nonempty "timezone"
   fi
 
-  echo "Shuttle lock record status: LOCKED (no 'TBD' placeholders found)"
+  echo "Shuttle lock record status: OK (no 'TBD' placeholders found; Lock status: $LOCK_STATUS)"
   echo "  File: $RECORD"
 fi

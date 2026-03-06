@@ -1,16 +1,18 @@
-# OpenMPW shuttle selection (how to pick + what we need)
+# Shuttle selection (how to pick + what we need)
 
 This doc exists so we stop treating the shuttle choice as a vague TODO.
+
+Current target (proposed): **ChipFoundry CI2605** (see `docs/SHUTTLE_LOCK_RECORD.md`).
 
 ## What we need to lock
 
 Record these **exact fields** once Praneet chooses a target shuttle:
 
-- **Program / foundry / PDK:** (e.g. OpenMPW / Sky130A)
-- **Shuttle name/number:** (e.g. OpenMPW-??)
-- **Submission cutoff (date + time + timezone):**
-- **Precheck deadline (if different):**
-- **Expected silicon delivery window:**
+- **Program / foundry / PDK:** (e.g. ChipFoundry / chipIgnite)
+- **Shuttle name/number:** (e.g. CI2605)
+- **Commitment/cutoff (date + time + timezone):** (if time/tz aren’t published, mark as “not specified”)
+- **Any required checks / precheck equivalent (if applicable):**
+- **Expected silicon delivery window (or listed delivery date):**
 - **Link to the official schedule page / announcement:**
 
 Once chosen, copy the values into:

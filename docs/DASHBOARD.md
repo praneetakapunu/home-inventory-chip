@@ -10,7 +10,7 @@ Deliver a taped-out **digital** chip (open-source tools) + a demo system that de
 ## Current status (as of this commit)
 - Phase: **RTL baseline + regmap + harness integration (low-disk green)**
 - Budget target: **<$5k**
-- Tapeout path: **SKY130A via OpenMPW / Caravel harness**
+- Tapeout path: **ChipFoundry / chipIgnite (CI2605 reservation shuttle)**
 - ADC part (locked): **TI ADS131M08**
 - Effective resolution target (locked): **20 g**
 
@@ -29,17 +29,15 @@ These are the things we can run repeatedly without needing a full OpenLane setup
 ## Milestones / schedule
 Baseline dates: see `docs/TIMELINE.md` (baseline start 2026-02-25).
 
-## Target OpenMPW shuttle (lock record)
-**Status:** TBD
+## Target shuttle (lock record)
+**Status:** PROPOSED: **ChipFoundry CI2605** (needs Praneet confirmation)
 
 Single source-of-truth for the shuttle choice: `docs/SHUTTLE_LOCK_RECORD.md`
 Sanity check helper:
 - `bash ops/check_shuttle_lock_record.sh` (status)
 - `bash ops/check_shuttle_lock_record.sh --strict` (fails if not fully locked)
 
-Shuttle-pick checklist: `docs/SHUTTLE_SELECTION.md`
-
-Once chosen, **treat the cutoff as a fixed constraint** and re-baseline `docs/TIMELINE.md` + `docs/TAPEOUT_CHECKLIST.md` accordingly.
+Once chosen, **treat the commitment date as a fixed constraint** and re-baseline `docs/TIMELINE.md` + `docs/TAPEOUT_CHECKLIST.md` accordingly.
 
 High level:
 1) Spec/acceptance frozen (v1)
@@ -61,7 +59,7 @@ High level:
    - Keep harness compile-check + IP verify suite green as we iterate.
 
 ## What I need from Praneet
-- Shuttle schedule/deadline to target (name + cutoff date). If unknown, we proceed with “continuous readiness” gates until chosen.
+- Confirm ChipFoundry CI2605 is the intended path (it’s now locked in `docs/SHUTTLE_LOCK_RECORD.md`) and share any ChipFoundry-specific checklists/requirements if they provide them (precheck equivalents, deliverable formats, etc.).
 
 ## Key decisions log
 - See: `decisions/` (one file per decision)

@@ -1,6 +1,8 @@
 # Shuttle lock record (single source)
 
-Fill this in **once** when Praneet chooses the target OpenMPW shuttle.
+**Lock status:** PROPOSED (awaiting Praneet confirmation)
+
+Fill this in **once** when Praneet chooses the target shuttle.
 
 Why this file exists:
 - We kept copying the shuttle cutoff into multiple docs.
@@ -8,29 +10,35 @@ Why this file exists:
 
 ## Locked fields (copy/paste from official source)
 
-- **Last verified (UTC):** TBD
-- **Program / foundry / PDK:** OpenMPW / Sky130A
-- **Shuttle name/number:** TBD
-- **Submission cutoff:** TBD
-- **Precheck deadline (if different):** TBD
-- **Expected silicon delivery window:** TBD
-- **Source link (official schedule / announcement):** TBD
-- **Source excerpt (copy/paste):** TBD
+- **Last verified (UTC):** 2026-03-06 18:18 UTC
+- **Program / foundry / PDK:** ChipFoundry / chipIgnite reservations (PDK not stated on schedule page)
+- **Shuttle name/number:** CI2605 (May MPW Shuttle)
+- **Submission cutoff:** Commitment Date: 2026-03-18 (date-only on source; internal safe deadline is earlier)
+- **Precheck deadline (if different):** Not specified (ChipFoundry flow; see notes)
+- **Expected silicon delivery window:** Delivery Date: 2026-10-28 (per schedule)
+- **Source link (official schedule / announcement):** https://chipfoundry.io/#schedule
+- **Source excerpt (copy/paste):**
+  "CI2605 … Commitment Date March 18, 2026 … Tapeout Date May 13, 2026 … Delivery Date October 28, 2026"
 
 ### Canonical formatting (use this structure when locking)
 
 Keep this structure even after locking so the cutoff is unambiguous.
 
 ```text
-Submission cutoff:
-  date:
-  time:
-  timezone:
+Submission cutoff (ChipFoundry commitment date):
+  official date: 2026-03-18
+  official time: not specified (date-only on source)
+  official timezone: not specified (source does not state TZ)
+
+Internal safe deadline (assume safest):
+  date: 2026-03-17
+  time: 23:59
+  timezone: PT
 
 Precheck deadline (if different):
-  date:
-  time:
-  timezone:
+  date: not specified
+  time: not specified
+  timezone: not specified
 ```
 
 ## Derived deadlines (internal; compute from the cutoff)
@@ -38,15 +46,15 @@ Precheck deadline (if different):
 Once the shuttle is locked, derive these “internal” dates so we can plan backwards.
 (These do not have to match any official program deadline.)
 
-- **Internal freeze tag (v1-freeze):** TBD
-- **Internal precheck-clean target:** TBD
-- **Internal final-integration target:** TBD
+- **Internal freeze tag (v1-freeze):** 2026-03-08 (tag: `v1-freeze-20260308`)
+- **Internal precheck-clean target:** not applicable (ChipFoundry requirements not yet provided; no OpenMPW mpw-precheck assumed)
+- **Internal final-integration target:** 2026-03-12 (keeps margin before internal safe deadline 2026-03-17 23:59 PT)
 
 ## Change log
 
 If the official schedule changes, append a line here.
 
-- TBD — initial record created.
+- 2026-03-06 — proposed shuttle target: ChipFoundry CI2605 (date-only commitment deadline from schedule page).
 
 ## Notes
 - If the official schedule changes, update this file and then re-baseline `docs/TIMELINE.md`.

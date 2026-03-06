@@ -9,19 +9,19 @@ This is a *working* schedule. If we drift by >3 days on any milestone, we should
 
 ## Milestones (v1)
 
-### M-1 — Pick target OpenMPW shuttle
-- Target: **TBD (Praneet)**
+### M-1 — Confirm & lock target shuttle (ChipFoundry)
+- Target (proposed): **CI2605** (Commitment Date: 2026-03-18; Tapeout: 2026-05-13; Delivery: 2026-10-28)
 - Exit criteria:
   - `docs/SHUTTLE_LOCK_RECORD.md` filled (no TBDs) and includes:
     - **Last verified (UTC)**
     - **source link** + **copy/paste excerpt**
-    - cutoff **date + time + timezone**
+    - commitment/cutoff **date** (and time/timezone if published; otherwise explicitly marked “not specified”)
   - `bash ops/check_shuttle_lock_record.sh --strict` passes
-  - `docs/TAPEOUT_CHECKLIST.md` updated for any shuttle-specific constraints (precheck deadline, submission mechanics)
+  - `docs/TAPEOUT_CHECKLIST.md` updated for any ChipFoundry-specific constraints (deliverables, checks, submission mechanics)
 
 Locked fields live in: `docs/SHUTTLE_LOCK_RECORD.md` (single source).
 
-Once locked, also fill in the **Derived deadlines** section in the lock record so the rest of this timeline can be planned backwards from the cutoff.
+Once locked, also fill in the **Derived deadlines** section in the lock record so the rest of this timeline can be planned backwards from the commitment date.
 
 ### M0 — v1 freeze tag (spec/regmap/tests stable)
 - Target: **2026-03-01** (baseline)
@@ -30,18 +30,19 @@ Once locked, also fill in the **Derived deadlines** section in the lock record s
   - `make -C verify all` green
   - tag created: `v1-freeze-YYYYMMDD`
 
-### M1 — OpenMPW/Caravel harness integration complete
-- Target: **2026-03-11**
+### M1 — Submission/integration repo path confirmed (ChipFoundry)
+- Target: **2026-03-10**
 - Exit criteria:
-  - builds in the submission repo
-  - wrapper wired (clock/reset/Wishbone/IO)
-  - harness-level sim sanity passes
+  - ChipFoundry submission/integration repo identified (or their required submission mechanism documented)
+  - If a wrapper/harness is required: wrapper wired (clock/reset/Wishbone/IO) and compile-check passes
+  - Minimal sim sanity passes (at least RTL compile + smoke DV)
 
-### M2 — OpenMPW precheck clean + artifacts logged
-- Target: **2026-03-18**
+### M2 — Commitment deadline met (ChipFoundry reservation)
+- Target: **2026-03-18** (internal safe deadline: **2026-03-17 23:59 PT**)
 - Exit criteria:
-  - precheck passes (or documented waivers)
-  - `docs/PRECHECK_LOG.md` includes command + commit + summary
+  - Reservation/commitment submitted/confirmed for CI2605 (or documented why not)
+  - `docs/PRECHECK_LOG.md` includes *any* ChipFoundry-required checks that were run (or notes that none are required at this stage)
+  - `docs/PRECHECK_LOG.md` includes repo commit + summary
 
 ### M3 — PD signoff-quality run (OpenLane/OpenROAD) for integrated design
 - Target: **2026-04-15**
@@ -50,13 +51,13 @@ Once locked, also fill in the **Derived deadlines** section in the lock record s
   - DRC/LVS clean (per flow expectations)
   - reproducible run documented
 
-### M4 — Submit to MPW shuttle
-- Target: **2026-04-20**
+### M4 — Tapeout delivery (CI2605)
+- Target: **2026-05-13**
 - Exit criteria:
   - final tag + release notes
-  - submission accepted
+  - deliverables submitted/accepted per ChipFoundry requirements
 
-## Post-submission (external lead times)
-- Fab (MPW): **8–16 weeks** typical
-- Packaging + shipping: **2–6 weeks**
+## Post-tapeout (external lead times)
+- ChipFoundry schedule (per CI2605): **Delivery Date 2026-10-28**
+- Packaging/shipping details: TBD (depends on ChipFoundry offering: QFN vs bare die, etc.)
 
