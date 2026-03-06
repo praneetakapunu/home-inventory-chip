@@ -239,16 +239,30 @@ wire adc_capture_busy;
 
     wire [31:0] evt_ts_now = r_time_now;
 
-    // Stub sample pattern is identical to ADC_RAW_CHx update logic.
+    // v1 baseline: drive the event detector from the snapshot-updated
+    // ADC raw registers.
+    //
+    // Important subtlety:
+    // - r_adc_raw[] updates on the clock edge when adc_snapshot_fire is true.
+    // - The event detector samples its inputs *in the same cycle* as
+    //   evt_sample_valid_stub.
+    //
+    // Therefore, we present the *next* snapshot values here (the same values
+    // that will be written into r_adc_raw[] on this SNAPSHOT pulse), so that:
+    //  - FIFO stub data (STATUS + CH0..CH7) matches the ADC_RAW_CHx registers
+    //    firmware reads after the write
+    //  - event detector behavior matches those same sampled values
     wire        evt_sample_valid_stub = adc_snapshot_fire;
-    wire [31:0] evt_sample_ch0_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd0;
-    wire [31:0] evt_sample_ch1_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd1;
-    wire [31:0] evt_sample_ch2_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd2;
-    wire [31:0] evt_sample_ch3_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd3;
-    wire [31:0] evt_sample_ch4_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd4;
-    wire [31:0] evt_sample_ch5_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd5;
-    wire [31:0] evt_sample_ch6_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd6;
-    wire [31:0] evt_sample_ch7_stub = 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + 32'd7;
+
+    wire [31:0] adc_snapshot_count_next = r_adc_snapshot_count + 32'h1;
+    wire [31:0] evt_sample_ch0_stub = 32'h0000_1000 + adc_snapshot_count_next + 32'd0;
+    wire [31:0] evt_sample_ch1_stub = 32'h0000_1000 + adc_snapshot_count_next + 32'd1;
+    wire [31:0] evt_sample_ch2_stub = 32'h0000_1000 + adc_snapshot_count_next + 32'd2;
+    wire [31:0] evt_sample_ch3_stub = 32'h0000_1000 + adc_snapshot_count_next + 32'd3;
+    wire [31:0] evt_sample_ch4_stub = 32'h0000_1000 + adc_snapshot_count_next + 32'd4;
+    wire [31:0] evt_sample_ch5_stub = 32'h0000_1000 + adc_snapshot_count_next + 32'd5;
+    wire [31:0] evt_sample_ch6_stub = 32'h0000_1000 + adc_snapshot_count_next + 32'd6;
+    wire [31:0] evt_sample_ch7_stub = 32'h0000_1000 + adc_snapshot_count_next + 32'd7;
 
 `ifndef USE_REAL_ADC_INGEST
     // Stub ADC "SoC frame" for FIFO population: STATUS + CH0..CH7 (9 words).
