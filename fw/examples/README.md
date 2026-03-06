@@ -6,6 +6,12 @@ Caravel management firmware environment.
 They are intentionally minimal and avoid depending on a particular SDK.
 
 ## Files
+- `homeinv_reg_smoke.c`: minimal reg-block smoke test:
+  - reads `ID`/`VERSION`
+  - writes `CTRL.ENABLE`
+  - reads `TIME_NOW` (sanity check for a live counter)
+  - pulses `CTRL.START` (W1P)
+
 - `homeinv_adc_fifo_dump.c`: demonstrates how to:
   - clear FIFO overrun (W1C)
   - trigger a `SNAPSHOT`
