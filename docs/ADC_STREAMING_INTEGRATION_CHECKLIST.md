@@ -130,8 +130,11 @@ Acceptance:
   - packer pushing wrong bus / `fifo_din` not connected.
 
 - `LEVEL_WORDS` never increases:
-  - streaming disabled (`ENABLE_ADC_STREAMING=0`)
-  - upstream `frame_valid` never asserted
+  - build flag mismatch: expecting real ADC ingest but `USE_REAL_ADC_INGEST` is not defined (or vice versa)
+  - never triggering the source:
+    - stub mode: `ADC_CMD.SNAPSHOT` not written (W1P)
+    - real ingest mode: `CTRL.START` not written (W1P) / `adc_streaming_ingest.start` never seen
+  - upstream `frame_valid` never asserted (real ingest path)
   - FIFO held in reset
 
 - `OVERRUN` never sets even with forced full FIFO:
