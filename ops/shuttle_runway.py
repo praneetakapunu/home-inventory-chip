@@ -123,12 +123,32 @@ def main() -> int:
 
     if delta.total_seconds() < 0:
         print("  STATUS: deadline is in the past (record likely stale)")
-    elif weeks < 2:
+        return 0
+
+    if weeks < 2:
         print("  STATUS: extremely tight (<2 weeks). Freeze scope immediately.")
     elif weeks < 4:
         print("  STATUS: tight (<4 weeks). Avoid scope churn; prioritize precheck readiness.")
     else:
         print("  STATUS: reasonable runway (>=4 weeks). Still avoid address-map churn.")
+
+    # Suggested internal milestones.
+    #
+    # These are intentionally simple (calendar-day offsets) and exist to reduce
+    # hand-calculated drift across docs/.
+    freeze_days = 10
+    final_integration_days = 5
+
+    freeze_dt = deadline - dt.timedelta(days=freeze_days)
+    final_integration_dt = deadline - dt.timedelta(days=final_integration_days)
+
+    print("  Suggested internal milestones (derived):")
+    print(
+        f"    Freeze tag target:        {freeze_dt.strftime('%Y-%m-%d')}  (deadline - {freeze_days}d)"
+    )
+    print(
+        f"    Final integration target: {final_integration_dt.strftime('%Y-%m-%d')}  (deadline - {final_integration_days}d)"
+    )
 
     return 0
 

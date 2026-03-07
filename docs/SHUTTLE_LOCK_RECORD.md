@@ -49,9 +49,14 @@ Precheck deadline (if different):
 Once the shuttle is locked, derive these “internal” dates so we can plan backwards.
 (These do not have to match any official program deadline.)
 
-- **Internal freeze tag (v1-freeze):** 2026-03-08 (tag: `v1-freeze-20260308`)
+Preferred workflow:
+- Update the **Internal safe deadline ... utc:** line above.
+- Run: `python3 ops/shuttle_runway.py`
+- Copy the “Suggested internal milestones” dates into this section.
+
+- **Internal freeze tag (v1-freeze):** 2026-03-08 (tag: `v1-freeze-20260308`) *(derived)*
 - **Internal precheck-clean target:** not applicable (ChipFoundry requirements not yet provided; no OpenMPW mpw-precheck assumed)
-- **Internal final-integration target:** 2026-03-12 (keeps margin before internal safe deadline 2026-03-17 23:59 PT)
+- **Internal final-integration target:** 2026-03-13 *(derived; keep margin before internal safe deadline)*
 
 ## Change log
 
