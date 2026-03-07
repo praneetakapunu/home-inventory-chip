@@ -119,6 +119,7 @@ else
     require_nonempty "date"
     require_nonempty "time"
     require_nonempty "timezone"
+    require_nonempty "utc"
   fi
 
   echo "Shuttle lock record status: OK (no 'TBD' placeholders found; Lock status: $LOCK_STATUS)"

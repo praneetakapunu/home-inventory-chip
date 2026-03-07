@@ -29,16 +29,19 @@ Submission cutoff (ChipFoundry commitment date):
   official date: 2026-03-18
   official time: not specified (date-only on source)
   official timezone: not specified (source does not state TZ)
+  official utc: not specified
 
 Internal safe deadline (assume safest):
   date: 2026-03-17
   time: 23:59
   timezone: PT
+  utc: 2026-03-18 06:59Z
 
 Precheck deadline (if different):
   date: not specified
   time: not specified
   timezone: not specified
+  utc: not specified
 ```
 
 ## Derived deadlines (internal; compute from the cutoff)
