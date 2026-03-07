@@ -89,6 +89,32 @@ CRC details:
 - **Input CRC** is optional via `MODE.RX_CRC_EN`.
 - **Output CRC cannot be disabled**; it always appears at end of output frame.
 
+### NULL command encoding (v1 operational assumption)
+During continuous streaming, firmware (or the SoC wrapper) issues the NULL command each frame.
+
+Normative v1 assumption:
+- The on-wire `COMMAND` word is the **16-bit NULL command**, padded to the current word length.
+  - 24-bit word length: `0x0000_00` on DIN (MSB-first)
+  - 32-bit word length: `0x0000_0000` on DIN (MSB-first)
+
+The RTL does not need to interpret DIN for v1 streaming; this is listed so the end-to-end contract is explicit.
+
+### Frame → FIFO mapping (normative v1)
+The ADC always outputs 10 words per data frame on DOUT:
+
+1) `RESPONSE` (for previous frame’s command; for NULL this is the STATUS register)
+2) `CH0`
+3) `CH1`
+4) `CH2`
+5) `CH3`
+6) `CH4`
+7) `CH5`
+8) `CH6`
+9) `CH7`
+10) `OUTPUT_CRC`
+
+v1 streaming drops the final CRC word and pushes the first 9 words into the Wishbone FIFO in the same order.
+
 ## DRDY behavior (datasheet-verified + v1 guidance)
 - DRDY indicates “new data” and is tied to conversion timing.
 - `MODE.DRDY_FMT` controls whether DRDY is a level-style signal or a short negative pulse.
@@ -121,6 +147,14 @@ We **do not** currently expose the output CRC to firmware in v1. (We may optiona
 - Treat conversion data as **24-bit two’s complement** on the wire.
 - Present them to firmware as **signed 32-bit** by **sign-extending in RTL** (word1..word8).
 - The STATUS word is **zero-extended** (do not sign-extend).
+
+Normative sign-extension formula (for each channel word captured as a 24-bit value `x[23:0]`):
+- `sample32[23:0]  = x[23:0]`
+- `sample32[31:24] = {8{x[23]}}`
+
+Status word handling:
+- The STATUS register is logically 16 bits of data; on the wire it is MSB-aligned and padded.
+- v1 presents it as a 32-bit unsigned word with only the meaningful STATUS bits set (upper padding bits = 0).
 
 ### Word/byte ordering (firmware-visible)
 Because the Wishbone FIFO is a **32-bit word stream**, firmware sees already-packed 32-bit integers.
@@ -168,6 +202,11 @@ Baseline implementation strategy:
 - firmware drives repetitive NULL commands
 - RTL uses DRDY falling edge as the “start capture next frame” event (with appropriate synchronization)
 - capture 10 words, drop final CRC word, and push 9 words into FIFO
+
+### Debug/robustness recommendations (non-normative but strongly suggested)
+These are cheap checks that help during bring-up:
+- **Word-length sanity:** when capture is configured for 24-bit words, assert that the frame completes after exactly 240 SCLK edges while CS is low (and analogously 320 for 32-bit).
+- **Unexpected mode detection:** if the observed CS-low bitcount does not match the configured word length × 10 words, increment a sticky error counter and re-arm on next DRDY.
 
 ## Verification hooks
 Cocotb can emulate the ADC as a “frame source”:
