@@ -212,6 +212,11 @@ module wb_real_adc_ingest_smoke_tb;
         rst = 1'b0;
         repeat (2) @(negedge clk);
 
+        // Configure event detector so the real-ingest tap drives a visible event.
+        // Enable CH0 and set threshold to 0 so our positive sample will trigger.
+        wb_write32(ADR_EVT_THRESH_CH0, 32'h0000_0000);
+        wb_write32(ADR_EVT_CFG,        32'h0000_0001); // EVT_EN[0]=1
+
         // Trigger capture via CTRL.START W1P (bit[1] in byte lane 0).
         wb_write32_sel(ADR_CTRL, 32'h0000_0002, 4'b0001);
 
@@ -265,6 +270,20 @@ module wb_real_adc_ingest_smoke_tb;
         wb_read32(ADR_ADC_FIFO_STATUS, rdata);
         if (rdata[15:0] !== 16'd0) begin
             $display("[tb] ERROR: expected FIFO level 0 after pops, got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Real-ingest tap should have driven at least one event on CH0.
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== 32'd1) begin
+            $display("[tb] ERROR: expected EVT_COUNT_CH0==1, got 0x%08x", rdata);
+            $fatal(1);
+        end
+
+        // Other channels remain disabled.
+        wb_read32(ADR_EVT_COUNT_CH1, rdata);
+        if (rdata !== 32'd0) begin
+            $display("[tb] ERROR: expected EVT_COUNT_CH1==0, got 0x%08x", rdata);
             $fatal(1);
         end
 
