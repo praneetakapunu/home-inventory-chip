@@ -125,6 +125,17 @@ Put one file per candidate shuttle under `docs/shuttle_scores/`.
 
 - ChipFoundry CI2605 (May MPW Shuttle): `docs/shuttle_scores/CI2605_chipfoundry.md`
 
+## Quick helper: compute runway from the lock record
+
+Once `docs/SHUTTLE_LOCK_RECORD.md` has an **Internal safe deadline** with a concrete `utc:` value,
+use this helper to compute “weeks until cutoff” and print a sanity status:
+
+```bash
+python3 ops/shuttle_runway.py
+```
+
+This is intentionally stdlib-only so it can run in low-disk CI.
+
 ## Action items (to close this TBD)
 
 - [ ] Praneet: choose target shuttle + cutoff.
