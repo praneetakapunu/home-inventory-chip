@@ -52,6 +52,8 @@ Once the shuttle is locked, derive these “internal” dates so we can plan bac
 Preferred workflow:
 - Update the **Internal safe deadline ... utc:** line above.
 - Run: `python3 ops/shuttle_runway.py`
+  - For CI / tooling: `python3 ops/shuttle_runway.py --json`
+  - To fail if the deadline is stale: `python3 ops/shuttle_runway.py --strict`
 - Copy the “Suggested internal milestones” dates into this section.
 
 - **Internal freeze tag (v1-freeze):** 2026-03-08 (tag: `v1-freeze-20260308`) *(derived)*

@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
 import pathlib
 import re
 import sys
@@ -62,6 +63,16 @@ def main() -> int:
         "--record",
         default="docs/SHUTTLE_LOCK_RECORD.md",
         help="Path to the shuttle lock record markdown file.",
+    )
+    ap.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON (still dependency-free).",
+    )
+    ap.add_argument(
+        "--strict",
+        action="store_true",
+        help="Fail (exit 1) if the derived deadline is in the past.",
     )
     args = ap.parse_args()
 
@@ -115,23 +126,6 @@ def main() -> int:
 
     weeks = days / 7.0
 
-    print("Shuttle runway (from lock record)")
-    print(f"  Record:   {record_path}")
-    print(f"  Now UTC:   {now.strftime('%Y-%m-%d %H:%MZ')}")
-    print(f"  Deadline:  {deadline.strftime('%Y-%m-%d %H:%MZ')}  (internal safe deadline)")
-    print(f"  Remaining: {sign}{days}d {hours}h {minutes}m  (~{sign}{weeks:.1f} weeks)")
-
-    if delta.total_seconds() < 0:
-        print("  STATUS: deadline is in the past (record likely stale)")
-        return 0
-
-    if weeks < 2:
-        print("  STATUS: extremely tight (<2 weeks). Freeze scope immediately.")
-    elif weeks < 4:
-        print("  STATUS: tight (<4 weeks). Avoid scope churn; prioritize precheck readiness.")
-    else:
-        print("  STATUS: reasonable runway (>=4 weeks). Still avoid address-map churn.")
-
     # Suggested internal milestones.
     #
     # These are intentionally simple (calendar-day offsets) and exist to reduce
@@ -142,13 +136,50 @@ def main() -> int:
     freeze_dt = deadline - dt.timedelta(days=freeze_days)
     final_integration_dt = deadline - dt.timedelta(days=final_integration_days)
 
-    print("  Suggested internal milestones (derived):")
-    print(
-        f"    Freeze tag target:        {freeze_dt.strftime('%Y-%m-%d')}  (deadline - {freeze_days}d)"
-    )
-    print(
-        f"    Final integration target: {final_integration_dt.strftime('%Y-%m-%d')}  (deadline - {final_integration_days}d)"
-    )
+    if args.json:
+        payload = {
+            "record": str(record_path),
+            "now_utc": now.strftime("%Y-%m-%d %H:%MZ"),
+            "deadline_utc": deadline.strftime("%Y-%m-%d %H:%MZ"),
+            "remaining_seconds": int(delta.total_seconds()),
+            "remaining_days": int(delta.total_seconds() // 86400),
+            "weeks": float(weeks) * (1.0 if delta.total_seconds() >= 0 else -1.0),
+            "suggested": {
+                "freeze_days": freeze_days,
+                "freeze_date": freeze_dt.strftime("%Y-%m-%d"),
+                "final_integration_days": final_integration_days,
+                "final_integration_date": final_integration_dt.strftime("%Y-%m-%d"),
+            },
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print("Shuttle runway (from lock record)")
+        print(f"  Record:   {record_path}")
+        print(f"  Now UTC:   {now.strftime('%Y-%m-%d %H:%MZ')}")
+        print(
+            f"  Deadline:  {deadline.strftime('%Y-%m-%d %H:%MZ')}  (internal safe deadline)"
+        )
+        print(f"  Remaining: {sign}{days}d {hours}h {minutes}m  (~{sign}{weeks:.1f} weeks)")
+
+        if delta.total_seconds() < 0:
+            print("  STATUS: deadline is in the past (record likely stale)")
+        elif weeks < 2:
+            print("  STATUS: extremely tight (<2 weeks). Freeze scope immediately.")
+        elif weeks < 4:
+            print("  STATUS: tight (<4 weeks). Avoid scope churn; prioritize precheck readiness.")
+        else:
+            print("  STATUS: reasonable runway (>=4 weeks). Still avoid address-map churn.")
+
+        print("  Suggested internal milestones (derived):")
+        print(
+            f"    Freeze tag target:        {freeze_dt.strftime('%Y-%m-%d')}  (deadline - {freeze_days}d)"
+        )
+        print(
+            f"    Final integration target: {final_integration_dt.strftime('%Y-%m-%d')}  (deadline - {final_integration_days}d)"
+        )
+
+    if args.strict and delta.total_seconds() < 0:
+        return 1
 
     return 0
 
