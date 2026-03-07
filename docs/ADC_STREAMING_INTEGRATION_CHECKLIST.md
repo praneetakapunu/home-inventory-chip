@@ -54,9 +54,9 @@ Deliverable:
 
 ## Phase B — Frame packer (unit-testable in isolation)
 
-**Status:** implemented inside `rtl/adc/adc_streaming_ingest.v`.
+**Status:** implemented inside `rtl/adc/adc_streaming_ingest.v` and covered by directed sim.
 
-1. Implement a frame packer with a simple handshake:
+1. The frame→FIFO packer interface is:
    - input: one-cycle `frame_valid` + stable word bundle
    - output: `fifo_push` + `fifo_din[31:0]`
 
@@ -64,10 +64,10 @@ Deliverable:
    - push status word first
    - then CH0..CH7
 
-3. For a one-cycle `frame_valid`, the packer must generate **9 pushes** over 9 cycles (or faster if the FIFO supports multiword push, but assume 1/clk).
+3. For a one-cycle `frame_valid`, the packer generates **9 pushes** (one per clk in the baseline implementation).
 
-Deliverable:
-- A small directed sim (or SystemVerilog test) that asserts push count/order for a synthetic frame.
+Deliverable (implemented):
+- `verify/adc_frame_to_fifo_tb.v` asserts push count/order for a synthetic frame (`make -C verify adc_frame_to_fifo_tb.out`).
 
 ---
 
@@ -83,8 +83,8 @@ Deliverable:
    - FIFO empties on reset.
    - `OVERRUN` clears on reset.
 
-Deliverable:
-- Directed sim that forces FIFO full and demonstrates sticky `OVERRUN` + no corruption of earlier words.
+Deliverable (implemented):
+- `verify/adc_stream_overrun_tb.v` forces FIFO full and demonstrates sticky `OVERRUN` + no corruption of earlier words (`make -C verify adc_stream_overrun_tb.out`).
 
 ---
 
@@ -100,11 +100,14 @@ Deliverable:
    - Only bits in selected byte lanes participate (per `wbs_sel_i`).
    - Firmware should clear with full-word write (`SEL=0xF`).
 
-Deliverable:
-- Wishbone DV smoke test (`verify/wb_tb.v`) that:
-  - drains FIFO words and observes `LEVEL_WORDS` count down
-  - checks empty reads return `0` and do not alter state
-  - checks sticky `OVERRUN` and W1C clear works (byte-lane masked)
+Deliverable (implemented):
+- Wishbone DV smoke tests:
+  - `verify/wb_tb.v` (baseline regmap + stub SNAPSHOT path)
+  - `verify/wb_adc_fifo_override_tb.v` (direct FIFO drain/empty-read semantics)
+  - `verify/wb_real_adc_ingest_smoke_tb.v` (real-ingest build flag compile + minimal smoke)
+
+Suggested run:
+- `make -C verify wb_tb.out wb_adc_fifo_override_tb.out wb_real_adc_ingest_smoke_tb.out`
 
 ---
 
