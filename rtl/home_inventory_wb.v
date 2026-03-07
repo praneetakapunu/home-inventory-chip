@@ -141,6 +141,14 @@ module home_inventory_wb (
 wire adc_capture_busy;
 
 `ifdef USE_REAL_ADC_INGEST
+    wire        adc_tap_valid;
+    wire [32*9-1:0] adc_tap_words_packed; // v1: STATUS + CH0..CH7 (CRC dropped)
+`else
+    wire        adc_tap_valid = 1'b0;
+    wire [32*9-1:0] adc_tap_words_packed = {32*9{1'b0}};
+`endif
+
+`ifdef USE_REAL_ADC_INGEST
     // ADS131M08 wire framing assumptions (v1):
     // - 24-bit words on the wire
     // - 10 words per conversion frame (STATUS + CH0..CH7 + OUTPUT_CRC)
@@ -170,7 +178,10 @@ wire adc_capture_busy;
         .capture_busy(adc_capture_busy),
         .fifo_overrun_sticky(adc_fifo_overrun_sticky),
         .fifo_overrun_clear(adc_fifo_overrun_clear),
-        .fifo_level_words(adc_fifo_level_words)
+        .fifo_level_words(adc_fifo_level_words),
+
+        .tap_valid(adc_tap_valid),
+        .tap_words_packed(adc_tap_words_packed)
     );
 
     // When running real ingest, the local FIFO push interface is unused.
@@ -252,6 +263,21 @@ wire adc_capture_busy;
     //  - FIFO stub data (STATUS + CH0..CH7) matches the ADC_RAW_CHx registers
     //    firmware reads after the write
     //  - event detector behavior matches those same sampled values
+
+`ifdef USE_REAL_ADC_INGEST
+    // Real ingest: drive the event detector from the captured frame tap.
+    // tap_words_packed layout: word0=STATUS, word1=CH0, ..., word8=CH7
+    wire        evt_sample_valid_stub = adc_tap_valid;
+    wire [31:0] evt_sample_ch0_stub   = adc_tap_words_packed[32*1 +: 32];
+    wire [31:0] evt_sample_ch1_stub   = adc_tap_words_packed[32*2 +: 32];
+    wire [31:0] evt_sample_ch2_stub   = adc_tap_words_packed[32*3 +: 32];
+    wire [31:0] evt_sample_ch3_stub   = adc_tap_words_packed[32*4 +: 32];
+    wire [31:0] evt_sample_ch4_stub   = adc_tap_words_packed[32*5 +: 32];
+    wire [31:0] evt_sample_ch5_stub   = adc_tap_words_packed[32*6 +: 32];
+    wire [31:0] evt_sample_ch6_stub   = adc_tap_words_packed[32*7 +: 32];
+    wire [31:0] evt_sample_ch7_stub   = adc_tap_words_packed[32*8 +: 32];
+`else
+    // Stub SNAPSHOT path: deterministic ramp pattern.
     wire        evt_sample_valid_stub = adc_snapshot_fire;
 
     wire [31:0] adc_snapshot_count_next = r_adc_snapshot_count + 32'h1;
@@ -263,6 +289,7 @@ wire adc_capture_busy;
     wire [31:0] evt_sample_ch5_stub = 32'h0000_1000 + adc_snapshot_count_next + 32'd5;
     wire [31:0] evt_sample_ch6_stub = 32'h0000_1000 + adc_snapshot_count_next + 32'd6;
     wire [31:0] evt_sample_ch7_stub = 32'h0000_1000 + adc_snapshot_count_next + 32'd7;
+`endif
 
 `ifndef USE_REAL_ADC_INGEST
     // Stub ADC "SoC frame" for FIFO population: STATUS + CH0..CH7 (9 words).

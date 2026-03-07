@@ -57,7 +57,14 @@ module adc_streaming_ingest #(
     output wire        capture_busy,
     output wire        fifo_overrun_sticky,
     input  wire        fifo_overrun_clear,
-    output wire [$clog2(FIFO_DEPTH_WORDS+1)-1:0] fifo_level_words
+    output wire [$clog2(FIFO_DEPTH_WORDS+1)-1:0] fifo_level_words,
+
+    // Optional tap of the most recently captured frame (for event detector / DV).
+    // Words are the first WORDS_OUT words of the captured frame, packed with:
+    //   word0 at [31:0], word1 at [63:32], ...
+    // Channel words (word1..) are sign-extended from BITS_PER_WORD to 32-bit.
+    output wire        tap_valid,
+    output wire [32*WORDS_OUT-1:0] tap_words_packed
 );
 
     // ---------------------------------------------------------------------
@@ -65,6 +72,27 @@ module adc_streaming_ingest #(
     // ---------------------------------------------------------------------
     wire                           frame_valid;
     wire [32*WORDS_PER_FRAME-1:0]  frame_words_packed;
+
+    // Tap: expose a sign-extended, packed view of the first WORDS_OUT words.
+    assign tap_valid = frame_valid;
+
+    genvar gi;
+    generate
+        for (gi = 0; gi < WORDS_OUT; gi = gi + 1) begin : gen_tap_words
+            wire [31:0] w_raw = frame_words_packed[32*gi +: 32];
+
+            if (gi == 0) begin : gen_status
+                // STATUS word: keep as-is.
+                assign tap_words_packed[32*gi +: 32] = w_raw;
+            end else begin : gen_ch
+                if (BITS_PER_WORD < 32) begin : gen_sext
+                    assign tap_words_packed[32*gi +: 32] = {{(32-BITS_PER_WORD){w_raw[BITS_PER_WORD-1]}}, w_raw[BITS_PER_WORD-1:0]};
+                end else begin : gen_nosext
+                    assign tap_words_packed[32*gi +: 32] = w_raw;
+                end
+            end
+        end
+    endgenerate
 
     adc_spi_frame_capture #(
         .BITS_PER_WORD(BITS_PER_WORD),
