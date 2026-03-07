@@ -53,6 +53,30 @@ At first hardware bring-up, before trusting any samples:
 
 If (1) fails, **do not** debug RTL first.
 
+## Clock ↔ data-rate expectations (so DV + bring-up agree)
+We need a *numerical* expectation for what "normal" looks like on the scope.
+
+The ADS131M08 conversion rate is derived from the modulator clocking; in practice, we should lock a **single `CLKIN` frequency** and a **single sample rate target** (at least for v1 bring-up).
+
+v1 guidance (pragmatic):
+- Pick a `CLKIN` that is easy to generate/verify (common oscillators), then set ADS131M08 decimation/sample-rate registers accordingly.
+- Ensure firmware logging includes: observed DRDY rate + the configured ADS131M08 data-rate settings.
+
+What must be documented once we confirm the board/harness:
+- `CLKIN` frequency (Hz) and its source (oscillator part# or SoC clock output name)
+- expected DRDY rate (samples/sec) at v1 defaults
+- any required straps (SYNC/RESET, START pin behavior, etc.)
+
+## Questions to answer from the harness/PCB (must close before tapeout)
+1) Is ADS131M08 `CLKIN` physically routed? To where?
+2) Is there an oscillator footprint/populated? If yes: frequency + part number.
+3) If `CLKIN` is driven from SoC/harness:
+   - which clock net?
+   - is it present immediately after reset?
+   - what is the tolerance/jitter expectation?
+4) Is `DRDY` level shifted / inverted on the harness? (we assume active-low semantics)
+5) Is `RST_n` controllable from SoC, or only POR?
+
 ## Current v1 status
 - **Clock source:** TBD.
 - **Action required:** confirm what the OpenMPW harness/board actually provides:
