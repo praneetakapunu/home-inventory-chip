@@ -119,6 +119,12 @@ If any item above is blocked (disk, missing dependency, broken script), record i
 - Copy/paste checklist + scoring sheet: `docs/shuttle_scoring_template.md`
   - Goal: when we talk about “OpenMPW-XX”, we can point to a filled-in sheet with UTC dates.
 
+### Filled-in scoring sheets (examples)
+
+Put one file per candidate shuttle under `docs/shuttle_scores/`.
+
+- ChipFoundry CI2605 (May MPW Shuttle): `docs/shuttle_scores/CI2605_chipfoundry.md`
+
 ## Action items (to close this TBD)
 
 - [ ] Praneet: choose target shuttle + cutoff.
