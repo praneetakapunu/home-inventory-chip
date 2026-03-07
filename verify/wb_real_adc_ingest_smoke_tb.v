@@ -216,22 +216,38 @@ module wb_real_adc_ingest_smoke_tb;
         wb_write32_sel(ADR_CTRL, 32'h0000_0002, 4'b0001);
 
         // Wait for FIFO to fill to 9 words (STATUS + CH0..CH7).
+        // Also confirm CAPTURE_BUSY (bit[17]) asserted at least once during capture.
         // (Avoid 'break' so this runs on older Icarus versions.)
         k = 0;
         begin : wait_fifo
             reg got_level;
+            reg saw_busy;
             got_level = 1'b0;
+            saw_busy  = 1'b0;
             while (!got_level) begin
                 wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+
+                if (rdata[17]) begin
+                    saw_busy = 1'b1;
+                end
+
                 if (rdata[15:0] == 16'd9) begin
                     $display("[tb] FIFO level reached 9");
                     got_level = 1'b1;
                 end
+
                 k = k + 1;
                 if (k > 5000) begin
                     $display("[tb] ERROR: timeout waiting for FIFO level 9 (status=0x%08x)", rdata);
                     $fatal(1);
                 end
+            end
+
+            if (!saw_busy) begin
+                $display("[tb] ERROR: expected CAPTURE_BUSY (bit17) to assert during capture, never saw it (last status=0x%08x)", rdata);
+                $fatal(1);
+            end else begin
+                $display("[tb] Saw CAPTURE_BUSY assert during capture");
             end
         end
 
