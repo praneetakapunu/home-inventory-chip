@@ -1,6 +1,6 @@
 # Home Inventory Chip — Project Dashboard
 
-**Last updated:** 2026-03-05 (UTC)
+**Last updated:** 2026-03-08 (UTC)
 
 ## Objective
 Deliver a taped-out **digital** chip (open-source tools) + a demo system that demonstrates a practical **home inventory management** path.
@@ -36,6 +36,15 @@ Single source-of-truth for the shuttle choice: `docs/SHUTTLE_LOCK_RECORD.md`
 Sanity check helper:
 - `bash ops/check_shuttle_lock_record.sh` (status)
 - `bash ops/check_shuttle_lock_record.sh --strict` (fails if not fully locked)
+
+### Runway (auto-derived from lock record)
+As of 2026-03-08 00:31Z (from `python3 ops/shuttle_runway.py`):
+- Internal safe deadline (UTC): **2026-03-18 06:59Z**
+- Remaining: **~10d 6h (~1.4 weeks)**
+- Status: **extremely tight (<2 weeks) → freeze scope immediately**
+- Suggested internal milestones:
+  - Freeze tag target: **2026-03-08**
+  - Final integration target: **2026-03-13**
 
 Once chosen, **treat the commitment date as a fixed constraint** and re-baseline `docs/TIMELINE.md` + `docs/TAPEOUT_CHECKLIST.md` accordingly.
 
