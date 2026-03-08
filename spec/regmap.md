@@ -181,6 +181,35 @@ Address space for event/counter reporting. Formats are defined in `spec/fixed_po
 | 9 | `CLEAR_HISTORY` | Write 1 to clear `EVT_LAST_TS`, `EVT_LAST_TS_CHx`, and `EVT_LAST_DELTA_CHx` (resets history). |
 | 31:10 | — | Reserved (read as 0; writes ignored). |
 
+## Firmware usage examples (Wishbone)
+
+These examples are intended to prevent the two most common integration mistakes:
+1) treating register offsets as *word* addresses instead of **byte** addresses, and
+2) clearing sticky/W1C bits with partial-byte selects.
+
+### Addressing
+Caravel provides a **byte address** on `wbs_adr_i`. Firmware should use the byte offsets shown in this doc.
+
+- Example: `TIME_NOW` is at byte address `0x0000_010C`.
+- If you keep a word-indexed view in firmware, compute: `word_index = byte_addr >> 2`.
+
+### Full-word write (recommended)
+Use `SEL=0b1111` for most writes.
+
+- Set `CTRL.ENABLE = 1`:
+  - `WRITE32(0x0000_0100, 0x0000_0001)`
+- Pulse `CTRL.START` (W1P):
+  - `WRITE32(0x0000_0100, 0x0000_0002)`
+  - (No read-modify-write needed; reads return 0 for W1P fields.)
+
+### Clearing sticky / W1C bits
+For W1C fields (e.g. `ADC_FIFO_STATUS.OVERRUN`), write a **1** to the bit you want to clear.
+
+- Clear `OVERRUN` (bit 16) safely:
+  - `WRITE32(0x0000_0208, 0x0001_0000)`
+
+**Recommendation:** when clearing sticky status, always perform a full-word write with `SEL=0b1111` so you don't accidentally skip the byte lane containing the sticky bit.
+
 ## Notes
 - Event detector thresholds are specified in **raw ADC LSBs** so firmware can start using them immediately; additional modes (hysteresis, debounce, comparator direction) can be added later without changing existing addresses.
 - Unknown/unused addresses must read as 0.
