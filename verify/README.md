@@ -3,8 +3,11 @@
 ## Goal
 Have a repeatable simulation/regression loop early.
 
-## Smoke test (Wishbone regfile)
-A minimal iverilog-based smoke test exists for the Wishbone register block.
+## Smoke test (Wishbone regfile + top)
+A minimal iverilog-based smoke suite exists for:
+- the Wishbone register block,
+- the SoC top wrapper (`rtl/home_inventory_top.v`), and
+- the ADC streaming submodules.
 
 Prereq (Ubuntu/Debian):
 
@@ -20,6 +23,11 @@ make -C verify help
 
 # One command (recommended)
 make -C verify all
+
+# Low-disk / fast preflight (good for frequent local checks)
+# - regmap consistency
+# - wb + top compile/run
+make -C verify regmap-check regmap-gen-check sim top-sim
 
 # Or run step-by-step:
 # 1) Regmap drift checks (no simulator needed)
@@ -43,6 +51,10 @@ make -C verify spi-sim
 # 7) Event detector directed test (requires iverilog)
 make -C verify evt-sim
 ```
+
+Notes:
+- Most targets produce a local `verify/*.out` executable and run it via `vvp`.
+- Use `make -C verify clean` to remove generated `*.out` and `*.vcd` artifacts.
 
 This checks:
 - ID + VERSION reads
