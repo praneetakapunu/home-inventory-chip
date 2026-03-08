@@ -136,6 +136,17 @@ When confirmed, fill in the **Decision record** below with:
   - Is there an oscillator footprint/populated?
   - Is there a stable SoC clock that can be routed out?
 
+### Last harness repo audit (evidence snapshot)
+As of this commit window, the harness repo contains **only** a placeholder mention that we *might* add `adc_clkin` if we decide to drive ADS131M08 `CLKIN` from the SoC; there is **no locked routing/net/pad assignment** yet.
+
+Source (harness repo):
+- `docs/source/adc_pinout_plan.md` (mentions optional `adc_clkin`)
+
+Run:
+```bash
+tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
+```
+
 ## Decision record (to fill)
 When decided, add a short entry here and link the decision in `decisions/`.
 
