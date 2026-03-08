@@ -98,6 +98,37 @@ If measured DRDY is zero or wildly off, treat it as **clocking/config** first—
 4) Is `DRDY` level shifted / inverted on the harness? (we assume active-low semantics)
 5) Is `RST_n` controllable from SoC, or only POR?
 
+## How to confirm clocking quickly (repo-local procedure)
+We have **two** repos in play:
+- IP/spec repo: `chip-inventory/` (this repo)
+- Harness repo: `home-inventory-chip-openmpw/`
+
+The fastest way to find any existing decisions/assumptions is to grep the harness repo.
+
+### One-liner helper (preferred)
+From the IP repo root:
+```bash
+tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
+```
+
+### Manual grep (if you don’t want scripts)
+```bash
+cd ../home-inventory-chip-openmpw
+rg -n "adc_clkin|ADC_CLKIN|CLKIN|ADS131|ads131" docs verilog caravel spi
+```
+
+### What “confirmed” means for v1
+We are confirmed only when we can answer (with a source link/path):
+- Is `CLKIN` physically routed on the harness/board?
+- If yes, what is the **source** (oscillator part# OR which SoC clock output net)?
+- What is the expected **frequency** (Hz)?
+- Is the signal present immediately after reset / before FW starts SPI?
+
+When confirmed, fill in the **Decision record** below with:
+- `Source:` path (e.g. harness doc, schematic page, netlist snippet)
+- expected `CLKIN` frequency
+- expected steady-state `DRDY` rate at v1 defaults
+
 ## Current v1 status
 - **Clock source:** TBD.
 - **Action required:** confirm what the OpenMPW harness/board actually provides:
