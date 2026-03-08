@@ -547,7 +547,9 @@ wire adc_capture_busy;
             r_irq_en        <= 32'h0;
             r_time_now      <= 32'h0;
 
-            r_adc_num_ch    <= 4'h0;
+            // Default to 8 channels (matches ADS131M08) so firmware can
+            // assume a sane value without an explicit configuration write.
+            r_adc_num_ch    <= 4'h8;
             r_adc_snapshot_count <= 32'h0;
 
             // ADC FIFO state lives in u_adc_fifo (reset by wb_rst_i)
@@ -653,7 +655,13 @@ wire adc_capture_busy;
             // ADC snapshot behavior (stub): on SNAPSHOT pulse, update raw regs so
             // firmware can observe changing values even before ADC integration.
             if (adc_snapshot_fire) begin
+                // Always bump the snapshot counter on a SNAPSHOT command so FW can
+                // confirm the control path is alive.
                 r_adc_snapshot_count <= r_adc_snapshot_count + 32'h1;
+
+`ifndef USE_REAL_ADC_INGEST
+                // Stub behavior: on SNAPSHOT pulse, update raw regs so firmware can
+                // observe changing values even before ADC integration.
                 for (i = 0; i < 8; i = i + 1) begin
                     // Deterministic pattern: base + snapshot_count + channel index
                     r_adc_raw[i] <= 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + i[31:0];
@@ -663,6 +671,7 @@ wire adc_capture_busy;
 
                 // Event detector is driven by the same stub snapshot samples via u_evt.
                 // (When the real ADC stream lands, drive u_evt from that path instead.)
+`endif
             end
         end
     end
