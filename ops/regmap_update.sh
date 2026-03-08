@@ -15,8 +15,13 @@ YAML="spec/regmap_v1.yaml"
 HDR_OUT="fw/include/home_inventory_regmap.h"
 SVPKG_OUT="rtl/include/home_inventory_regmap_pkg.sv"
 VH_OUT="rtl/include/regmap_params.vh"
+MD_OUT="spec/regmap_v1_table.md"
 
 python3 ops/regmap_validate.py --yaml "$YAML"
+
+python3 ops/gen_regmap_md.py \
+  --yaml "$YAML" \
+  --out  "$MD_OUT"
 
 python3 ops/gen_regmap_header.py \
   --yaml "$YAML" \
@@ -32,6 +37,7 @@ python3 tools/regmap/gen_verilog_params.py \
 
 echo ""
 echo "Regmap artifacts updated from: $YAML"
+echo " - $MD_OUT"
 echo " - $HDR_OUT"
 echo " - $SVPKG_OUT"
 echo " - $VH_OUT"

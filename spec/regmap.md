@@ -4,6 +4,8 @@ This is the **v1** register map for the digital block that will live in the Open
 
 Source-of-truth (machine-readable): `spec/regmap_v1.yaml`
 
+Auto-generated table view (keep in sync via `bash ops/regmap_update.sh`): `spec/regmap_v1_table.md`
+
 - Bus: **Wishbone slave**, 32-bit data.
 - Addressing: Caravel presents a **byte address** on `wbs_adr_i`, but this block decodes registers as **32-bit word-aligned** (i.e. it ignores `wbs_adr_i[1:0]`).
 - All registers are 32-bit.
