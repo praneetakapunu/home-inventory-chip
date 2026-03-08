@@ -82,7 +82,10 @@ Harness expectations:
 
 Fast sanity checks:
 - IP repo already compiles both configurations via: `bash ops/rtl_compile_check.sh`
-- Harness repo should ideally support a matching `make rtl-compile-check REAL_ADC=1` (or equivalent) so wrapper drift is caught early.
+- Harness repo supports a matching compile-check with the define enabled:
+  - `make rtl-compile-check-real-adc`
+
+This catches wrapper/port-list drift early, without running any DV.
 
 ## Common failure modes
 - **Stale filelist in harness**: run `make sync-ip-filelist`.
