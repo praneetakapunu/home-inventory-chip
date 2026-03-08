@@ -652,27 +652,44 @@ wire adc_capture_busy;
 
             // FIFO pop is handled by adc_fifo_pop_ready -> u_adc_fifo.
 
-            // ADC snapshot behavior (stub): on SNAPSHOT pulse, update raw regs so
-            // firmware can observe changing values even before ADC integration.
+            // -----------------------------------------------------------------
+            // ADC register mirroring
+            // -----------------------------------------------------------------
+            // Goal: keep firmware-visible ADC_RAW_CHx + ADC_SNAPSHOT_COUNT useful
+            // in *both* modes:
+            // - Stub mode: SNAPSHOT updates regs with a deterministic pattern.
+            // - Real ingest: every captured conversion frame mirrors into regs.
+
+`ifdef USE_REAL_ADC_INGEST
+            // Real ingest: mirror the most recent captured frame into ADC_RAW_CHx.
+            // tap_words_packed layout: word0=STATUS, word1=CH0, ..., word8=CH7.
+            if (adc_tap_valid) begin
+                r_adc_snapshot_count <= r_adc_snapshot_count + 32'h1;
+                r_adc_raw[0] <= adc_tap_words_packed[32*1 +: 32];
+                r_adc_raw[1] <= adc_tap_words_packed[32*2 +: 32];
+                r_adc_raw[2] <= adc_tap_words_packed[32*3 +: 32];
+                r_adc_raw[3] <= adc_tap_words_packed[32*4 +: 32];
+                r_adc_raw[4] <= adc_tap_words_packed[32*5 +: 32];
+                r_adc_raw[5] <= adc_tap_words_packed[32*6 +: 32];
+                r_adc_raw[6] <= adc_tap_words_packed[32*7 +: 32];
+                r_adc_raw[7] <= adc_tap_words_packed[32*8 +: 32];
+            end
+`else
+            // Stub mode: on SNAPSHOT pulse, update regs so firmware can observe
+            // changing values even before ADC integration.
             if (adc_snapshot_fire) begin
                 // Always bump the snapshot counter on a SNAPSHOT command so FW can
                 // confirm the control path is alive.
                 r_adc_snapshot_count <= r_adc_snapshot_count + 32'h1;
 
-`ifndef USE_REAL_ADC_INGEST
-                // Stub behavior: on SNAPSHOT pulse, update raw regs so firmware can
-                // observe changing values even before ADC integration.
                 for (i = 0; i < 8; i = i + 1) begin
                     // Deterministic pattern: base + snapshot_count + channel index
                     r_adc_raw[i] <= 32'h0000_1000 + (r_adc_snapshot_count + 32'h1) + i[31:0];
                 end
 
                 // FIFO population is handled by u_adc_stub_frame_to_fifo + u_adc_fifo.
-
-                // Event detector is driven by the same stub snapshot samples via u_evt.
-                // (When the real ADC stream lands, drive u_evt from that path instead.)
-`endif
             end
+`endif
         end
     end
 
