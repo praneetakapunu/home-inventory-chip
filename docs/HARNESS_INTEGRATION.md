@@ -33,6 +33,11 @@ make sync-ip-filelist
 This copies the IP filelist from the submodule into the harness `verilog/rtl/` tree.
 
 ## Fast checks (recommended every change)
+If you want a single command that checks **both** repos (IP + harness) without running OpenLane:
+```bash
+bash ops/preflight_ip_and_harness_low_disk.sh
+```
+
 ### 1) IP repo: regmap + directed sims
 From `chip-inventory/`:
 ```bash

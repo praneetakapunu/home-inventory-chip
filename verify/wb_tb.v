@@ -270,7 +270,7 @@ module wb_tb;
         // ADC
         // -----------------------------------------------------------------
         wb_read32(ADR_ADC_CFG, rdata);
-        if (rdata !== 32'h0000_0000) begin
+        if (rdata !== 32'h0000_0008) begin
             $display("[tb] ERROR: ADC_CFG reset mismatch: got 0x%08x", rdata);
             $fatal(1);
         end

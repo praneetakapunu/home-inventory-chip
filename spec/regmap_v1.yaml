@@ -97,13 +97,13 @@ blocks:
       - name: ADC_CFG
         offset: 0x000
         access: rw
-        reset: 0x00000000
+        reset: 0x00000008
         desc: ADC config. For v1 bring-up, only NUM_CH is normative.
         fields:
           - name: NUM_CH
             bits: [3, 0]
             access: rw
-            reset: 0
+            reset: 8
             desc: Number of channels populated (1–8). Firmware enumerates channels using this.
 
       - name: ADC_CMD
