@@ -58,11 +58,32 @@ We need a *numerical* expectation for what "normal" looks like on the scope.
 
 The ADS131M08 conversion rate is derived from the modulator clocking; in practice, we should lock a **single `CLKIN` frequency** and a **single sample rate target** (at least for v1 bring-up).
 
-v1 guidance (pragmatic):
-- Pick a `CLKIN` that is easy to generate/verify (common oscillators), then set ADS131M08 decimation/sample-rate registers accordingly.
-- Ensure firmware logging includes: observed DRDY rate + the configured ADS131M08 data-rate settings.
+### Proposed v1 baseline (PROVISIONAL — not locked until harness is confirmed)
+Because the OpenMPW harness may constrain what clocks we can practically provide, we keep this as a *recommendation* until we can point to an actual schematic/net.
 
-What must be documented once we confirm the board/harness:
+**Recommendation:** prefer one of these two `CLKIN` frequencies, chosen for “easy to generate and verify”:
+- **8.192 MHz** (common audio-ish clock; easy divider chains)
+- **4.096 MHz** (half-rate alternative)
+
+Then select an ADS131M08 data-rate configuration such that **DRDY is in the low-kHz range** during initial bring-up.
+
+Why low-kHz:
+- Fast enough to observe quickly and stress FIFO + drain loops.
+- Slow enough that a simple firmware loop can keep up without DMA.
+
+**Bring-up target:** 1 kSps per channel (order-of-magnitude target; exact register settings to be filled once we lock the final `CLKIN` + OSR).
+
+### What firmware must log (so we can debug clocking remotely)
+Even in “minimal” bring-up firmware, always log these fields at start:
+- assumed/selected `CLKIN` source (oscillator vs SoC clock output name)
+- assumed/selected `CLKIN` frequency (Hz)
+- configured ADS131M08 data-rate / decimation registers (raw values)
+- **measured DRDY rate** (Hz) from a timer-based measurement over ~1s
+- streaming FIFO overrun flag status (`ADC_FIFO_STATUS.OVERRUN`)
+
+If measured DRDY is zero or wildly off, treat it as **clocking/config** first—not RTL.
+
+### What must be documented once we confirm the board/harness
 - `CLKIN` frequency (Hz) and its source (oscillator part# or SoC clock output name)
 - expected DRDY rate (samples/sec) at v1 defaults
 - any required straps (SYNC/RESET, START pin behavior, etc.)
