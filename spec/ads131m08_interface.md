@@ -228,3 +228,4 @@ Minimum tests:
 - [x] Lock the v1 **sample width policy**: ADC outputs 24-bit two’s complement; RTL sign-extends to 32-bit for firmware.
 - [ ] Confirm clocking plan for ADC on the OpenMPW harness/PCB (`CLKIN` source).
   - Working notes live in: `docs/ADC_CLOCKING_PLAN.md`
+  - Decision to accept (with evidence): `decisions/011-adc-clkin-source-and-frequency.md`

@@ -173,7 +173,11 @@ docs/source/adc_pinout_plan.md:60:- Clocking plan: will the board provide `CLKIN
 ## Decision record (to fill)
 When decided, add a short entry here and link the decision in `decisions/`.
 
-- Decision: (TBD)
-- Source: (schematic / harness docs / datasheet)
-- Expected `CLKIN` frequency: (TBD)
-- Expected DRDY rate: (TBD)
+Decision to accept:
+- `decisions/011-adc-clkin-source-and-frequency.md`
+
+Fill once accepted:
+- Decision: (Option A oscillator OR Option B SoC clock)
+- Source: (schematic / harness docs / committed pinout file)
+- Expected `CLKIN` frequency: (Hz)
+- Expected DRDY rate (at v1 defaults): (Hz)
