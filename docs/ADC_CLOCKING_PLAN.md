@@ -137,14 +137,29 @@ When confirmed, fill in the **Decision record** below with:
   - Is there a stable SoC clock that can be routed out?
 
 ### Last harness repo audit (evidence snapshot)
-As of this commit window, the harness repo contains **only** a placeholder mention that we *might* add `adc_clkin` if we decide to drive ADS131M08 `CLKIN` from the SoC; there is **no locked routing/net/pad assignment** yet.
+**Audit date:** 2026-03-09 (UTC)
 
-Source (harness repo):
-- `docs/source/adc_pinout_plan.md` (mentions optional `adc_clkin`)
+As of this audit, the harness repo contains **only** a placeholder mention that we *might* add `adc_clkin` if we decide to drive ADS131M08 `CLKIN` from the SoC; there is **no locked routing/net/pad assignment** yet.
 
-Run:
+**Evidence (harness repo):**
+- `docs/source/adc_pinout_plan.md`:
+  - mentions optional `adc_clkin` (“if we decide to drive CLKIN from SoC”)
+  - explicitly calls out the open question: “will the board provide `CLKIN`, or do we need to synthesize/route one from Caravel?”
+- `docs/source/pinout.md`: mentions eventual need for external ADS131M08 GPIO routing (SPI + DRDY + reset)
+- `verilog/rtl/home_inventory_user_project.v`: contains a comment stub for the external ADS131M08 interface
+
+Run (from the IP repo root):
 ```bash
 tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
+```
+
+**Expected output today (abridged):**
+```text
+--- rg -n "adc_clkin" ---
+docs/source/adc_pinout_plan.md:26:- `adc_clkin` (if we decide to drive CLKIN from SoC)
+
+--- rg -n "\bCLKIN\b" ---
+docs/source/adc_pinout_plan.md:60:- Clocking plan: will the board provide `CLKIN`, or do we need to synthesize/route one from Caravel?
 ```
 
 ## Decision record (to fill)

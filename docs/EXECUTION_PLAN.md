@@ -17,9 +17,10 @@ Pick *one* of these and land it as a small, reviewable commit:
 2) **ADC streaming end-to-end wiring (RTL)**
    - Wire real `adc_streaming_ingest` path into `home_inventory_wb` behind a build flag.
    - Keep SNAPSHOT stub path for bring-up until the real ADC pins are available in the harness.
-3) **ADC clocking confirmation (docs + harness grep helper)**
-   - Make the `CLKIN` unknown actionable by documenting an explicit confirmation procedure.
-   - Add a tiny script to grep the harness repo for `CLKIN/adc_clkin/ADS131` so we stop guessing.
+3) **ADC clocking confirmation (docs + harness grep helper)** ✅
+   - Made the `CLKIN` unknown actionable by documenting an explicit confirmation procedure.
+   - Added/confirmed a low-disk grep helper script:
+     - `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
 
 ## Next 48 hours (Madhuri)
 1) Submission mechanics: keep harness repo integrated and green on **low-disk** checks
