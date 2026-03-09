@@ -6,6 +6,7 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 
 ## 0) Decisions locked (pre-freeze)
 - [ ] Target shuttle + **commitment/cutoff date** chosen and recorded (`docs/SHUTTLE_LOCK_RECORD.md`; linked from `docs/DASHBOARD.md` + `docs/TIMELINE.md`)
+  - [ ] Lock record is complete (strict): `bash ops/check_shuttle_lock_record.sh --strict`
 - [ ] Top-level intent and boundaries clear (what v1 does / does not do)
 - [ ] External ADC part locked (done: ADS131M08)
 - [ ] SPI framing assumptions documented (DRDY, words-per-frame, CRC policy)
@@ -26,8 +27,10 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 - [ ] Low-disk "sanity" suite is green (should run even when OpenLane is blocked by disk):
   - [ ] `bash ops/preflight_low_disk.sh` (IP repo)
 - [ ] `iverilog` (or equivalent) compile check is green for:
-  - [ ] chip-inventory IP (`rtl/`)
+  - [ ] chip-inventory IP (`rtl/`) — `bash ops/rtl_compile_check.sh`
   - [ ] harness integration repo (Caravel user project)
+    - [ ] `cd ../home-inventory-chip-openmpw && make sync-ip-filelist`
+    - [ ] `cd ../home-inventory-chip-openmpw && make rtl-compile-check`
 - [ ] No generated blobs committed (build/ sim/ temp)
 - [ ] License headers / third-party attributions handled
 
