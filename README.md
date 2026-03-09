@@ -28,6 +28,7 @@ make -C verify all
 - Tapeout readiness gates: `docs/TAPEOUT_CHECKLIST.md`
 - Register map source-of-truth: `spec/regmap_v1.yaml`
 - Harness integration checklist: `docs/HARNESS_INTEGRATION.md`
+- RTL compile-time flags (SIM vs real ADC ingest): `docs/RTL_BUILD_FLAGS.md`
 
 ## Harness integration (OpenMPW / Caravel)
 
