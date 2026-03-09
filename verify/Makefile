@@ -59,7 +59,8 @@ WB_ADC_OVERRIDE_OUT := wb_adc_fifo_override_tb.out
 WB_REAL_ADC_SMOKE_TB  := wb_real_adc_ingest_smoke_tb.v
 WB_REAL_ADC_SMOKE_OUT := wb_real_adc_ingest_smoke_tb.out
 
-.PHONY: help all sim top-sim real-adc-sim wb-real-adc-smoke-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
+.PHONY: help all sim top-sim real-adc-sim wb-real-adc-smoke-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim \
+	rtl-compile-check regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
 help:
@@ -67,6 +68,7 @@ help:
 	 && echo "  make -C verify all                 # full smoke suite (recommended)" \
 	 && echo "  make -C verify regmap-check        # YAML ↔ RTL consistency" \
 	 && echo "  make -C verify regmap-gen-check    # generated artifacts up-to-date" \
+	 && echo "  make -C verify rtl-compile-check   # compile full IP filelist" \
 	 && echo "  make -C verify sim                 # wb_tb" \
 	 && echo "  make -C verify top-sim             # top_tb" \
 	 && echo "  make -C verify real-adc-sim        # compiles with USE_REAL_ADC_INGEST" \
@@ -84,7 +86,12 @@ help:
 	 && echo "  make -C verify clean"
 
 # One command to run the whole smoke suite (what humans should run locally).
-all: regmap-check regmap-gen-check sim top-sim real-adc-sim wb-real-adc-smoke-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim
+all: regmap-check regmap-gen-check rtl-compile-check sim top-sim real-adc-sim wb-real-adc-smoke-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim
+
+# Compile full RTL filelist (no simulation). This is a closer approximation of
+# the harness compile-check than the per-testbench compile steps.
+rtl-compile-check:
+	bash ../ops/rtl_compile_check.sh
 
 sim: $(OUT)
 	$(VVP) $(OUT)
