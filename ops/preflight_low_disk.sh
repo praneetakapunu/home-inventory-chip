@@ -60,6 +60,10 @@ banner "Shuttle lock record (informational)"
 # shuttle is chosen, but it provides a clear log line in CI and local runs.
 bash ops/check_shuttle_lock_record.sh
 
+banner "Regmap generation drift check"
+# Ensure committed derived artifacts match spec/regmap_v1.yaml.
+bash ops/regmap_check.sh
+
 banner "Regmap + smoke sims (make -C verify all)"
 make -C verify all
 

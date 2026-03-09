@@ -46,7 +46,7 @@ This file is **auto-generated** from `spec/regmap_v1.yaml`. Do not edit by hand.
 
 | Address | Name | Access | Reset | Description |
 |---:|---|---|---:|---|
-| 0x00000200 | `ADC_CFG` | rw | 0x00000000 | ADC config. For v1 bring-up, only NUM_CH is normative. |
+| 0x00000200 | `ADC_CFG` | rw | 0x00000008 | ADC config. For v1 bring-up, only NUM_CH is normative. |
 | 0x00000204 | `ADC_CMD` | rw | 0x00000000 | ADC command. SNAPSHOT is write-1-to-pulse; reads return 0. |
 | 0x00000208 | `ADC_FIFO_STATUS` | ro_w1c | — | Streaming FIFO status. LEVEL_WORDS reports fill level; OVERRUN is sticky and clears on write-1 (byte-lane masked by wbs_sel_i). |
 | 0x0000020C | `ADC_FIFO_DATA` | ro | — | FIFO data pop. Each read pops one 32-bit word when LEVEL_WORDS != 0; reads when empty return 0 and do not change state. |
@@ -64,7 +64,7 @@ This file is **auto-generated** from `spec/regmap_v1.yaml`. Do not edit by hand.
 
 | Bits | Field | Access | Reset | Description |
 |---:|---|---|---:|---|
-| 3:0 | `NUM_CH` | rw | 0x00000000 | Number of channels populated (1–8). Firmware enumerates channels using this. |
+| 3:0 | `NUM_CH` | rw | 0x00000008 | Number of channels populated (1–8). Firmware enumerates channels using this. |
 
 ### `ADC_CMD` fields @ 0x00000204
 
