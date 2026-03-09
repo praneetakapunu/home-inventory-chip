@@ -153,12 +153,20 @@ Run (from the IP repo root):
 tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
 ```
 
-**Expected output today (abridged):**
+**Observed output (2026-03-09, abridged):**
 ```text
---- rg -n "adc_clkin" ---
+--- rg -n "adc_clkin" (docs verilog) ---
 docs/source/adc_pinout_plan.md:26:- `adc_clkin` (if we decide to drive CLKIN from SoC)
 
---- rg -n "\bCLKIN\b" ---
+--- rg -n "ADC_CLKIN" (docs verilog) ---
+(no matches)
+
+--- rg -n "ADS131" (docs verilog) ---
+docs/source/pinout.md:27:However, v1 will eventually need GPIO routing for the external ADS131M08 ADC (SPI + DRDY + reset).
+docs/source/adc_pinout_plan.md:1:# ADC (ADS131M08) GPIO Pinout Plan — v1 (DRAFT)
+verilog/rtl/home_inventory_user_project.v:67:    // external ADS131M08 interface.
+
+--- rg -n "\\bCLKIN\\b" (docs/verilog, word-boundary) ---
 docs/source/adc_pinout_plan.md:60:- Clocking plan: will the board provide `CLKIN`, or do we need to synthesize/route one from Caravel?
 ```
 
