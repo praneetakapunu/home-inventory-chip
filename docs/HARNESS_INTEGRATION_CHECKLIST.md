@@ -75,6 +75,17 @@ These are the human-reviewed “contract” files.
 - [ ] This repo’s top module IO matches the pinout (no surprise ports)
 - [ ] Any clock/reset assumptions are written down (freq, polarity, sync domain)
 
+**ADC-specific (must close before tapeout):**
+- [ ] ADS131M08 `CLKIN` source is **explicitly confirmed** (oscillator vs SoC clock-out) and documented
+- [ ] Expected `CLKIN` frequency (Hz) is documented
+- [ ] Expected `DRDY` rate at v1 defaults is documented (order-of-magnitude is fine initially)
+- [ ] Evidence captured as a repo path/link in `chip-inventory/docs/ADC_CLOCKING_PLAN.md`
+
+Quick harness audit helper (from this repo root):
+```bash
+tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
+```
+
 Recommended content for pinout doc:
 - List of IOs used (digital only for now)
 - Direction, pull/tie behavior on reset
