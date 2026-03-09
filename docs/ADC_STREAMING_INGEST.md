@@ -70,9 +70,11 @@ Note: `adc_streaming_ingest` itself can be used with deeper FIFOs in DV, but the
 Inside the Wishbone block (single-clock v1), the regbank should:
 
 1) Instantiate `adc_streaming_ingest` (or keep the stub FIFO path for bring-up).
-2) Drive `.start` from the existing `ADC_CMD.SNAPSHOT` pulse (until continuous streaming is added).
+2) Drive `.start` from the existing `CTRL.START` W1P pulse (until continuous streaming is added).
 3) Connect `.pop_*` to the existing `ADC_FIFO_DATA` pop-on-read semantics.
 4) Connect `.fifo_level_words` and `.fifo_overrun_*` to `ADC_FIFO_STATUS`.
+
+> Note: the current, committed wiring lives in `rtl/home_inventory_wb.v` and already drives `.start` from `CTRL.START` when `USE_REAL_ADC_INGEST` is enabled. This doc section is the *contract*, not the implementation source-of-truth.
 
 ### Build-time selection (stub vs real ingest)
 
@@ -81,6 +83,21 @@ Inside the Wishbone block (single-clock v1), the regbank should:
 - **real ADC ingest** (`adc_streaming_ingest`) when `USE_REAL_ADC_INGEST` is defined
 
 The intent is that firmware sees identical register semantics in both modes; only the FIFO producer changes.
+
+#### Harness-side enablement (compile-time)
+
+In the OpenMPW harness repo (`home-inventory-chip-openmpw`), this define must be applied consistently to *both* the wrapper modules and the IP RTL compilation unit.
+
+Reference checklist:
+- `docs/HARNESS_INTEGRATION.md` → “Optional: enabling real ADC ingest (USE_REAL_ADC_INGEST)”
+
+Fast sanity commands (low disk):
+- IP repo (both modes compile):
+  - `bash ops/rtl_compile_check.sh`
+- Harness repo (wrapper compile with define):
+  - `make rtl-compile-check-real-adc`
+
+If the harness compile-check fails under `USE_REAL_ADC_INGEST`, treat it as **port-list drift** (wrapper not conditionally exposing `adc_*` pins yet) rather than an RTL functional bug.
 
 If/when the event detector is switched from the current stub to real ADC data:
 - Tap the unpacked channel words from the packed frame **before** the FIFO (or reconstruct them from the first 9 popped words).
