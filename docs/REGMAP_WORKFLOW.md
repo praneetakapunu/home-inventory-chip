@@ -1,106 +1,63 @@
-# Regmap workflow (v1)
+# Regmap workflow (single source of truth)
 
-Goal: keep **spec**, **RTL**, **DV**, and **firmware** aligned as the design evolves.
+This project treats `spec/regmap_v1.yaml` as the **only** authoritative register map.
 
-## Source of truth
-- Machine-readable: `spec/regmap_v1.yaml`
-- Human-readable: `spec/regmap.md`
+Everything else (FW headers, SV packages, Verilog `localparam`s, human tables) is generated from it.
 
-When changing the regmap, update **both** in the same PR.
+## Quick rule
+- **Edit:** `spec/regmap_v1.yaml`
+- **Validate + regen artifacts:** `bash ops/regmap_update.sh`
+- **Check nothing drifted:** `make -C verify regmap-check regmap-gen-check`
 
-## One-command update (recommended)
-After editing `spec/regmap_v1.yaml`, run:
+## Files involved
+**Source-of-truth**
+- `spec/regmap_v1.yaml`
+
+**Generated artifacts (must stay in sync)**
+- C header (firmware): `fw/include/home_inventory_regmap.h`
+- SystemVerilog package (RTL/DV): `rtl/include/home_inventory_regmap_pkg.sv`
+- Verilog include (DV/RTL glue): `rtl/include/regmap_params.vh`
+- Markdown table view: `spec/regmap_v1_table.md`
+
+## Normal edit loop
+1) Edit the YAML:
+
+```bash
+$EDITOR spec/regmap_v1.yaml
+```
+
+2) Regenerate + validate:
 
 ```bash
 bash ops/regmap_update.sh
 ```
 
-This will:
-- validate the YAML
-- regenerate the firmware header
-- regenerate the RTL/DV SystemVerilog package
-- regenerate a Verilog `include` file with `ADR_*` localparams (for plain-Verilog modules)
-
-## Validation (manual)
-Run:
+3) Run consistency checks:
 
 ```bash
-python3 ops/regmap_validate.py --yaml spec/regmap_v1.yaml
+make -C verify regmap-check regmap-gen-check
 ```
 
-This checks:
-- unique addresses
-- word alignment
-- sane/non-overlapping bitfields
-
-## CI / local "did I forget to regenerate?" checks
-These are the exact targets CI runs.
-
-From repo root:
+4) Commit the YAML + generated outputs together:
 
 ```bash
-# YAML ↔ RTL (home_inventory_wb.v) address consistency
+git add spec/regmap_v1.yaml spec/regmap_v1_table.md \
+  fw/include/home_inventory_regmap.h \
+  rtl/include/home_inventory_regmap_pkg.sv \
+  rtl/include/regmap_params.vh
+```
+
+## Common integration pitfalls (Caravel/Wishbone)
+- **Byte addressing vs word addressing:** Caravel presents a **byte address** on `wbs_adr_i`. Our RTL decodes 32-bit word-aligned registers (ignores `[1:0]`), but the offsets in docs/specs are still **byte addresses**.
+- **W1C + byte-lanes:** for sticky status bits (W1C), firmware should use full-word writes (`SEL=0b1111`) so the correct byte lane participates.
+
+## CI / low-disk friendly
+This workflow is designed to be fast and avoid heavy EDA installs.
+
+If you only have a minute, run:
+
+```bash
 make -C verify regmap-check
-
-# Assert committed generated artifacts match the YAML
-make -C verify regmap-gen-check
 ```
 
-### Common failure mode
-If `regmap-gen-check` fails after you edited `spec/regmap_v1.yaml`, you almost certainly forgot to run:
-
-```bash
-bash ops/regmap_update.sh
-```
-
-Commit the regenerated artifacts alongside the YAML change.
-
-## Firmware header generation
-The C header used by bring-up software is generated from the YAML.
-
-Run:
-
-```bash
-python3 ops/gen_regmap_header.py \
-  --yaml spec/regmap_v1.yaml \
-  --out  fw/include/home_inventory_regmap.h
-```
-
-### Policy
-- **Do not** hand-edit `fw/include/home_inventory_regmap.h`.
-- If you need a new constant/macro, add it to the YAML (preferred) or add a small post-generation section in the generator.
-
-## SystemVerilog package generation
-For RTL/DV, we also generate a small SV package with addresses + bitfield masks.
-
-Run:
-
-```bash
-python3 ops/gen_regmap_sv_pkg.py \
-  --yaml spec/regmap_v1.yaml \
-  --out  rtl/include/home_inventory_regmap_pkg.sv
-```
-
-### Policy
-- **Do not** hand-edit `rtl/include/home_inventory_regmap_pkg.sv`.
-- Prefer importing this package in RTL/DV instead of duplicating address constants.
-
-## Verilog `ADR_*` params include generation
-For plain-Verilog modules (or quick bring-up), we also generate a small Verilog include file with `ADR_*` localparams.
-
-Run:
-
-```bash
-python3 tools/regmap/gen_verilog_params.py \
-  --yaml spec/regmap_v1.yaml \
-  --out  rtl/include/regmap_params.vh
-```
-
-### Policy
-- **Do not** hand-edit `rtl/include/regmap_params.vh`.
-- Prefer the SV package when working in SystemVerilog; use the `.vh` include for legacy/plain-Verilog code.
-
-## DV expectations
-In the harness repo, the Wishbone regblock smoke tests should enumerate expected addresses / resets from `spec/regmap_v1.yaml`.
-
-This keeps DV and firmware using the same definitions.
+(That checks YAML ↔ RTL address map consistency without regenerating outputs.)
