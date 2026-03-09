@@ -34,11 +34,19 @@ say "[preflight] (1/2) chip-inventory: ops/preflight_low_disk.sh"
 )
 
 # 2) Harness repo checks
-say "[preflight] (2/2) home-inventory-chip-openmpw: make sync-ip-filelist + rtl-compile-check"
+say "[preflight] (2/2) home-inventory-chip-openmpw: sync filelist + verify drift + rtl compile checks"
 (
   cd "${HARNESS_REPO}"
+
+  # Keep the harness-consumed filelist in sync with the IP repo, then verify it
+  # matches the canonical source-of-truth.
   make sync-ip-filelist
+  bash "${ROOT_DIR}/tools/harness/check_harness_filelist.sh" --harness-root .
+
+  # Fast sanity compile (default + real-ADC wiring) to catch wrapper/port drift
+  # without running any DV or OpenLane.
   make rtl-compile-check
+  make rtl-compile-check-real-adc
 )
 
-say "[preflight] OK: IP + harness low-disk readiness checks passed."
+say "[preflight] OK: IP + harness low-disk readiness checks passed (including filelist drift + real-ADC compile)."

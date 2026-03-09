@@ -37,6 +37,12 @@ If you want a single command that checks **both** repos (IP + harness) without r
 ```bash
 bash ops/preflight_ip_and_harness_low_disk.sh
 ```
+This currently runs:
+- IP repo low-disk preflight (`ops/preflight_low_disk.sh`)
+- Harness: `make sync-ip-filelist`
+- Harness: **filelist drift check** (ensures `verilog/rtl/ip_home_inventory.f` matches the IP submodule)
+- Harness: `make rtl-compile-check`
+- Harness: `make rtl-compile-check-real-adc` (catches wrapper/port drift under `USE_REAL_ADC_INGEST`)
 
 ### 1) IP repo: regmap + directed sims
 From `chip-inventory/`:
