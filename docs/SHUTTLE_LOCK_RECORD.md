@@ -10,7 +10,7 @@ Why this file exists:
 
 ## Locked fields (copy/paste from official source)
 
-- **Last verified (UTC):** 2026-03-06 18:18 UTC
+- **Last verified (UTC):** 2026-03-06 18:18Z
 - **Program / foundry / PDK:** ChipFoundry / chipIgnite reservations (PDK not stated on schedule page)
 - **Shuttle name/number:** CI2605 (May MPW Shuttle)
 - **Submission cutoff:** Commitment Date: 2026-03-18 (date-only on source; internal safe deadline is earlier)

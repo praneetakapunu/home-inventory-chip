@@ -29,6 +29,7 @@ import sys
 
 
 UTC_RE = re.compile(r"^\s*utc:\s*(?P<utc>.+?)\s*$")
+LAST_VERIFIED_RE = re.compile(r"^\s*-\s*\*\*Last verified \(UTC\):\*\*\s*(?P<ts>.+?)\s*$")
 
 
 def parse_utc(s: str) -> dt.datetime:
@@ -42,6 +43,10 @@ def parse_utc(s: str) -> dt.datetime:
     """
 
     s = s.strip()
+
+    # Accept common UTC suffixes.
+    if s.upper().endswith(" UTC"):
+        s = s[:-4]
     if s.endswith("Z"):
         s = s[:-1]
 
@@ -72,7 +77,15 @@ def main() -> int:
     ap.add_argument(
         "--strict",
         action="store_true",
-        help="Fail (exit 1) if the derived deadline is in the past.",
+        help=(
+            "Fail (exit 1) if the derived deadline is in the past, or if the lock record appears stale."
+        ),
+    )
+    ap.add_argument(
+        "--stale-days",
+        type=int,
+        default=7,
+        help="In --strict mode, fail if 'Last verified (UTC)' is older than this many days.",
     )
     args = ap.parse_args()
 
@@ -82,6 +95,18 @@ def main() -> int:
         return 2
 
     text = record_path.read_text(encoding="utf-8")
+
+    # Parse 'Last verified (UTC)' so we can detect stale lock records.
+    last_verified = None
+    for line in text.splitlines():
+        m = LAST_VERIFIED_RE.match(line)
+        if m:
+            try:
+                last_verified = parse_utc(m.group("ts"))
+            except ValueError:
+                # Keep it non-fatal unless --strict; downstream will report it.
+                last_verified = None
+            break
 
     # Heuristic parse: find the 'Internal safe deadline' block and then the first `utc:` within it.
     anchor = "Internal safe deadline"
@@ -115,6 +140,12 @@ def main() -> int:
     now = dt.datetime.now(tz=dt.timezone.utc)
     delta = deadline - now
 
+    stale_days = None
+    is_stale = False
+    if last_verified is not None:
+        stale_days = (now - last_verified).total_seconds() / 86400.0
+        is_stale = stale_days > float(args.stale_days)
+
     # Compute human-ish breakdown.
     seconds = int(delta.total_seconds())
     sign = "" if seconds >= 0 else "-"
@@ -144,6 +175,9 @@ def main() -> int:
             "remaining_seconds": int(delta.total_seconds()),
             "remaining_days": int(delta.total_seconds() // 86400),
             "weeks": float(weeks) * (1.0 if delta.total_seconds() >= 0 else -1.0),
+            "last_verified_utc": last_verified.strftime("%Y-%m-%d %H:%MZ") if last_verified else None,
+            "stale_days": stale_days,
+            "is_stale": is_stale,
             "suggested": {
                 "freeze_days": freeze_days,
                 "freeze_date": freeze_dt.strftime("%Y-%m-%d"),
@@ -154,15 +188,23 @@ def main() -> int:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
         print("Shuttle runway (from lock record)")
-        print(f"  Record:   {record_path}")
-        print(f"  Now UTC:   {now.strftime('%Y-%m-%d %H:%MZ')}")
+        print(f"  Record:        {record_path}")
+        print(f"  Now UTC:        {now.strftime('%Y-%m-%d %H:%MZ')}")
         print(
-            f"  Deadline:  {deadline.strftime('%Y-%m-%d %H:%MZ')}  (internal safe deadline)"
+            f"  Deadline:       {deadline.strftime('%Y-%m-%d %H:%MZ')}  (internal safe deadline)"
         )
-        print(f"  Remaining: {sign}{days}d {hours}h {minutes}m  (~{sign}{weeks:.1f} weeks)")
+        if last_verified is None:
+            print("  Last verified:  (missing/unparsable)")
+        else:
+            print(f"  Last verified:  {last_verified.strftime('%Y-%m-%d %H:%MZ')}  (~{stale_days:.1f} days ago)")
+        print(f"  Remaining:      {sign}{days}d {hours}h {minutes}m  (~{sign}{weeks:.1f} weeks)")
 
         if delta.total_seconds() < 0:
             print("  STATUS: deadline is in the past (record likely stale)")
+        elif is_stale:
+            print(
+                f"  STATUS: lock record is stale (> {args.stale_days} days since verification). Re-check official schedule."
+            )
         elif weeks < 2:
             print("  STATUS: extremely tight (<2 weeks). Freeze scope immediately.")
         elif weeks < 4:
@@ -178,8 +220,21 @@ def main() -> int:
             f"    Final integration target: {final_integration_dt.strftime('%Y-%m-%d')}  (deadline - {final_integration_days}d)"
         )
 
-    if args.strict and delta.total_seconds() < 0:
-        return 1
+    if args.strict:
+        if delta.total_seconds() < 0:
+            return 1
+        if last_verified is None:
+            print(
+                "ERROR: lock record missing or has unparseable 'Last verified (UTC)' line",
+                file=sys.stderr,
+            )
+            return 1
+        if is_stale:
+            print(
+                f"ERROR: lock record stale (~{stale_days:.1f}d since verification; threshold={args.stale_days}d)",
+                file=sys.stderr,
+            )
+            return 1
 
     return 0
 
