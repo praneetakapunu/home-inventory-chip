@@ -15,7 +15,7 @@ Update policy:
 
 ## Regmap v1 freeze
 
-- Status: **NOT_FROZEN / FROZEN**
+- Status: **NOT_FROZEN**
 - Freeze commit (chip-inventory): `TBD`
 - Notes:
   - Source of truth: `spec/regmap_v1.yaml`
@@ -30,8 +30,8 @@ Checklist to claim **FROZEN**:
 
 ## RTL baseline ("last known good" for IP repo)
 
-- Status: **TRACKING / FROZEN**
-- Baseline commit (chip-inventory): `TBD`
+- Status: **TRACKING**
+- Baseline commit (chip-inventory): `9d7c861f8390af0be8ff42c4bf0455d26908fe06`
 - Gates that must be green at this commit:
   - `bash ops/preflight_low_disk.sh`
   - `make -C verify all`
@@ -40,8 +40,8 @@ Checklist to claim **FROZEN**:
 
 ## Harness integration baseline (last known good)
 
-- Status: **TRACKING / FROZEN**
-- Baseline commit (home-inventory-chip-openmpw): `TBD`
+- Status: **TRACKING**
+- Baseline commit (home-inventory-chip-openmpw): `91948bfd57cd5bcc7f29555d99384fd0b6c6bc5e`
 - Gates that must be green at this commit:
   - `make sync-ip-filelist`
   - `make rtl-compile-check`
