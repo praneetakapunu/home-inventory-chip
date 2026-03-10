@@ -640,15 +640,36 @@ module wb_tb;
         // -----------------------------------------------------------------
         // EVT_CFG clear controls (byte-lane masked W1P)
         // -----------------------------------------------------------------
+        // Spec sanity:
+        // - CLEAR_COUNTS clears counts only (timestamps unaffected)
+        // - CLEAR_HISTORY clears timestamps/deltas only (counts unaffected)
+
+        // Ensure we have a nonzero count + timestamp before clearing.
+        wb_write32(ADR_ADC_CMD, 32'h0000_0001);
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata == 32'd0) begin
+            $display("[tb] ERROR: expected EVT_COUNT_CH0 to be nonzero before clear tests: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        wb_read32(ADR_EVT_LAST_TS, ts1);
+
         // Clear counts without disturbing enable bits: touch only byte lane 1.
         wb_write32_sel(ADR_EVT_CFG, 32'h0000_0100, 4'b0010); // CLEAR_COUNTS
+
+        // Counts must clear...
         wb_read32(ADR_EVT_COUNT_CH0, rdata);
         if (rdata !== 32'd0) begin
             $display("[tb] ERROR: CLEAR_COUNTS did not clear EVT_COUNT_CH0: got 0x%08x", rdata);
             $fatal(1);
         end
+        // ...but timestamps must remain unchanged.
+        wb_read32(ADR_EVT_LAST_TS, ts2);
+        if (ts2 !== ts1) begin
+            $display("[tb] ERROR: CLEAR_COUNTS should not change EVT_LAST_TS: before=0x%08x after=0x%08x", ts1, ts2);
+            $fatal(1);
+        end
 
-        // Snapshot should increment from 0 again (still enabled).
+        // Snapshot should increment count from 0 again (still enabled).
         wb_write32(ADR_ADC_CMD, 32'h0000_0001);
         wb_read32(ADR_EVT_COUNT_CH0, rdata);
         if (rdata !== 32'd1) begin
@@ -657,10 +678,17 @@ module wb_tb;
         end
 
         // Clear history (timestamps + deltas) without disturbing enable bits.
+        wb_read32(ADR_EVT_COUNT_CH0, ts3); // reuse ts3 as a 32-bit temp
         wb_write32_sel(ADR_EVT_CFG, 32'h0000_0200, 4'b0010); // CLEAR_HISTORY
         wb_read32(ADR_EVT_LAST_TS, rdata);
         if (rdata !== 32'd0) begin
             $display("[tb] ERROR: CLEAR_HISTORY did not clear EVT_LAST_TS: got 0x%08x", rdata);
+            $fatal(1);
+        end
+        // Counts must be unaffected.
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        if (rdata !== ts3) begin
+            $display("[tb] ERROR: CLEAR_HISTORY should not clear EVT_COUNT_CH0: before=0x%08x after=0x%08x", ts3, rdata);
             $fatal(1);
         end
         wb_read32(ADR_EVT_LAST_TS_CH0, rdata);
