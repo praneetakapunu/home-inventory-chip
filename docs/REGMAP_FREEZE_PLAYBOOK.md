@@ -68,4 +68,5 @@ Regmap is considered frozen when:
 
 - Addresses and reset values are stable.
 - Both gates are green.
-- The freeze commit hash is referenced from `docs/TAPEOUT_CHECKLIST.md`.
+- The freeze commit hash is recorded in `docs/BASELINES.md` (**Regmap v1 freeze**).
+- The tapeout checklist points at the same baseline.

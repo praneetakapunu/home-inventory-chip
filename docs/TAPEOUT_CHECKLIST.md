@@ -12,6 +12,7 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 - [ ] SPI framing assumptions documented (DRDY, words-per-frame, CRC policy)
 - [ ] Regmap v1 frozen (addresses + reset values)
   - Playbook: `docs/REGMAP_FREEZE_PLAYBOOK.md`
+  - Baseline record: `docs/BASELINES.md` (Regmap v1 freeze)
   - [ ] `spec/regmap_v1.yaml` + `spec/regmap.md` updated together (no drift)
   - [ ] Regenerated derived artifacts committed:
     - [ ] `bash ops/regmap_update.sh`
