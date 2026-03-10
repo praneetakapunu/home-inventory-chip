@@ -59,7 +59,10 @@ WB_ADC_OVERRIDE_OUT := wb_adc_fifo_override_tb.out
 WB_REAL_ADC_SMOKE_TB  := wb_real_adc_ingest_smoke_tb.v
 WB_REAL_ADC_SMOKE_OUT := wb_real_adc_ingest_smoke_tb.out
 
-.PHONY: help all sim top-sim real-adc-sim wb-real-adc-smoke-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim \
+WB_EVT_CFG_SELMASK_TB  := wb_evt_cfg_selmask_tb.v
+WB_EVT_CFG_SELMASK_OUT := wb_evt_cfg_selmask_tb.out
+
+.PHONY: help all sim top-sim real-adc-sim wb-real-adc-smoke-sim wb-evt-cfg-selmask-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim \
 	rtl-compile-check regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
@@ -73,6 +76,7 @@ help:
 	 && echo "  make -C verify top-sim             # top_tb" \
 	 && echo "  make -C verify real-adc-sim        # compiles with USE_REAL_ADC_INGEST" \
 	 && echo "  make -C verify wb-real-adc-smoke-sim # wb + real ADC ingest FIFO pop semantics" \
+	 && echo "  make -C verify wb-evt-cfg-selmask-sim # verify EVT_CFG W1P bits are byte-lane masked" \
 	 && echo "  make -C verify fifo-sim            # adc_stream_fifo_tb" \
 	 && echo "  make -C verify drdy-sim            # adc_drdy_sync_tb" \
 	 && echo "  make -C verify spi-sim             # adc_spi_frame_capture_tb" \
@@ -86,7 +90,7 @@ help:
 	 && echo "  make -C verify clean"
 
 # One command to run the whole smoke suite (what humans should run locally).
-all: regmap-check regmap-gen-check rtl-compile-check sim top-sim real-adc-sim wb-real-adc-smoke-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim
+all: regmap-check regmap-gen-check rtl-compile-check sim top-sim real-adc-sim wb-real-adc-smoke-sim wb-evt-cfg-selmask-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim
 
 # Compile full RTL filelist (no simulation). This is a closer approximation of
 # the harness compile-check than the per-testbench compile steps.
@@ -134,6 +138,9 @@ wb-adc-override-sim: $(WB_ADC_OVERRIDE_OUT)
 
 wb-real-adc-smoke-sim: $(WB_REAL_ADC_SMOKE_OUT)
 	$(VVP) $(WB_REAL_ADC_SMOKE_OUT)
+
+wb-evt-cfg-selmask-sim: $(WB_EVT_CFG_SELMASK_OUT)
+	$(VVP) $(WB_EVT_CFG_SELMASK_OUT)
 
 # Pure-Python consistency check (no Verilog simulator required).
 regmap-check:
@@ -198,6 +205,16 @@ regmap-vh-gen-check:
 
 $(OUT): $(TB) $(RTL_DIR)/home_inventory_wb.v $(RTL_DIR)/home_inventory_event_detector.v \
 	$(RTL_DIR)/adc/adc_stream_fifo.v $(RTL_DIR)/adc/adc_frame_to_fifo.v
+
+$(WB_EVT_CFG_SELMASK_OUT): $(WB_EVT_CFG_SELMASK_TB) $(RTL_DIR)/home_inventory_wb.v $(RTL_DIR)/home_inventory_event_detector.v \
+	$(RTL_DIR)/adc/adc_stream_fifo.v $(RTL_DIR)/adc/adc_frame_to_fifo.v
+	$(IVERILOG) $(IVERILOG_FLAGS) -o $(WB_EVT_CFG_SELMASK_OUT) \
+		-I$(RTL_DIR) -I$(RTL_DIR)/include \
+		$(WB_EVT_CFG_SELMASK_TB) \
+		$(RTL_DIR)/home_inventory_wb.v \
+		$(RTL_DIR)/home_inventory_event_detector.v \
+		$(RTL_DIR)/adc/adc_stream_fifo.v \
+		$(RTL_DIR)/adc/adc_frame_to_fifo.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(TOP_OUT): $(TOP_TB) \
