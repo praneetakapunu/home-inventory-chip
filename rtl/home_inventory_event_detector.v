@@ -15,6 +15,8 @@
 // be driven by stub snapshot samples during bring-up and later by the real ADC
 // capture pipeline.
 
+`timescale 1ns/1ps
+
 `default_nettype none
 
 module home_inventory_event_detector (

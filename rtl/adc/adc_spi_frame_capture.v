@@ -22,6 +22,8 @@
 // - CPOL/CPHA are parameterized; default matches ADS131M08 mode (CPOL=0, CPHA=1)
 //   per project spec.
 //
+`timescale 1ns/1ps
+
 `default_nettype none
 
 module adc_spi_frame_capture #(

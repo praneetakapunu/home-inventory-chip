@@ -9,6 +9,8 @@
 // - sticky overrun flag when push attempted while full
 // - explicit clear for overrun flag (W1C at reg-level)
 
+`timescale 1ns/1ps
+
 `default_nettype none
 
 module adc_stream_fifo #(

@@ -10,6 +10,8 @@
 //
 // NOTE: Addressing is byte-addressed (Wishbone). See spec/regmap.md.
 
+`timescale 1ns/1ps
+
 `default_nettype none
 
 module home_inventory_wb (

@@ -20,6 +20,8 @@
 // - This module exposes the FIFO level + sticky overrun flag so the regbank can
 //   implement ADC_FIFO_STATUS/ADC_FIFO_DATA semantics.
 //
+`timescale 1ns/1ps
+
 `default_nettype none
 
 module adc_streaming_ingest #(

@@ -14,6 +14,8 @@
 // - word1..8 = CH0..CH7
 // - (optional) trailing words (e.g., OUTPUT_CRC) may exist and are ignored here
 //
+`timescale 1ns/1ps
+
 `default_nettype none
 
 module adc_soc_frame_unpack #(

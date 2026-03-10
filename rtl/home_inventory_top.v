@@ -12,6 +12,8 @@
 // - The OpenMPW harness repo provides the *Caravel user_project_wrapper*.
 // - This module is the IP top (Wishbone + optional ADC pins).
 
+`timescale 1ns/1ps
+
 `default_nettype none
 
 module home_inventory_top (

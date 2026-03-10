@@ -13,6 +13,8 @@
 // Policy (v1): only emit pulses *after* we've observed DRDY high at least once
 // post-reset (i.e., the edge detector is "armed").
 
+`timescale 1ns/1ps
+
 `default_nettype none
 
 module adc_drdy_sync (
