@@ -85,9 +85,22 @@ trap 'rm -f "${TMP_OUT}"' EXIT
 } > "${TMP_OUT}"
 
 # Only update the destination if it changed (keeps git diffs clean).
-if [[ -f "${OUT_FILELIST}" ]] && cmp -s "${TMP_OUT}" "${OUT_FILELIST}"; then
-  echo "OK: harness filelist already up-to-date: ${OUT_FILELIST}"
-  exit 0
+#
+# NOTE: The file includes a volatile "Generated:" timestamp line. We treat that
+# timestamp as non-semantic and avoid rewriting the file when *only* the
+# timestamp differs.
+if [[ -f "${OUT_FILELIST}" ]]; then
+  NORMALIZED_TMP="$(mktemp)"
+  NORMALIZED_REAL="$(mktemp)"
+  trap 'rm -f "${TMP_OUT}" "${NORMALIZED_TMP}" "${NORMALIZED_REAL}"' EXIT
+
+  sed -E 's/^# Generated: .*/# Generated: <timestamp elided>/' "${TMP_OUT}" > "${NORMALIZED_TMP}"
+  sed -E 's/^# Generated: .*/# Generated: <timestamp elided>/' "${OUT_FILELIST}" > "${NORMALIZED_REAL}"
+
+  if cmp -s "${NORMALIZED_TMP}" "${NORMALIZED_REAL}"; then
+    echo "OK: harness filelist already up-to-date (ignoring timestamp): ${OUT_FILELIST}"
+    exit 0
+  fi
 fi
 
 mv "${TMP_OUT}" "${OUT_FILELIST}"
