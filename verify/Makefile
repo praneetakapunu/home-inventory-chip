@@ -222,7 +222,6 @@ $(WB_EVT_CFG_SELMASK_OUT): $(WB_EVT_CFG_SELMASK_TB) $(RTL_DIR)/home_inventory_wb
 		$(RTL_DIR)/home_inventory_event_detector.v \
 		$(RTL_DIR)/adc/adc_stream_fifo.v \
 		$(RTL_DIR)/adc/adc_frame_to_fifo.v
-	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 $(WB_EVT_INTEGRATION_OUT): $(WB_EVT_INTEGRATION_TB) $(RTL_DIR)/home_inventory_wb.v $(RTL_DIR)/home_inventory_event_detector.v \
 	$(RTL_DIR)/adc/adc_stream_fifo.v $(RTL_DIR)/adc/adc_frame_to_fifo.v
