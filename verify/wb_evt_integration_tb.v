@@ -216,6 +216,24 @@ module wb_evt_integration_tb;
         wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
         expect32(rdata, 32'd15, "EVT_LAST_DELTA_CH0 after second hit");
 
+        // -----------------------------------------------------------------
+        // Enable-edge history clear semantics (0->1 on EVT_EN clears history)
+        // -----------------------------------------------------------------
+        // Disable then re-enable ch0; next hit should report delta==0.
+        wb_write32(ADR_EVT_CFG, 32'h0000_0000); // disable all
+        wb_write32(ADR_EVT_CFG, 32'h0000_0001); // re-enable ch0
+
+        sim_evt_pulse_ch0(32'd150, 32'd40);
+
+        wb_read32(ADR_EVT_COUNT_CH0, rdata);
+        expect32(rdata, 32'd3, "EVT_COUNT_CH0 after re-enable + hit");
+
+        wb_read32(ADR_EVT_LAST_TS_CH0, rdata);
+        expect32(rdata, 32'd40, "EVT_LAST_TS_CH0 after re-enable + hit");
+
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
+        expect32(rdata, 32'd0, "EVT_LAST_DELTA_CH0 after re-enable + hit");
+
         // Clear counts (W1P lives in bit[8], byte lane 1).
         wb_write32_sel(ADR_EVT_CFG, 32'h0000_0100, 4'b0010); // write bit[8]
 
@@ -224,7 +242,7 @@ module wb_evt_integration_tb;
 
         // History should remain until CLEAR_HISTORY.
         wb_read32(ADR_EVT_LAST_TS_CH0, rdata);
-        expect32(rdata, 32'd25, "EVT_LAST_TS_CH0 preserved by clear_counts");
+        expect32(rdata, 32'd40, "EVT_LAST_TS_CH0 preserved by clear_counts");
 
         // Clear history (bit[9])
         wb_write32_sel(ADR_EVT_CFG, 32'h0000_0200, 4'b0010);
