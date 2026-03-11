@@ -8,10 +8,15 @@ Fill this out as the RTL/harness wiring settles.
 ## 1) Clock domains (enumerate)
 
 - [x] **wb_clk_i** (Wishbone / bus clock)
-  - Source in harness: **TBD** (record exact net/clock generator in harness repo)
-  - Frequency: **TBD**
+  - Source in harness: **Caravel WB MI A clock** passed straight through the OpenMPW wrapper.
+    - Evidence: harness `user_project_wrapper.v` instantiates `home_inventory_user_project` and wires `.wb_clk_i(wb_clk_i)` (repo: `../home-inventory-chip-openmpw/verilog/rtl/user_project_wrapper.v`).
+  - Frequency: **harness/Caravel-defined** (treat as a parameter of the platform; measure/confirm in harness docs).
   - Evidence:
     - All state in `rtl/home_inventory_wb.v` is clocked by `wb_clk_i`.
+
+- [x] **user_clock2** (Caravel independent clock input)
+  - v1 status: **not used** by the home-inventory user project.
+  - Evidence: harness exposes `user_clock2` at the wrapper top, but `home_inventory_user_project` does not have a `user_clock2` port (repo: `../home-inventory-chip-openmpw/verilog/rtl/user_project_wrapper.v`).
 
 - [x] **adc_sclk** (ADC SPI clock)
   - v1 implementation: **derived from `wb_clk_i`** inside `rtl/adc/adc_spi_frame_capture.v` via divider (`SCLK_DIV`).
@@ -39,8 +44,11 @@ For each clock domain above, document:
 - [x] whether reset deassertion is synchronized
   - Yes: reset is sampled on `wb_clk_i`.
 
+Evidence (harness wiring):
+- The OpenMPW `user_project_wrapper` wires `.wb_rst_i(wb_rst_i)` into `home_inventory_user_project` (repo: `../home-inventory-chip-openmpw/verilog/rtl/user_project_wrapper.v`).
+
 Open item:
-- [ ] Confirm the harness-provided reset polarity for the user project wrapper and ensure it matches `wb_rst_i` expectations.
+- [ ] Confirm the **timing** of `wb_rst_i` deassertion from the harness/Caravel side (async vs sync). The IP RTL *treats* `wb_rst_i` as a synchronous reset (sampled on `wb_clk_i`). If Caravel deasserts it asynchronously, we should add a small synchronizer or document the assumption explicitly.
 
 ## 3) Async inputs (enumerate + mitigation)
 
@@ -49,8 +57,9 @@ List every signal that can be asynchronous to a receiving clock domain.
 ### Current v1 wiring (as implemented in IP RTL)
 
 - [x] **No asynchronous pacing inputs are consumed by the v1 IP RTL today.**
-  - `adc_miso` is sampled relative to `adc_sclk` that we generate; it is treated as synchronous to that interface.
-  - No `adc_drdy` pin is currently in the top-level port list; capture is started by a Wishbone W1P (`CTRL.START`).
+  - `adc_miso` is sampled relative to `adc_sclk` that we generate (in the real-ingest build); it is treated as synchronous to that SPI interface.
+  - No `adc_drdy_n` pin is currently consumed by the IP RTL; capture is started by a Wishbone W1P (`CTRL.START`).
+    - Note: the harness wrapper *does* reserve an `adc_drdy_n` wire when `HOMEINV_ENABLE_ADC_GPIO` is enabled, but it is currently unused by the IP.
 
 ### Candidate list (update as harness/PCB wiring is finalized)
 

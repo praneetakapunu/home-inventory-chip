@@ -1,5 +1,3 @@
-`timescale 1ns/1ps
-
 // home_inventory_regmap_pkg.sv
 //
 // AUTO-GENERATED FILE. DO NOT EDIT BY HAND.
