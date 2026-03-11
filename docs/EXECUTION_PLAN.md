@@ -27,6 +27,9 @@ Pick *one* of these and land it as a small, reviewable commit:
    - IP repo: `bash ops/preflight_low_disk.sh` (one-shot low-disk suite)
      - (equivalent to: `bash ops/rtl_compile_check.sh` + `make -C verify all`)
    - Harness repo: `make sync-ip-filelist` + `make rtl-compile-check`
+   - Quick harness audit helpers (grep-based, no toolchain):
+     - `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
+     - `tools/harness_event_detector_audit.sh ../home-inventory-chip-openmpw`
    - Notes/checklist: `docs/HARNESS_INTEGRATION.md`
 2) Land RTL baseline in source-of-truth (done, keep iterating):
    - `rtl/home_inventory_top.v` skeleton
