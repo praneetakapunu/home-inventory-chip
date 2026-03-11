@@ -23,9 +23,25 @@ They are intentionally minimal and avoid depending on a particular SDK.
   - trigger `ADC_CMD.SNAPSHOT` (current RTL stub sample_valid)
   - read `EVT_COUNT_CH0`, `EVT_LAST_DELTA_CH0`, `EVT_LAST_TS`
 
+## Integration notes (Caravel/Wishbone pitfalls)
+
+1) **Offsets are byte addresses**
+- The register offsets in `home_inventory_regmap.h` are **byte offsets**.
+- Caravel presents a byte address on `wbs_adr_i`. Do not treat offsets as
+  word indices unless you explicitly shift (`byte_off = word_index << 2`).
+
+2) **Byte-enables / partial writes**
+- The RTL is required to honor `wbs_sel_i[3:0]` for writes.
+- For sticky/W1C bits (e.g. `ADC_FIFO_STATUS.OVERRUN`), prefer full-word writes
+  so you don't accidentally miss the byte lane containing the sticky bit.
+
+3) **Base address is harness-specific**
+- You must provide the correct peripheral base address for your platform.
+  In Caravel this is often the user project Wishbone base (commonly shown as
+  `0x3000_0000` in examples), but confirm in the specific harness/SoC docs.
+
 ## Notes
 - These snippets use the generated register map header:
   - `../include/home_inventory_regmap.h`
-- You must provide the correct peripheral base address for your platform.
-  In Caravel this is typically the user project Wishbone base, e.g.
-  `0x3000_0000`, but confirm in the harness/SoC documentation.
+- For full regmap semantics (W1P/W1C details, FIFO packing), see:
+  - `../../spec/regmap.md`
