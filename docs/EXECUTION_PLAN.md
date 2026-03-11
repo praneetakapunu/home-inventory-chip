@@ -24,6 +24,7 @@ Pick *one* of these and land it as a small, reviewable commit:
 
 ## Next 48 hours (Madhuri)
 1) Submission mechanics: keep harness repo integrated and green on **low-disk** checks
+   - If targeting ChipFoundry/chipIgnite, keep the open questions tracked in: `docs/CHIPFOUNDRY_SUBMISSION_NOTES.md`
    - IP repo: `bash ops/preflight_low_disk.sh` (one-shot low-disk suite)
      - (equivalent to: `bash ops/rtl_compile_check.sh` + `make -C verify all`)
    - Harness repo: `make sync-ip-filelist` + `make rtl-compile-check`

@@ -1,6 +1,11 @@
 # OpenMPW submission notes (working)
 
-This doc is the practical “how we tape out” record for OpenMPW-style shuttles.
+This doc is the practical “how we tape out” record for **OpenMPW/Caravel-style** shuttles.
+
+If the target shuttle is ChipFoundry/chipIgnite (see `docs/SHUTTLE_LOCK_RECORD.md`), also read:
+- `docs/CHIPFOUNDRY_SUBMISSION_NOTES.md`
+
+That doc tracks the **open questions / required confirmations** so we don’t spend disk/time on the wrong precheck flow.
 
 ## Working assumption (v1)
 - **PDK:** `sky130A`
