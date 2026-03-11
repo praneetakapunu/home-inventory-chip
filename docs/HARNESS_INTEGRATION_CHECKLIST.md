@@ -50,18 +50,17 @@ Why: keeps the *ordering and membership* of RTL sources identical between repos.
 Sanity commands (harness repo):
 
 ```bash
-# fast compile check using Icarus (default build: stub ADC path)
-iverilog -g2012 -o /tmp/wrapper.out \
-  -f verilog/rtl/ip_home_inventory.f \
-  verilog/rtl/user_project_wrapper.v
+# Keep the harness filelist synced with the IP repo.
+make sync-ip-filelist
 
-# optional: compile-check the *real ADC ingest* variant (adds SPI pin ports)
+# Fast compile check using Icarus (default build: stub ADC path)
+make rtl-compile-check
+
+# Optional: compile-check the *real ADC ingest* variant (adds SPI pin ports)
 # NOTE: your wrapper must conditionally plumb/tie the ADC pins when enabled.
-iverilog -g2012 -DUSE_REAL_ADC_INGEST -o /tmp/wrapper_adc.out \
-  -f verilog/rtl/ip_home_inventory.f \
-  verilog/rtl/user_project_wrapper.v
+make rtl-compile-check-real-adc
 
-# or syntax/lint-ish compile using Verilator
+# Optional: syntax/lint-ish compile using Verilator
 verilator -Wall --cc \
   -f verilog/rtl/ip_home_inventory.f \
   verilog/rtl/user_project_wrapper.v \

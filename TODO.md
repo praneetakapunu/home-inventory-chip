@@ -8,6 +8,7 @@ This is the short list of *current* work. Keep it honest; move completed items o
 - **[Madhuri]** Keep low-disk gates green:
   - IP repo: `make -C verify all`
   - Harness repo: `make sync-ip-filelist` + `make rtl-compile-check`
+  - (optional but recommended) Harness repo: `make rtl-compile-check-real-adc`
 - **[Madhuri]** Decide target shuttle/deadline and copy into `docs/DASHBOARD.md` + `docs/TAPEOUT_CHECKLIST.md`
 
 ## Done (recent)
