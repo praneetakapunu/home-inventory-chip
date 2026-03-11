@@ -254,6 +254,19 @@ module wb_real_adc_ingest_smoke_tb;
             end else begin
                 $display("[tb] Saw CAPTURE_BUSY assert during capture");
             end
+
+            // After the frame is captured and the FIFO is full, CAPTURE_BUSY
+            // should eventually deassert.
+            k = 0;
+            while (rdata[17] !== 1'b0) begin
+                wb_read32(ADR_ADC_FIFO_STATUS, rdata);
+                k = k + 1;
+                if (k > 5000) begin
+                    $display("[tb] ERROR: timeout waiting for CAPTURE_BUSY to deassert (status=0x%08x)", rdata);
+                    $fatal(1);
+                end
+            end
+            $display("[tb] CAPTURE_BUSY deasserted after capture");
         end
 
         // Pop and verify words[0..8] (CRC dropped).
@@ -264,6 +277,14 @@ module wb_real_adc_ingest_smoke_tb;
                          k, rdata[23:0], words[k], rdata);
                 $fatal(1);
             end
+        end
+
+        // Mirroring: ADC_RAW_CHx should reflect the last captured frame.
+        wb_read32(ADR_ADC_RAW_CH0, rdata);
+        if (rdata[23:0] !== words[1]) begin
+            $display("[tb] ERROR: ADC_RAW_CH0 mirror mismatch: got 0x%06x exp 0x%06x (rdata=0x%08x)",
+                     rdata[23:0], words[1], rdata);
+            $fatal(1);
         end
 
         // After pops, FIFO must be empty.
