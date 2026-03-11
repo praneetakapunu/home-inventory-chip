@@ -67,6 +67,19 @@ verilator -Wall --cc \
   --top-module user_project_wrapper
 ```
 
+### C.1) Optional features: keep them deliberate
+These are the integrations that tend to drift or get “half-wired”. Make them explicit.
+
+**Event detector:**
+- [ ] The event detector RTL is included via the same IP filelist (`ip_home_inventory.f`)
+- [ ] Any event-related Wishbone registers are visible via the harness regmap include path
+- [ ] Compile-check still passes with the event detector enabled by default
+
+Quick harness audit helper (from this repo root):
+```bash
+tools/harness_event_detector_audit.sh ../home-inventory-chip-openmpw
+```
+
 ## D) Pinout + interface freeze artifacts
 These are the human-reviewed “contract” files.
 
