@@ -50,6 +50,22 @@ Record evidence as:
 - **Expected CLKIN frequency:** (Hz)
 - **Expected DRDY rate at v1 defaults:** (Hz)
 
+### Low-disk confirmation procedure (repo-local)
+Use this when you *don’t* want to open schematics yet, and just want to find any already-committed assumptions.
+
+From `chip-inventory/`:
+```bash
+tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
+```
+
+If it finds a candidate mapping, capture the evidence in this decision in the format:
+- Source: `home-inventory-chip-openmpw/<path>:<line>`
+- CLKIN route: `io[*]` (or named net) → `ADC_CLKIN/CLKIN`
+- Expected CLKIN frequency: `<Hz>`
+
+If it finds **no** mapping and only “TBD/placeholder” text, that is still useful evidence:
+- it means we must treat `CLKIN` routing/frequency as an explicit tapeout requirement (Option A oscillator or Option B SoC clock-out) and track it as an open item until the harness repo/board design is updated.
+
 ## Consequences
 - Firmware bring-up (`docs/ADC_FW_INIT_SEQUENCE.md`) will treat missing/incorrect `CLKIN` as the *first* debug item.
 - RTL verification continues to assume an ideal clock; real-hardware validation depends on this being correct.
