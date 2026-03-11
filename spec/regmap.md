@@ -181,8 +181,8 @@ Address space for event/counter reporting. Formats are defined in `spec/fixed_po
 | Bit(s) | Name | Meaning |
 |---:|---|---|
 | 7:0 | `EVT_EN` | 1 = enable event detection for channel. **0→1 clears per-channel timestamp history**, so the first event after enabling reports `EVT_LAST_DELTA_CHx = 0`. |
-| 8 | `CLEAR_COUNTS` | Write 1 to clear `EVT_COUNT_CH0..7` to 0 (timestamps unaffected). |
-| 9 | `CLEAR_HISTORY` | Write 1 to clear `EVT_LAST_TS`, `EVT_LAST_TS_CHx`, and `EVT_LAST_DELTA_CHx` (resets history). |
+| 8 | `CLEAR_COUNTS` | **W1P**. Write 1 to clear `EVT_COUNT_CH0..7` to 0 (timestamps unaffected). Reads return 0. |
+| 9 | `CLEAR_HISTORY` | **W1P**. Write 1 to clear `EVT_LAST_TS`, `EVT_LAST_TS_CHx`, and `EVT_LAST_DELTA_CHx` (resets history). Reads return 0. |
 | 31:10 | — | Reserved (read as 0; writes ignored). |
 
 ## Firmware usage examples (Wishbone)
