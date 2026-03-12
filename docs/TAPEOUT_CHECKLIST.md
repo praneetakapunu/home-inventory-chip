@@ -32,12 +32,20 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
   - [ ] harness integration repo (Caravel user project)
     - [ ] `cd ../home-inventory-chip-openmpw && make sync-ip-filelist`
     - [ ] `cd ../home-inventory-chip-openmpw && make rtl-compile-check`
+    - [ ] `cd ../home-inventory-chip-openmpw && make rtl-compile-check-real-adc` (exercises `USE_REAL_ADC_INGEST` wrapper wiring)
 - [ ] No generated blobs committed (build/ sim/ temp)
 - [ ] License headers / third-party attributions handled
 
 ## 2) Harness integration (OpenMPW submission repo)
 - [ ] User project wrapper wires the IP cleanly
 - [ ] Clock/reset strategy documented (which clock, reset polarity, synchronizers)
+- [ ] ADC pinout + clocking are explicitly confirmed (no guessing)
+  - [ ] Run low-disk audits from IP repo:
+    - [ ] `tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw`
+    - [ ] `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
+  - [ ] Record results in:
+    - [ ] `docs/ADC_PINOUT_CONTRACT.md`
+    - [ ] `docs/ADC_CLOCKING_PLAN.md`
 - [ ] Wishbone integration verified:
   - [ ] Reads/writes work for a representative reg set
   - [ ] Byte enables handled (or explicitly unsupported + documented)
