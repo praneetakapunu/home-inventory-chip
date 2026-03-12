@@ -22,63 +22,49 @@ They assume you have a memory-mapped Wishbone window (e.g. via Caravel house-kee
 #include <stdint.h>
 #include <stdbool.h>
 
+// Prefer including the *generated* header so you don't duplicate addresses/fields:
+//   fw/include/home_inventory_regmap.h
+// It is generated from spec/regmap_v1.yaml via:
+//   bash ops/regmap_update.sh
+#include "home_inventory_regmap.h"
+
 // Base of this block in your SoC address space.
 // (Project-specific: set this to your Wishbone bridge mapping.)
-#ifndef HICH_WB_BASE
-#define HICH_WB_BASE (0x00000000u)
+#ifndef HOMEINV_WB_BASE
+#define HOMEINV_WB_BASE (0x00000000u)
 #endif
 
-static inline void wb_write32(uint32_t byte_addr, uint32_t data) {
-  volatile uint32_t *p = (volatile uint32_t *)(HICH_WB_BASE + byte_addr);
+static inline void wb_write32(uint32_t reg_off, uint32_t data) {
+  volatile uint32_t *p = (volatile uint32_t *)(HOMEINV_WB_BASE + reg_off);
   *p = data;
 }
 
-static inline uint32_t wb_read32(uint32_t byte_addr) {
-  volatile uint32_t *p = (volatile uint32_t *)(HICH_WB_BASE + byte_addr);
+static inline uint32_t wb_read32(uint32_t reg_off) {
+  volatile uint32_t *p = (volatile uint32_t *)(HOMEINV_WB_BASE + reg_off);
   return *p;
 }
 
-// Addresses (byte addresses). Keep in sync with spec/regmap_v1.yaml.
-enum {
-  ADR_ID               = 0x00000000u,
-  ADR_VERSION          = 0x00000004u,
-  ADR_CTRL             = 0x00000100u,
-  ADR_TIME_NOW         = 0x0000010Cu,
-  ADR_ADC_CFG          = 0x00000200u,
-  ADR_ADC_CMD          = 0x00000204u,
-  ADR_ADC_FIFO_STATUS  = 0x00000208u,
-  ADR_ADC_FIFO_DATA    = 0x0000020Cu,
-  ADR_ADC_RAW_CH0      = 0x00000210u,
-  ADR_ADC_SNAPSHOT_CNT = 0x00000230u,
-  ADR_EVT_CFG          = 0x00000444u,
-  ADR_EVT_THRESH_CH0   = 0x00000480u,
-};
+// Helper (when you want word-indexed array addressing in FW)
+static inline uint32_t homeinv_reg_off(uint32_t byte_off) {
+  return byte_off; // reg offsets in the generated header are byte offsets.
+}
 
-// Bit helpers
+// Generic bit helper
 #define BIT(x) (1u << (x))
 
-// CTRL
-#define CTRL_ENABLE  BIT(0)
-#define CTRL_START   BIT(1)  // W1P
-
-// ADC_CMD
-#define ADC_CMD_SNAPSHOT BIT(0)  // W1P
-
-// ADC_FIFO_STATUS
-#define ADC_FIFO_LEVEL_MASK   (0xFFFFu)
-#define ADC_FIFO_OVERRUN_BIT  (16u)
-#define ADC_FIFO_OVERRUN      BIT(ADC_FIFO_OVERRUN_BIT) // W1C
-
-// EVT_CFG
-#define EVT_CFG_CLEAR_COUNTS  BIT(8)  // W1P
-#define EVT_CFG_CLEAR_HISTORY BIT(9)  // W1P
+// Convenience wrappers around generated masks/shifts
+#define CTRL_ENABLE_MASK  HOMEINV_CTRL_ENABLE_MASK
+#define CTRL_START_MASK   HOMEINV_CTRL_START_MASK   // W1P
+#define ADC_CMD_SNAPSHOT_MASK HOMEINV_ADC_CMD_SNAPSHOT_MASK // W1P
+#define ADC_FIFO_LEVEL_MASK   (0x0000FFFFu)
+#define ADC_FIFO_OVERRUN_MASK HOMEINV_ADC_FIFO_STATUS_OVERRUN_MASK // W1C
 
 static inline uint32_t adc_raw_addr(uint32_t ch) {
-  return ADR_ADC_RAW_CH0 + 4u * ch;
+  return HOMEINV_REG_ADC_RAW_CH0 + 4u * ch;
 }
 
 static inline uint32_t evt_thresh_addr(uint32_t ch) {
-  return ADR_EVT_THRESH_CH0 + 4u * ch;
+  return HOMEINV_REG_EVT_THRESH_CH0 + 4u * ch;
 }
 ```
 
@@ -155,14 +141,14 @@ typedef struct {
 // Returns true on success; false on timeout.
 static inline bool adc_read_frame(adc_frame_t *out, uint32_t timeout_iters) {
   while (timeout_iters--) {
-    uint32_t st = wb_read32(ADR_ADC_FIFO_STATUS);
+    uint32_t st = wb_read32(HOMEINV_REG_ADC_FIFO_STATUS);
     uint32_t level = st & ADC_FIFO_LEVEL_MASK;
     if (level >= 9u) break;
   }
-  if ((wb_read32(ADR_ADC_FIFO_STATUS) & ADC_FIFO_LEVEL_MASK) < 9u) return false;
+  if ((wb_read32(HOMEINV_REG_ADC_FIFO_STATUS) & ADC_FIFO_LEVEL_MASK) < 9u) return false;
 
-  out->status = wb_read32(ADR_ADC_FIFO_DATA);
-  for (uint32_t i = 0; i < 8u; i++) out->ch[i] = wb_read32(ADR_ADC_FIFO_DATA);
+  out->status = wb_read32(HOMEINV_REG_ADC_FIFO_DATA);
+  for (uint32_t i = 0; i < 8u; i++) out->ch[i] = wb_read32(HOMEINV_REG_ADC_FIFO_DATA);
   return true;
 }
 ```
@@ -254,10 +240,10 @@ static inline void evt_configure(uint32_t en_mask, const int32_t thresh[8]) {
   }
 
   // Optional: clear prior state (if reconfiguring live).
-  wb_write32(ADR_EVT_CFG, EVT_CFG_CLEAR_COUNTS | EVT_CFG_CLEAR_HISTORY);
+  wb_write32(HOMEINV_REG_EVT_CFG, EVT_CFG_CLEAR_COUNTS | EVT_CFG_CLEAR_HISTORY);
 
   // Enable selected channels (0→1 edges clear history per-channel).
-  wb_write32(ADR_EVT_CFG, (en_mask & 0xFFu));
+  wb_write32(HOMEINV_REG_EVT_CFG, (en_mask & 0xFFu));
 }
 
 // Example “poll”: detect if any channel saw an event since last time.
