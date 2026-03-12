@@ -47,6 +47,42 @@ if ! grep -q "Last verified (UTC)" "$RECORD"; then
   exit 1
 fi
 
+# Staleness check: the schedule source can change; in strict mode we fail if the
+# lock record hasn't been re-verified recently.
+#
+# The record line is expected to look like:
+#   - **Last verified (UTC):** 2026-03-06 18:18Z
+#
+# NOTE: This is a *process* gate, not a technical one. Keep it lightweight.
+STALE_DAYS=${STALE_DAYS:-7}
+LAST_VERIFIED_LINE=$(grep -m1 -E "\*\*Last verified \(UTC\):\*\*" "$RECORD" || true)
+LAST_VERIFIED_TS=$(echo "$LAST_VERIFIED_LINE" | sed -E 's/.*\*\*Last verified \(UTC\):\*\* *//')
+
+last_verified_is_stale() {
+  local ts="$1"
+  if [[ -z "$ts" ]]; then
+    return 2
+  fi
+
+  # Convert to epoch seconds. Prefer GNU date; if unavailable, skip staleness.
+  if ! command -v date >/dev/null 2>&1; then
+    return 3
+  fi
+
+  local lv_epoch now_epoch age_days
+  lv_epoch=$(date -u -d "$ts" +%s 2>/dev/null || true)
+  if [[ -z "$lv_epoch" ]]; then
+    return 4
+  fi
+  now_epoch=$(date -u +%s)
+  age_days=$(( (now_epoch - lv_epoch) / 86400 ))
+
+  if [[ "$age_days" -gt "$STALE_DAYS" ]]; then
+    return 0
+  fi
+  return 1
+}
+
 field_line() {
   # Print the first matching markdown bullet line for a field label.
   # Example: field_line "Source link"
@@ -80,6 +116,13 @@ else
 
     if [[ -z "$LV_LINE" ]]; then
       echo "ERROR: missing 'Last verified (UTC)' line" >&2
+      exit 1
+    fi
+
+    # Fail strict mode if the record is stale.
+    if last_verified_is_stale "$LAST_VERIFIED_TS"; then
+      echo "ERROR: shuttle lock record appears stale (Last verified (UTC): $LAST_VERIFIED_TS; stale threshold: ${STALE_DAYS}d)" >&2
+      echo "  Re-verify the official schedule link and update docs/SHUTTLE_LOCK_RECORD.md" >&2
       exit 1
     fi
 
@@ -120,6 +163,11 @@ else
     require_nonempty "time"
     require_nonempty "timezone"
     require_nonempty "utc"
+  fi
+
+  if last_verified_is_stale "$LAST_VERIFIED_TS"; then
+    echo "WARNING: shuttle lock record may be stale (Last verified (UTC): $LAST_VERIFIED_TS; stale threshold: ${STALE_DAYS}d)"
+    echo "  Re-verify the official schedule link and refresh docs/SHUTTLE_LOCK_RECORD.md"
   fi
 
   echo "Shuttle lock record status: OK (no 'TBD' placeholders found; Lock status: $LOCK_STATUS)"
