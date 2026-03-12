@@ -42,23 +42,42 @@ If `adc_reset_n` / `adc_pwdn_n` are not available on the harness, the wrapper mu
 
 ## 2) Harness mapping (must be filled before tapeout)
 
-Fill this section once the harness pad mapping is confirmed.
+The harness currently has an **opt-in GPIO routing block** in:
+- `home-inventory-chip-openmpw/verilog/rtl/home_inventory_user_project.v`
+  - enabled by compile-time define: `HOMEINV_ENABLE_ADC_GPIO`
+  - uses parameterized indices (currently placeholders)
 
-For each signal, record **exactly one** of:
+For each logical ADC signal, record **exactly one** of:
 - Caravel user GPIO (`io[<n>]`)
 - explicit net name in the wrapper (`user_project_wrapper`/`home_inventory_user_project`)
 - "not connected" (with reason)
 
+### Current harness placeholders (DO NOT TAPEOUT AS-IS)
+
+As of today, the harness uses these parameter defaults when `HOMEINV_ENABLE_ADC_GPIO` is enabled:
+
 ```text
-adc_sclk     -> TBD
-adc_cs_n     -> TBD
-adc_mosi     -> TBD
-adc_miso     -> TBD
-adc_drdy_n   -> TBD
-adc_clkin    -> TBD
-adc_reset_n  -> TBD
-adc_pwdn_n   -> TBD
+adc_sclk     -> io[0]   (ADC_SCLK_IO)
+adc_cs_n     -> io[1]   (ADC_CSN_IO)
+adc_mosi     -> io[2]   (ADC_MOSI_IO)
+adc_miso     -> io[3]   (ADC_MISO_IO)      [input]
+adc_drdy_n   -> io[4]   (ADC_DRDYN_IO)     [input]
+adc_reset_n  -> io[5]   (ADC_RSTN_IO)
+adc_clkin    -> not connected (must be provided by board/harness)
+adc_pwdn_n   -> not connected (optional; add when pads allow)
 ```
+
+Notes:
+- `adc_reset_n` is currently **driven high** in the harness (`assign adc_rst_n = 1'b1;`).
+  - i.e. the pad is reserved, but the IP does not yet own reset sequencing.
+- `adc_drdy_n` is currently only routed to a harness-local wire (it is **not** yet consumed by the IP ingest RTL).
+- When `HOMEINV_ENABLE_ADC_GPIO` is *not* enabled, the wrapper ties `adc_miso=0` and `adc_drdy_n=1`.
+
+### To be locked before tapeout
+
+Replace the placeholder indices above with the final pad mapping (and remove any remaining ambiguity):
+- update `ADC_*_IO` parameters in the harness (or convert to hard-coded localparams)
+- reflect the final mapping here (no TBD)
 
 Also record (one line each):
 - pad type / drive strength constraints (if any)
