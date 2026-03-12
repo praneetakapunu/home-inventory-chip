@@ -1,63 +1,71 @@
-# Regmap workflow (single source of truth)
+# Register Map workflow (v1)
 
-This project treats `spec/regmap_v1.yaml` as the **only** authoritative register map.
+This project treats the register map as **spec-first**.
 
-Everything else (FW headers, SV packages, Verilog `localparam`s, human tables) is generated from it.
+- **Source-of-truth:** `spec/regmap_v1.yaml`
+- **Derived artifacts (must stay in sync):**
+  - `spec/regmap_v1_table.md` (human-readable table)
+  - `fw/include/home_inventory_regmap.h` (firmware C header)
+  - `rtl/include/home_inventory_regmap_pkg.sv` (SystemVerilog package)
+  - `rtl/include/regmap_params.vh` (Verilog `localparam` include)
 
-## Quick rule
-- **Edit:** `spec/regmap_v1.yaml`
-- **Validate + regen artifacts:** `bash ops/regmap_update.sh`
-- **Check nothing drifted:** `make -C verify regmap-check regmap-gen-check`
+## Quick start
 
-## Files involved
-**Source-of-truth**
-- `spec/regmap_v1.yaml`
-
-**Generated artifacts (must stay in sync)**
-- C header (firmware): `fw/include/home_inventory_regmap.h`
-- SystemVerilog package (RTL/DV): `rtl/include/home_inventory_regmap_pkg.sv`
-- Verilog include (DV/RTL glue): `rtl/include/regmap_params.vh`
-- Markdown table view: `spec/regmap_v1_table.md`
-
-## Normal edit loop
-1) Edit the YAML:
-
-```bash
-$EDITOR spec/regmap_v1.yaml
-```
-
-2) Regenerate + validate:
+### Update / regenerate artifacts (normal development)
 
 ```bash
 bash ops/regmap_update.sh
 ```
 
-3) Run consistency checks:
+This will:
+1) validate `spec/regmap_v1.yaml`
+2) regenerate all derived artifacts listed above
+3) print a `git status` summary so you can see what changed
+
+### Verify artifacts are in sync (CI / pre-push)
 
 ```bash
-make -C verify regmap-check regmap-gen-check
+bash ops/regmap_check.sh
 ```
 
-4) Commit the YAML + generated outputs together:
+This script regenerates artifacts and then **fails** if `git diff` shows drift.
+
+## Making changes safely
+
+1. Edit **only** `spec/regmap_v1.yaml` for functional changes.
+   - Do **not** hand-edit the generated `.h`, `.sv`, `.vh`, or the markdown table.
+2. Run `bash ops/regmap_update.sh`.
+3. Review diffs:
 
 ```bash
-git add spec/regmap_v1.yaml spec/regmap_v1_table.md \
+git diff -- spec/regmap_v1.yaml spec/regmap_v1_table.md \
   fw/include/home_inventory_regmap.h \
   rtl/include/home_inventory_regmap_pkg.sv \
   rtl/include/regmap_params.vh
 ```
 
-## Common integration pitfalls (Caravel/Wishbone)
-- **Byte addressing vs word addressing:** Caravel presents a **byte address** on `wbs_adr_i`. Our RTL decodes 32-bit word-aligned registers (ignores `[1:0]`), but the offsets in docs/specs are still **byte addresses**.
-- **W1C + byte-lanes:** for sticky status bits (W1C), firmware should use full-word writes (`SEL=0b1111`) so the correct byte lane participates.
+4. Commit **both** the YAML and the derived artifacts.
+   - Rationale: downstream users (firmware/RTL) shouldn’t need Python tooling to build.
 
-## CI / low-disk friendly
-This workflow is designed to be fast and avoid heavy EDA installs.
+## YAML conventions (what the generator expects)
 
-If you only have a minute, run:
+The YAML schema is validated by `ops/regmap_validate.py`. In general:
+- Addresses are **byte offsets** (Wishbone byte addressing).
+- Registers are 32-bit.
+- Bitfields should explicitly specify:
+  - access type (RO/RW/W1C/W1P)
+  - reset value (where applicable)
+  - a short description suitable for both RTL and firmware docs
 
-```bash
-make -C verify regmap-check
-```
+If validation fails, fix the YAML until `ops/regmap_update.sh` succeeds.
 
-(That checks YAML ↔ RTL address map consistency without regenerating outputs.)
+## Common footguns
+
+- **Byte vs word addressing:** Caravel presents a byte address on `wbs_adr_i`.
+  - In firmware you almost always want to use the byte offsets shown in the docs.
+- **W1C + byte-select interaction:** If you clear sticky bits with partial `wbs_sel_i`, only those byte lanes participate.
+  - Firmware recommendation: clear W1C bits with full-word writes (`SEL=0b1111`).
+
+## Troubleshooting
+
+- If generation fails due to Python environment issues, capture the exact error and add it under `## Blockers` in `docs/EXECUTION_PLAN.md` (chip-inventory repo) so it doesn’t get forgotten.
