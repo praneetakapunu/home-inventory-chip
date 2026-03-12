@@ -59,5 +59,9 @@ Format:
 - IP commit
 - Log reference (file/path/link)
 
+Helper:
+- `bash ops/record_precheck_run.sh --result PASS|FAIL --harness ../home-inventory-chip-openmpw --log <path-or-link>`
+  - Appends a row under **Entries** using the current git HEADs.
+
 Entries:
 - (none yet)
