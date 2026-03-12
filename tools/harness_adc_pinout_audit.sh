@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # Quick, low-disk helper to audit whether the harness repo:
-#  - exposes the optional ADC SPI pins (adc_sclk/cs_n/mosi/miso) under USE_REAL_ADC_INGEST
+#  - exposes the optional ADC interface pins under USE_REAL_ADC_INGEST
+#    (SPI: adc_sclk/cs_n/mosi/miso, plus drdy/reset/optional clkin)
 #  - maps those pins to specific Caravel io[*] indices (or at least names the nets)
 #  - has a compile-time path that defines USE_REAL_ADC_INGEST (Makefile target, etc.)
 #
@@ -47,6 +48,10 @@ TERMS=(
   "adc_cs_n"
   "adc_mosi"
   "adc_miso"
+  "adc_drdy"
+  "adc_drdy_n"
+  "adc_rst_n"
+  "adc_clkin"
   # Common Caravel wrapper naming.
   "user_project_wrapper"
   "user_project"
@@ -69,8 +74,9 @@ What to conclude from the output:
 1) If you see adc_* nets in verilog wrappers (home_inventory_user_project/user_project_wrapper):
    - Great: port-list drift is unlikely.
 
-2) If you also see explicit io[*] indices (or named pads) connected to adc_*:
+2) If you also see explicit io[*] indices (or named pads) connected to adc_* (including drdy/reset/clkin):
    - Record the exact mapping in chip-inventory/docs/ADC_PINOUT_CONTRACT.md.
+   - If drdy appears as adc_drdy_n vs adc_drdy, also record the polarity assumption explicitly.
 
 3) If adc_* is ONLY mentioned in docs (not in verilog):
    - Expect harness compile to fail under -DUSE_REAL_ADC_INGEST.
