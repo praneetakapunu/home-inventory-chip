@@ -229,3 +229,42 @@ Minimum tests:
 - [ ] Confirm clocking plan for ADC on the OpenMPW harness/PCB (`CLKIN` source).
   - Working notes live in: `docs/ADC_CLOCKING_PLAN.md`
   - Decision to accept (with evidence): `decisions/011-adc-clkin-source-and-frequency.md`
+
+## Harness-dependent confirmations (must lock before tapeout)
+These are not “nice to have” — they impact RTL pin polarity assumptions and whether we can hit the intended sample rate.
+
+1) **DRDY polarity / naming**
+   - Confirm whether the harness net is exposed as `adc_drdy` (active-low) or `adc_drdy_n`.
+   - Our RTL should treat **assert = low**, but we must confirm that the pad naming and top-level wiring are consistent.
+
+2) **CLKIN source and frequency**
+   - Confirm if the harness provides `CLKIN` to the ADC (and at what frequency).
+   - If not, confirm we are using the ADC internal oscillator and what performance/accuracy tradeoffs are acceptable.
+   - Use the harness audit helper and update the harness docs once confirmed:
+     - `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
+
+3) **SCLK budget vs. sample rate**
+   For continuous capture (one 10-word frame per conversion), the minimum SCLK frequency must satisfy:
+
+   - `f_sclk >= (10 * word_bits) * f_s`
+
+   Where:
+   - `word_bits` is 24 (v1 default) or 32 (if we switch later)
+   - `f_s` is the per-channel sample rate (conversions/sec)
+
+   Examples:
+   - 24-bit words at 1 kSPS: `f_sclk >= 10*24*1k = 240 kHz`
+   - 24-bit words at 32 kSPS: `f_sclk >= 10*24*32k = 7.68 MHz`
+   - 32-bit words at 32 kSPS: `f_sclk >= 10*32*32k = 10.24 MHz`
+
+   Practical guidance:
+   - Add margin (protocol overhead, FW scheduling, clock tolerance); do not run the link at the exact minimum.
+   - If the harness limits SCLK (routing/IO constraints), we must reduce `f_s` or change framing assumptions.
+
+4) **CS framing guarantee**
+   - Confirm the SoC wrapper can hold `CS` low for the full 10-word frame and that no other SPI target shares the bus with conflicting timing.
+
+Once these are confirmed, update:
+- `docs/ADC_CLOCKING_PLAN.md`
+- `docs/HARNESS_INTEGRATION.md`
+- (if needed) `docs/EXECUTION_PLAN.md` “Blockers” / “Risks”
