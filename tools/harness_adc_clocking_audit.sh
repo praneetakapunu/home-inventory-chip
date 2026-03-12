@@ -2,8 +2,10 @@
 set -euo pipefail
 
 # Quick, low-disk helper to locate ADC clocking references in the harness repo.
+#
 # Usage:
 #   tools/harness_adc_clocking_audit.sh [PATH_TO_HARNESS_REPO]
+#
 # Default:
 #   ../home-inventory-chip-openmpw
 
@@ -16,26 +18,43 @@ if [[ ! -d "$HARNESS_REPO" ]]; then
   exit 2
 fi
 
-cd "$HARNESS_REPO"
-
-echo "== Harness repo: $(pwd)"
-
 if ! command -v rg >/dev/null 2>&1; then
   echo "ERROR: ripgrep (rg) not found" >&2
   exit 2
 fi
 
+cd "$HARNESS_REPO"
+
+echo "== Harness repo: $(pwd)"
+
 # NOTE: Searching for the bare string "CLKIN" across the harness repo is extremely noisy
 # (it matches many internal cell/net names, especially in LVS spice). Instead, we:
 #   - prefer explicit signal names (adc_clkin, ADC_CLKIN)
 #   - search for ADS131 references
-#   - search for the word-boundary "CLKIN" only in docs/rtl-like sources
+#   - search for the word-boundary "CLKIN" only in doc/rtl-ish sources
 
-# Directories that are likely to contain pinout/clocking intent.
-SEARCH_DIRS=(
+# Candidate directories that are likely to contain pinout/clocking intent.
+# We keep this limited on purpose (avoid large dumps like LVS/SPICE).
+CANDIDATE_DIRS=(
   docs
   verilog
+  rtl
+  src
+  openlane
 )
+
+SEARCH_DIRS=()
+for d in "${CANDIDATE_DIRS[@]}"; do
+  [[ -d "$d" ]] && SEARCH_DIRS+=("$d")
+done
+
+if [[ "${#SEARCH_DIRS[@]}" -eq 0 ]]; then
+  echo "WARN: none of the expected source dirs exist (docs/verilog/rtl/src/openlane)." >&2
+  echo "      Falling back to searching from repo root (still excluding spice/lvs)." >&2
+  SEARCH_DIRS=(.)
+fi
+
+echo "== Search dirs: ${SEARCH_DIRS[*]}"
 
 # Broad terms that are still high-signal.
 TERMS=(
@@ -43,24 +62,41 @@ TERMS=(
   "ADC_CLKIN"
   "ads131"
   "ADS131"
+  "ads131m08"
+  "ADS131M08"
 )
 
 # File globs we explicitly exclude to keep this script fast and readable.
-# (The harness repo contains large LVS spice dumps where CLK* substrings are common.)
+# (The harness repo often contains large LVS spice dumps where CLK* substrings are common.)
 RG_EXCLUDES=(
   "--glob" "!**/*.spice"
   "--glob" "!**/lvs/**"
 )
 
+any_hit=0
+
 for t in "${TERMS[@]}"; do
   echo
   echo "--- rg -n \"$t\" (${SEARCH_DIRS[*]}) ---"
-  rg -n "${RG_EXCLUDES[@]}" "$t" "${SEARCH_DIRS[@]}" 2>/dev/null || true
+  if rg -n "${RG_EXCLUDES[@]}" "$t" "${SEARCH_DIRS[@]}" 2>/dev/null; then
+    any_hit=1
+  fi
+
 done
 
 echo
-echo "--- rg -n \"\\bCLKIN\\b\" (docs/verilog, word-boundary) ---"
-rg -n "${RG_EXCLUDES[@]}" -S "\\bCLKIN\\b" "${SEARCH_DIRS[@]}" 2>/dev/null || true
+echo "--- rg -n \"\\bCLKIN\\b\" (docs/verilog/rtl/src/openlane, word-boundary) ---"
+if rg -n "${RG_EXCLUDES[@]}" -S "\\bCLKIN\\b" "${SEARCH_DIRS[@]}" 2>/dev/null; then
+  any_hit=1
+fi
+
+echo
+if [[ "$any_hit" -eq 0 ]]; then
+  echo "== Summary: no obvious CLKIN/ADS131 clocking hits found in ${SEARCH_DIRS[*]} (excluding spice/lvs)."
+  echo "           That may mean: clocking is not documented yet OR uses different naming."
+else
+  echo "== Summary: hits found. Review the matches above and extract the concrete pad/net mapping + clock source." 
+fi
 
 echo
 cat <<'EOF'
