@@ -47,8 +47,17 @@ Why we keep it this way:
 - Firmware/DV see *one* stable FIFO + regmap interface, while the underlying data source can be swapped at build time.
 - Harness integration can guard the real ADC GPIO exposure to avoid accidental pad usage.
 
-Deliverable:
-- `make -C verify rtl-compile-check` (or equivalent) passes with and without `USE_REAL_ADC_INGEST`.
+Deliverable (repo-level):
+- In IP repo (`chip-inventory/`):
+  - `bash ops/rtl_compile_check.sh` passes (this compiles both default + `USE_REAL_ADC_INGEST` variants).
+- In harness repo (`home-inventory-chip-openmpw/`):
+  - `make sync-ip-filelist`
+  - `make rtl-compile-check`
+  - `make rtl-compile-check-real-adc`
+
+If any of these fail, treat it as a **tapeout blocker** (port-list drift or filelist drift) and fix before attempting OpenLane/precheck.
+
+See also: `docs/HARNESS_INTEGRATION.md`.
 
 ---
 
