@@ -26,6 +26,10 @@ fi
 cd "$HARNESS_REPO"
 
 echo "== Harness repo: $(pwd)"
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "== Harness git HEAD: $(git rev-parse --short HEAD)"
+  echo "== Harness git status: $(git status -sb | head -n 1)"
+fi
 
 # NOTE: Searching for the bare string "CLKIN" across the harness repo is extremely noisy
 # (it matches many internal cell/net names, especially in LVS spice). Instead, we:
@@ -70,6 +74,9 @@ TERMS=(
 # (The harness repo often contains large LVS spice dumps where CLK* substrings are common.)
 RG_EXCLUDES=(
   "--glob" "!**/*.spice"
+  "--glob" "!**/*.mag"
+  "--glob" "!**/*.gds"
+  "--glob" "!**/*.lef"
   "--glob" "!**/lvs/**"
 )
 
