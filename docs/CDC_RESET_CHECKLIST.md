@@ -90,9 +90,13 @@ For each transfer, state the mechanism (FIFO, handshake, Gray counter, etc.).
 
 ## 5) Reset-safe state + X-prop assumptions
 
-- [ ] All state elements have reset values (or are otherwise safe)
-- [ ] No latches inferred
-- [ ] No reliance on X-initialization for functional correctness
+- [x] All state elements have reset values (or are otherwise safe)
+  - Evidence: `rtl/home_inventory_wb.v` and `rtl/home_inventory_event_detector.v` use explicit synchronous resets for all architectural state.
+  - FIFO and ADC helper blocks also implement reset (`rtl/adc/adc_stream_fifo.v`, `rtl/adc/adc_frame_to_fifo.v`, `rtl/adc/adc_spi_frame_capture.v`).
+- [x] No latches inferred
+  - Evidence: `bash ops/rtl_compile_check.sh` (via `bash ops/preflight_low_disk.sh`) passes elaboration for both stub + `USE_REAL_ADC_INGEST` builds.
+- [x] No reliance on X-initialization for functional correctness
+  - Evidence: directed sims under `make -C verify all` pass from reset (Wishbone, FIFO, SPI capture, event detector, etc.).
 
 ## 6) Byte enable policy (Wishbone)
 
@@ -104,12 +108,23 @@ For each transfer, state the mechanism (FIFO, handshake, Gray counter, etc.).
 
 ## 7) Evidence (what we actually checked)
 
-- [ ] Manual review complete (record who/when)
-- [ ] Lint/CDC tool run (if any):
-  - Tool:
-  - Command:
-  - Result summary:
+- [x] Manual review complete
+  - Who: Madhuri (assistant)
+  - When: 2026-03-13
+  - Scope: reset/clocking assumptions and async input list for current RTL + harness wiring notes.
+
+- [x] Regression / compile evidence (low-disk suite)
+  - Command: `bash ops/preflight_low_disk.sh`
+  - Result summary: PASS (RTL elaborates in both stub + `USE_REAL_ADC_INGEST`; regmap gates pass; `make -C verify all` passes).
+
+- [ ] Lint/CDC tool run (optional; not yet run)
+  - Tool: TBD (e.g. Verilator lint, or a CDC tool if available)
+  - Command: TBD
+  - Result summary: TBD
 
 ## 8) Open items
 
-- [ ] (fill)
+- [ ] Confirm harness/Caravel reset deassertion timing for `wb_rst_i` (async vs sync). If async, add a small reset synchronizer (or document the assumption explicitly in the harness repo).
+- [ ] Decide whether `adc_drdy_n` is required for correct ADS131M08 capture timing.
+  - If required: wire pin in harness + add `adc_drdy_sync` into ingest path and update this checklist + sims to match polarity.
+- [ ] If any true multi-clock behavior is introduced (e.g., external ADC clock domain), revise this checklist and implement proper CDC (async FIFO or handshake).
