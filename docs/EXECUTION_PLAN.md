@@ -27,7 +27,8 @@ Pick *one* of these and land it as a small, reviewable commit:
    - If targeting ChipFoundry/chipIgnite, keep the open questions tracked in: `docs/CHIPFOUNDRY_SUBMISSION_NOTES.md`
    - IP repo: `bash ops/preflight_low_disk.sh` (one-shot low-disk suite)
      - (equivalent to: `bash ops/rtl_compile_check.sh` + `make -C verify all`)
-   - Harness repo: `make sync-ip-filelist` + `make rtl-compile-check`
+   - Cross-repo (preferred): `bash ops/preflight_all_low_disk.sh` (IP preflight + harness compile-check)
+   - Harness repo (manual): `make sync-ip-filelist` + `make rtl-compile-check`
    - Quick harness audit helpers (grep-based, no toolchain):
      - `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
      - `tools/harness_event_detector_audit.sh ../home-inventory-chip-openmpw`
