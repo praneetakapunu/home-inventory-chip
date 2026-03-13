@@ -41,6 +41,17 @@ ip/home-inventory-chip/tools/harness/check_harness_filelist.sh --diff
 
 Why: keeps the *ordering and membership* of RTL sources identical between repos.
 
+Additional guardrail (catches broken paths even if the filelist is “in sync”):
+
+```bash
+# from harness repo root
+ip/home-inventory-chip/tools/harness/audit_harness_filelist.sh
+```
+
+This fails fast on:
+- missing files referenced by the harness filelist
+- absolute paths / `..` traversal
+
 ## C) Wrapper instantiation
 - [ ] `verilog/rtl/user_project_wrapper.v` instantiates the IP top module (currently: `home_inventory_top`)
 - [ ] Wrapper connects only the pins we intend to own (everything else tied off deterministically)
