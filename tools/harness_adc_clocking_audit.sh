@@ -62,12 +62,24 @@ echo "== Search dirs: ${SEARCH_DIRS[*]}"
 
 # Broad terms that are still high-signal.
 TERMS=(
+  # Explicit signal names / part identifiers
   "adc_clkin"
   "ADC_CLKIN"
-  "ads131"
+  "adc-clkin"
   "ADS131"
-  "ads131m08"
+  "ads131"
   "ADS131M08"
+  "ads131m08"
+
+  # Likely clock-source breadcrumbs (even before a pinout is finalized)
+  "oscillator"
+  "OSC"
+  "xtal"
+  "crystal"
+  "CLKOUT"
+  "clkout"
+  "clock out"
+  "clock_out"
 )
 
 # File globs we explicitly exclude to keep this script fast and readable.
@@ -85,11 +97,17 @@ any_hit=0
 for t in "${TERMS[@]}"; do
   echo
   echo "--- rg -n \"$t\" (${SEARCH_DIRS[*]}) ---"
-  if rg -n "${RG_EXCLUDES[@]}" "$t" "${SEARCH_DIRS[@]}" 2>/dev/null; then
+  if rg -n "${RG_EXCLUDES[@]}" -S "$t" "${SEARCH_DIRS[@]}" 2>/dev/null; then
     any_hit=1
   fi
 
 done
+
+echo
+echo "--- Files with any hits (quick index) ---"
+if rg "${RG_EXCLUDES[@]}" -l -S "(adc_clkin|ADC_CLKIN|ADS131|ads131|ADS131M08|ads131m08|\\bCLKIN\\b|oscillator|xtal|crystal|CLKOUT|clkout)" "${SEARCH_DIRS[@]}" 2>/dev/null; then
+  any_hit=1
+fi
 
 echo
 echo "--- rg -n \"\\bCLKIN\\b\" (docs/verilog/rtl/src/openlane, word-boundary) ---"
