@@ -87,6 +87,18 @@ def main() -> int:
         default=7,
         help="In --strict mode, fail if 'Last verified (UTC)' is older than this many days.",
     )
+    ap.add_argument(
+        "--freeze-days",
+        type=int,
+        default=10,
+        help="Days before deadline to target the internal freeze tag milestone.",
+    )
+    ap.add_argument(
+        "--final-integration-days",
+        type=int,
+        default=5,
+        help="Days before deadline to target the internal final-integration milestone.",
+    )
     args = ap.parse_args()
 
     record_path = pathlib.Path(args.record)
@@ -161,8 +173,8 @@ def main() -> int:
     #
     # These are intentionally simple (calendar-day offsets) and exist to reduce
     # hand-calculated drift across docs/.
-    freeze_days = 10
-    final_integration_days = 5
+    freeze_days = int(args.freeze_days)
+    final_integration_days = int(args.final_integration_days)
 
     freeze_dt = deadline - dt.timedelta(days=freeze_days)
     final_integration_dt = deadline - dt.timedelta(days=final_integration_days)
