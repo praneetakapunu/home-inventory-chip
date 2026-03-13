@@ -50,6 +50,21 @@ Record evidence as:
 - **Expected CLKIN frequency:** (Hz)
 - **Expected DRDY rate at v1 defaults:** (Hz)
 
+### Current evidence snapshot (as of harness HEAD 08e3dea)
+Running:
+```bash
+tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
+```
+Found **no explicit CLKIN mapping or frequency** in committed harness RTL/openlane docs; only draft planning notes.
+
+Evidence:
+- Source: `home-inventory-chip-openmpw/docs/source/adc_pinout_plan.md:26` — mentions optional `adc_clkin` only if we decide to drive `CLKIN` from SoC.
+- Source: `home-inventory-chip-openmpw/docs/source/adc_pinout_plan.md:34` — states intent to route/drive `adc_clkin` from a known SoC clock output (not yet specified).
+- Source: `home-inventory-chip-openmpw/docs/source/adc_pinout_plan.md:58` — `io[??]` placeholder for `adc_clkin`.
+- Source: `home-inventory-chip-openmpw/docs/source/adc_pinout_plan.md:62` — notes that if `adc_clkin` is not routed, harness/PCB must provide an oscillator into `CLKIN`.
+
+Implication: we must still lock either Option A (board oscillator) or Option B (SoC clock-out net), plus frequency, with real evidence before tapeout.
+
 ### Low-disk confirmation procedure (repo-local)
 Use this when you *don’t* want to open schematics yet, and just want to find any already-committed assumptions.
 

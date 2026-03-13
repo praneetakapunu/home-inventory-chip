@@ -76,7 +76,10 @@ Pick *one* of these and land it as a small, reviewable commit:
        - Harness: RTL compile-check passes after wiring
 
 ## Blockers (must be explicit)
-- None currently.
+- **ADS131M08 CLKIN source/frequency is not yet locked in the harness repo.**
+  - Harness has only draft notes with `io[??]` and no frequency evidence.
+  - Until we lock either (A) board oscillator → CLKIN, or (B) SoC clock-out → adc_clkin, plus frequency, real ADC bring-up is at risk.
+  - Track decision + evidence: `decisions/011-adc-clkin-source-and-frequency.md`.
 
 ## Notes / setup
 - DV toolchain notes: `docs/SIM_TOOLCHAIN.md`
