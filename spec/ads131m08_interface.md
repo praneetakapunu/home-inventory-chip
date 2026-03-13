@@ -238,8 +238,11 @@ These are not “nice to have” — they impact RTL pin polarity assumptions an
    - Our RTL should treat **assert = low**, but we must confirm that the pad naming and top-level wiring are consistent.
 
 2) **CLKIN source and frequency**
-   - Confirm if the harness provides `CLKIN` to the ADC (and at what frequency).
-   - If not, confirm we are using the ADC internal oscillator and what performance/accuracy tradeoffs are acceptable.
+   - Confirm if the harness provides a **continuous, free-running** `CLKIN` to the ADC (and at what frequency).
+   - **Do not** plan around an “internal oscillator” fallback for ADS131M08 v1.
+     If `CLKIN` is not routed/provided, treat it as a **hard tapeout blocker** and track it via:
+     - `decisions/011-adc-clkin-source-and-frequency.md`
+     - `docs/ADC_CLOCKING_PLAN.md`
    - Use the harness audit helper and update the harness docs once confirmed:
      - `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
 
