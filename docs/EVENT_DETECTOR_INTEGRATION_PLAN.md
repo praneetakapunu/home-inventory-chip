@@ -23,7 +23,11 @@ This plan is intentionally specific enough that wiring can be landed as a small,
   - `EVT_CFG.CLEAR_HISTORY` (W1P, bit 9)
   - `EVT_THRESH_CH0..7` (RW)
 
-So: *firmware-visible contract is already in place*; the missing piece is wiring the detector to the real ADC stream.
+So: *firmware-visible contract is already in place*.
+
+Update (current RTL): `rtl/home_inventory_wb.v` already supports wiring the event detector to the real ADC stream **behind** `USE_REAL_ADC_INGEST` by consuming `adc_streaming_ingest.tap_valid/tap_words_packed`.
+
+The remaining work is primarily harness-side (exposing ADC pins + enabling the build flag) and DV coverage for the real-ingest path.
 
 ## Integration targets
 
@@ -117,8 +121,9 @@ Short-term (v1): keep event detector instantiated inside `home_inventory_wb.v`.
   - `evt_ts_now = r_time_now`
 
 **Change needed (v1 integration target):**
-1) Replace the stub `evt_sample_valid` and `evt_sample_ch*` with real ADC frame samples.
+1) Ensure the harness enables `USE_REAL_ADC_INGEST` and connects ADC SPI pins.
 2) Keep `evt_ts_now = r_time_now` (Wishbone-domain monotonic timestamp) for v1.
+3) (Optional) keep SIM override hooks for directed DV.
 
 ### Mechanical wiring checklist (for the eventual RTL change)
 

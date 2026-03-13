@@ -36,17 +36,14 @@ Event detector sample updates occur on **ADC SNAPSHOT**:
 
 This provides a stable debug surface.
 
-### v1 real mode (planned)
-When the real ADS131M08 streaming path lands, the event detector should consume **the same sample words that feed the FIFO**:
-- one `sample_valid` per captured conversion frame
-- `sample_ch0..7` = signed 32-bit channel samples (post sign-extension)
-- `ts_now` sampled on the same beat as `sample_valid`
+### v1 real mode (implemented behind `USE_REAL_ADC_INGEST`)
+When `USE_REAL_ADC_INGEST` is enabled, `rtl/home_inventory_wb.v` drives the event detector from the **same captured frame tap** that mirrors into `ADC_RAW_CHx`:
+- `sample_valid` = `adc_streaming_ingest.tap_valid` (= `frame_valid`), a 1-cycle pulse **after the full SPI frame has been captured**
+- `sample_ch0..7` = `tap_words_packed[word1..word8]` (STATUS is word0)
+- channel words are **sign-extended** from `BITS_PER_WORD` to 32-bit in `adc_streaming_ingest` (STATUS word is left as-is)
 
-Open question (to lock when wiring): whether `sample_valid` should assert:
-- at *start* of SPI capture (DRDY edge), or
-- at *end* of SPI capture (after all channel words are captured)
-
-Either is acceptable; just be consistent and document it in this file when implemented.
+So for v1 we are locking the timing choice as:
+- `sample_valid` asserts at *end* of capture (capture-done), not on the DRDY edge.
 
 ## Register exposure (current)
 See `spec/regmap.md` / `spec/regmap_v1.yaml` for exact addresses.
