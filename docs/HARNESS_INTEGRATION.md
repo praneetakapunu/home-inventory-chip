@@ -95,8 +95,11 @@ Fast sanity checks:
 - IP repo already compiles both configurations via: `bash ops/rtl_compile_check.sh`
 - Harness repo supports a matching compile-check with the define enabled:
   - `make rtl-compile-check-real-adc`
-- Low-disk grep audit to confirm pin exposure + io[*] mapping intent:
-  - `../chip-inventory/tools/harness_adc_pinout_audit.sh .`
+- Low-disk grep audits (no toolchain):
+  - Pin exposure + io[*] mapping intent:
+    - `../chip-inventory/tools/harness_adc_pinout_audit.sh .`
+  - Streaming/real-ingest wiring surfaces (make target + define + adc_* ports):
+    - `../chip-inventory/tools/harness_adc_streaming_audit.sh .`
 
 This catches wrapper/port-list drift early, without running any DV.
 
