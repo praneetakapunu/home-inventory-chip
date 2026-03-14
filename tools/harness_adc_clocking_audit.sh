@@ -116,6 +116,15 @@ if rg -n "${RG_EXCLUDES[@]}" -S "\\bCLKIN\\b" "${SEARCH_DIRS[@]}" 2>/dev/null; t
 fi
 
 echo
+echo "--- rg -n frequency clues near CLKIN/adc_clkin (tries to find explicit MHz/kHz/Hz) ---"
+# This is intentionally heuristic: we're looking for any doc/RTL notes that mention a
+# clock net alongside an explicit frequency. This helps turn the 'CLKIN unknown' blocker
+# into concrete evidence quickly.
+if rg -n "${RG_EXCLUDES[@]}" -S -i "(adc[_-]?clkin|\\bCLKIN\\b)[^\n]{0,120}([0-9]+\\s*(mhz|khz|hz))" "${SEARCH_DIRS[@]}" 2>/dev/null; then
+  any_hit=1
+fi
+
+echo
 if [[ "$any_hit" -eq 0 ]]; then
   echo "== Summary: no obvious CLKIN/ADS131 clocking hits found in ${SEARCH_DIRS[*]} (excluding spice/lvs)."
   echo "           That may mean: clocking is not documented yet OR uses different naming."
