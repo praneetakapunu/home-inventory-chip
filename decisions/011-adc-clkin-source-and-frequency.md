@@ -50,6 +50,26 @@ Record evidence as:
 - **Expected CLKIN frequency:** (Hz)
 - **Expected DRDY rate at v1 defaults:** (Hz)
 
+### What “Accepted” should look like in the harness repo (practical)
+To avoid endless ambiguity, we want the harness repo to contain **at least one** of the following “hard” artifacts (in addition to any narrative docs):
+
+**If Option A (oscillator):**
+- A committed doc that names the oscillator **part number** and **frequency**, and shows it routes to ADS131M08 `CLKIN`.
+  - Example evidence locations:
+    - `docs/source/*` (pinout / schematic notes)
+    - a BOM file if present
+- Ideally: a schematic snippet or net name where the clock net is explicitly labeled (e.g. `ADC_CLKIN`).
+
+**If Option B (SoC clock-out):**
+- A committed pinout assignment showing the exact pad/index, e.g. `io[17] -> adc_clkin -> ADS131M08 CLKIN`.
+  - Example evidence locations:
+    - `docs/source/pinout.md` or `docs/source/adc_pinout_plan.md`
+    - a top-level wrapper port in `verilog/rtl/*` exposing `adc_clkin`
+    - any OpenLane constraint/pin-order file that carries the signal name
+- A committed note (or code comment) that specifies the clock **source** (which SoC clock net) and the **nominal frequency**.
+
+If the harness repo still contains `io[??]` placeholders, or talks about `adc_clkin` only as a future idea, then this decision remains **Proposed** and must stay listed as a tapeout blocker.
+
 ### Current evidence snapshot (as of harness HEAD 08e3dea)
 Running:
 ```bash
