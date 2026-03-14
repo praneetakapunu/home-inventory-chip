@@ -14,6 +14,7 @@ Why this file exists:
 - **Program / foundry / PDK:** ChipFoundry / chipIgnite reservations (PDK not stated on schedule page)
 - **Shuttle name/number:** CI2605 (May MPW Shuttle)
 - **Submission cutoff:** Commitment Date: 2026-03-18 (date-only on source; internal safe deadline is earlier)
+- **Tapeout date (official, if published):** Tapeout Date: 2026-05-13 (per schedule)
 - **Precheck deadline (if different):** Not specified (ChipFoundry flow; see notes)
 - **Expected silicon delivery window:** Delivery Date: 2026-10-28 (per schedule)
 - **Source link (official schedule / announcement):** https://chipfoundry.io/#schedule
@@ -29,6 +30,12 @@ Submission cutoff (ChipFoundry commitment date):
   official date: 2026-03-18
   official time: not specified (date-only on source)
   official timezone: not specified (source does not state TZ)
+  official utc: not specified
+
+Official tapeout date (if published):
+  official date: 2026-05-13
+  official time: not specified
+  official timezone: not specified
   official utc: not specified
 
 Internal safe deadline (assume safest):
