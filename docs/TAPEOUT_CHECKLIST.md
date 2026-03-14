@@ -20,6 +20,7 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
     - [ ] `rtl/include/home_inventory_regmap_pkg.sv`
     - [ ] `rtl/include/regmap_params.vh`
   - [ ] Consistency gates green:
+    - [ ] `bash ops/regmap_check.sh`
     - [ ] `make -C verify regmap-check`
     - [ ] `make -C verify regmap-gen-check`
 
@@ -27,6 +28,7 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 - [ ] Canonical RTL filelist exists and is used by CI
 - [ ] Low-disk "sanity" suite is green (should run even when OpenLane is blocked by disk):
   - [ ] `bash ops/preflight_low_disk.sh` (IP repo)
+  - [ ] `bash ops/preflight_all_low_disk.sh` (IP repo; includes cross-repo harness audits)
 - [ ] `iverilog` (or equivalent) compile check is green for:
   - [ ] chip-inventory IP (`rtl/`) — `bash ops/rtl_compile_check.sh`
   - [ ] harness integration repo (Caravel user project)
