@@ -6,7 +6,7 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 **OpenMPW tapeout path lock → harness/repo integration → RTL baseline**
 
 Runway note:
-- `python3 ops/shuttle_runway.py` currently reports **~1.1 weeks** to the internal safe deadline in `docs/SHUTTLE_LOCK_RECORD.md`.
+- `python3 ops/shuttle_runway.py` currently reports **~0.4 weeks** to the internal safe deadline in `docs/SHUTTLE_LOCK_RECORD.md`.
 - Treat this as **scope-freeze time**: only land changes that reduce risk or are directly required for tapeout.
 
 ## Next 2 hours (progress-tick target)
