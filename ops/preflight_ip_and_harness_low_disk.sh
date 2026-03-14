@@ -73,6 +73,13 @@ say "[preflight] (2/2) home-inventory-chip-openmpw: sync filelist + verify drift
   else
     say "[preflight] NOTE: no 'rtl-compile-check-real-adc' target in harness; skipping (OK for early integration)."
   fi
+
+  # Grep-based audits (no toolchain): catch integration drift early even on low-disk setups.
+  say "[preflight] Harness repo: grep-based audits (no toolchain)"
+  bash "${ROOT_DIR}/tools/harness_adc_clocking_audit.sh" .
+  bash "${ROOT_DIR}/tools/harness_adc_pinout_audit.sh" .
+  bash "${ROOT_DIR}/tools/harness_adc_streaming_audit.sh" .
+  bash "${ROOT_DIR}/tools/harness_event_detector_audit.sh" .
 )
 
 say "[preflight] OK: IP + harness low-disk readiness checks passed."

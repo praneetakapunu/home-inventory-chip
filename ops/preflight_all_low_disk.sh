@@ -39,4 +39,12 @@ banner "Harness repo: sync IP filelist + RTL compile-check"
   make rtl-compile-check
 )
 
+banner "Harness repo: lightweight grep-based audits (no toolchain)"
+# These are intentionally grep-based so they still work on low-disk / minimal setups.
+# They help catch integration drift early (pin names, clocking assumptions, wiring stubs).
+bash tools/harness_adc_clocking_audit.sh "$HARNESS_DIR"
+bash tools/harness_adc_pinout_audit.sh "$HARNESS_DIR"
+bash tools/harness_adc_streaming_audit.sh "$HARNESS_DIR"
+bash tools/harness_event_detector_audit.sh "$HARNESS_DIR"
+
 banner "DONE: cross-repo low-disk preflight checks passed"
