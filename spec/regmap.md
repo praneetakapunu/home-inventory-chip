@@ -6,6 +6,8 @@ Source-of-truth (machine-readable): `spec/regmap_v1.yaml`
 
 Auto-generated table view (keep in sync via `bash ops/regmap_update.sh`): `spec/regmap_v1_table.md`
 
+Auto-generated firmware header (keep in sync via `python3 tools/regmap/gen_c_header.py --in spec/regmap_v1.yaml --out spec/regmap_v1.h`): `spec/regmap_v1.h`
+
 Workflow notes (how to edit/regenerate/check): `docs/REGMAP_WORKFLOW.md`
 
 - Bus: **Wishbone slave**, 32-bit data.
