@@ -67,6 +67,26 @@ for t in "${TERMS[@]}"; do
 done
 
 echo
+echo "== Summary: io[*] indices mentioned on lines with adc_* nets =="
+# This is a best-effort heuristic. If the harness uses named nets/pads instead of io[*]
+# indices, this section may be empty (which is still useful signal).
+rg -n "${RG_EXCLUDES[@]}" \
+  "adc_(sclk|cs_n|mosi|miso|drdy(_n)?|rst_n|clkin)" \
+  "${SEARCH_DIRS[@]}" 2>/dev/null \
+  | rg -o "io\[[0-9]+\]" \
+  | sort -u \
+  | sed 's/^/ - /' \
+  || true
+
+echo
+echo "== Summary: candidate ADC nets found in verilog port lists =="
+rg -n "${RG_EXCLUDES[@]}" \
+  "(input|output|inout)[[:space:]]+.*adc_(sclk|cs_n|mosi|miso|drdy(_n)?|rst_n|clkin)" \
+  verilog 2>/dev/null \
+  | head -n 40 \
+  || true
+
+echo
 cat <<'EOF'
 
 What to conclude from the output:
