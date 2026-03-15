@@ -42,6 +42,10 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 - [ ] User project wrapper wires the IP cleanly
 - [ ] Clock/reset strategy documented (which clock, reset polarity, synchronizers)
 - [ ] ADC pinout + clocking are explicitly confirmed (no guessing)
+  - [ ] **Decision 011 accepted** with evidence: `decisions/011-adc-clkin-source-and-frequency.md`
+    - [ ] Locked: CLKIN route (oscillator vs SoC clock-out)
+    - [ ] Locked: nominal CLKIN frequency (Hz)
+    - [ ] Evidence points to committed harness source lines (`<path>:<line>`)
   - [ ] Run low-disk audits from IP repo:
     - [ ] `tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw`
     - [ ] `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
