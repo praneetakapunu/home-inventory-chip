@@ -4,7 +4,8 @@
 //
 // Demonstrates:
 // - clearing FIFO overrun (W1C)
-// - issuing ADC_CMD.SNAPSHOT
+// - triggering a capture (ADC_CMD.SNAPSHOT for stub builds, or CTRL.START for real ingest)
+// - waiting for CAPTURE_BUSY (when applicable)
 // - draining ADC_FIFO_DATA until ADC_FIFO_STATUS.LEVEL_WORDS==0
 //
 // This file is intentionally SDK-agnostic; you must provide the correct base
@@ -44,27 +45,32 @@ static inline void homeinv_write(uint32_t off, uint32_t v) {
 // -----------------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------------
-// ADC_FIFO_STATUS layout (from regmap):
-// - LEVEL_WORDS: [15:0]
-// - OVERRUN:     [16] (sticky, W1C)
 static inline uint16_t adc_fifo_level_words(uint32_t st) {
-    return (uint16_t)(st & 0xFFFFu);
+    return (uint16_t)((st & HOMEINV_ADC_FIFO_STATUS_LEVEL_WORDS_MASK) >> HOMEINV_ADC_FIFO_STATUS_LEVEL_WORDS_SHIFT);
 }
 
 static inline uint8_t adc_fifo_overrun(uint32_t st) {
-    return (uint8_t)((st >> 16) & 0x1u);
+    return (uint8_t)((st & HOMEINV_ADC_FIFO_STATUS_OVERRUN_MASK) ? 1u : 0u);
 }
 
-// Clear the OVERRUN sticky flag (write-1-to-clear bit[16]).
-// NOTE: Bit[16] is in byte lane 2; the RTL respects byte enables. Most FW
-// MMIO writes are full-word, so this is fine.
+static inline uint8_t adc_fifo_capture_busy(uint32_t st) {
+    return (uint8_t)((st & HOMEINV_ADC_FIFO_STATUS_CAPTURE_BUSY_MASK) ? 1u : 0u);
+}
+
+// Clear the OVERRUN sticky flag (write-1-to-clear OVERRUN).
 static inline void adc_fifo_clear_overrun(void) {
-    homeinv_write(HOMEINV_REG_ADC_FIFO_STATUS, (1u << 16));
+    homeinv_write(HOMEINV_REG_ADC_FIFO_STATUS, HOMEINV_ADC_FIFO_STATUS_OVERRUN_MASK);
 }
 
-// Trigger a stub "snapshot" (or later, a real capture) via write-1-to-pulse.
+// Trigger a stub "snapshot" capture via write-1-to-pulse.
 static inline void adc_snapshot(void) {
     homeinv_write(HOMEINV_REG_ADC_CMD, HOMEINV_ADC_CMD_SNAPSHOT_MASK);
+}
+
+// Trigger a real ADC ingest capture (USE_REAL_ADC_INGEST build) via CTRL.START (W1P).
+static inline void adc_start_capture(void) {
+    // START is W1P; don't RMW CTRL (reserved bits may exist). Just write the pulse bit.
+    homeinv_write(HOMEINV_REG_CTRL, HOMEINV_CTRL_START_MASK);
 }
 
 // Drain FIFO into a caller-provided buffer.
@@ -77,10 +83,30 @@ static size_t adc_fifo_drain(uint32_t *out_words, size_t max_words) {
         uint16_t level = adc_fifo_level_words(st);
         if (level == 0) break;
 
+        // Reading ADC_FIFO_DATA pops one word when the FIFO is non-empty.
         out_words[n++] = homeinv_read(HOMEINV_REG_ADC_FIFO_DATA);
     }
 
     return n;
+}
+
+// Wait (with a bounded spin) for CAPTURE_BUSY to assert at least once and then deassert.
+// This helps firmware avoid racing on slow SPI capture.
+static int adc_wait_capture_done(uint32_t timeout_iters) {
+    uint32_t i;
+    uint8_t saw_busy = 0u;
+
+    for (i = 0; i < timeout_iters; i++) {
+        uint32_t st = homeinv_read(HOMEINV_REG_ADC_FIFO_STATUS);
+        if (adc_fifo_capture_busy(st)) {
+            saw_busy = 1u;
+        } else if (saw_busy) {
+            // We saw busy high before, and now it's low.
+            return 0;
+        }
+    }
+
+    return -1;
 }
 
 // -----------------------------------------------------------------------------
@@ -90,6 +116,7 @@ static size_t adc_fifo_drain(uint32_t *out_words, size_t max_words) {
 // (This file intentionally does not include any print routines.)
 void homeinv_example_adc_fifo_dump(void) {
     // 1) Optional: enable chip block (CTRL.ENABLE)
+    // ENABLE is a normal R/W bit.
     uint32_t ctrl = homeinv_read(HOMEINV_REG_CTRL);
     ctrl |= HOMEINV_CTRL_ENABLE_MASK;
     homeinv_write(HOMEINV_REG_CTRL, ctrl);
@@ -99,9 +126,18 @@ void homeinv_example_adc_fifo_dump(void) {
         adc_fifo_clear_overrun();
     }
 
-    // 3) Trigger a snapshot. In the current RTL stub, this pushes 9 words:
-    //    STATUS_WORD + CH0..CH7.
+    // 3) Trigger a capture.
+    // - Stub path: ADC_CMD.SNAPSHOT pushes 9 words (STATUS + CH0..CH7) via RTL helper.
+    // - Real ingest path: CTRL.START kicks off SPI capture, which will push 9 words.
+#ifdef USE_REAL_ADC_INGEST
+    adc_start_capture();
+
+    // Wait for capture to complete. If this times out on real silicon,
+    // investigate SPI wiring/clocking or decrease the timeout for your CPU speed.
+    (void)adc_wait_capture_done(200000u);
+#else
     adc_snapshot();
+#endif
 
     // 4) Drain FIFO (caller can decode frames; see fw/tools/decode_adc_fifo.py)
     uint32_t words[64];

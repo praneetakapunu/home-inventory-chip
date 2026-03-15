@@ -14,7 +14,10 @@ They are intentionally minimal and avoid depending on a particular SDK.
 
 - `homeinv_adc_fifo_dump.c`: demonstrates how to:
   - clear FIFO overrun (W1C)
-  - trigger a `SNAPSHOT`
+  - trigger a capture:
+    - `ADC_CMD.SNAPSHOT` in stub builds
+    - `CTRL.START` when the RTL is built with `USE_REAL_ADC_INGEST`
+  - (optionally) wait for `ADC_FIFO_STATUS.CAPTURE_BUSY` to complete
   - drain the ADC FIFO as 32-bit words
 
 - `homeinv_event_detector_smoke.c`: demonstrates how to:
