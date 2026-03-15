@@ -18,9 +18,20 @@ Goal: keep the RTL/spec **register map** usable from C early, even before full f
 - Human-readable spec: `../spec/regmap.md`
 - Machine-readable: `../spec/regmap_v1.yaml`
 
-## How to regenerate the header
+## How to regenerate the regmap artifacts
+
+`spec/regmap_v1.yaml` is the single source of truth.
+
+To regenerate *all* derived artifacts (C header, SV package, markdown table, etc.):
 
 ```bash
-python3 ../ops/regmap_validate.py --yaml ../spec/regmap_v1.yaml
-python3 ../ops/gen_regmap_header.py --yaml ../spec/regmap_v1.yaml --out include/home_inventory_regmap.h
+cd ..
+bash ops/regmap_update.sh
+```
+
+To verify nothing drifted (what CI runs):
+
+```bash
+cd ..
+bash ops/regmap_check.sh
 ```

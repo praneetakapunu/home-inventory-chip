@@ -62,6 +62,25 @@ def _to_i32(u: int) -> int:
     return u - 0x1_0000_0000 if (u & 0x8000_0000) else u
 
 
+def _signext_ok(u: int, *, bits: int) -> bool:
+    """Return True if u32 looks like a sign-extended `bits`-wide sample.
+
+    Example: bits=24 expects u[31:24] to be all 0s for positive samples and all 1s
+    for negative samples.
+    """
+
+    if bits <= 0 or bits > 32:
+        raise ValueError("bits must be in [1, 32]")
+    if bits == 32:
+        return True
+
+    u &= 0xFFFF_FFFF
+    sign = (u >> (bits - 1)) & 1
+    upper_mask = (0xFFFF_FFFF << bits) & 0xFFFF_FFFF
+    expect = upper_mask if sign else 0
+    return (u & upper_mask) == expect
+
+
 def _read_words(lines: Iterable[str]) -> List[int]:
     words: List[int] = []
     for ln, raw in enumerate(lines, 1):
@@ -127,6 +146,22 @@ def main(argv: List[str]) -> int:
         help="Limit output to first N frames",
     )
     ap.add_argument(
+        "--bits-per-sample",
+        type=int,
+        default=24,
+        help="Expected ADC sample width for sign-extension checks (default: 24)",
+    )
+    ap.add_argument(
+        "--no-check-signext",
+        action="store_true",
+        help="Disable sign-extension sanity check for channel words",
+    )
+    ap.add_argument(
+        "--csv",
+        action="store_true",
+        help="Output one CSV row per frame (good for quick plotting)",
+    )
+    ap.add_argument(
         "--show-unsigned",
         action="store_true",
         help="Also print channel words as unsigned u32",
@@ -165,16 +200,50 @@ def main(argv: List[str]) -> int:
         print("no complete frames found", file=sys.stderr)
         return 2
 
-    for fr in frames:
-        print(f"frame {fr.idx}:")
-        print(f"  status: 0x{fr.status_u32:08X}")
-        for ch, u in enumerate(fr.ch_u32):
-            i = _to_i32(u)
+    bad_signext = 0
+
+    if args.csv:
+        # CSV header
+        cols = ["frame", "status_hex"] + [f"ch{i}_i32" for i in range(8)]
+        if args.show_unsigned:
+            cols += [f"ch{i}_u32_hex" for i in range(8)]
+        print(",".join(cols))
+
+        for fr in frames:
+            ch_i32 = [_to_i32(u) for u in fr.ch_u32]
+            if not args.no_check_signext:
+                for u in fr.ch_u32:
+                    if not _signext_ok(u, bits=args.bits_per_sample):
+                        bad_signext += 1
+
+            row = [str(fr.idx), f"0x{fr.status_u32:08X}"] + [str(x) for x in ch_i32]
             if args.show_unsigned:
-                print(f"  ch{ch}: i32={i:11d}  u32=0x{u:08X}")
-            else:
-                print(f"  ch{ch}: i32={i:11d}  (0x{u:08X})")
-        print("")
+                row += [f"0x{u:08X}" for u in fr.ch_u32]
+            print(",".join(row))
+
+    else:
+        for fr in frames:
+            print(f"frame {fr.idx}:")
+            print(f"  status: 0x{fr.status_u32:08X}")
+            for ch, u in enumerate(fr.ch_u32):
+                i = _to_i32(u)
+                if not args.no_check_signext and not _signext_ok(u, bits=args.bits_per_sample):
+                    bad_signext += 1
+                    signext_note = f"  [warn: not sign-extended {args.bits_per_sample}-bit]"
+                else:
+                    signext_note = ""
+
+                if args.show_unsigned:
+                    print(f"  ch{ch}: i32={i:11d}  u32=0x{u:08X}{signext_note}")
+                else:
+                    print(f"  ch{ch}: i32={i:11d}  (0x{u:08X}){signext_note}")
+            print("")
+
+    if (not args.no_check_signext) and bad_signext:
+        print(
+            f"[warn] {bad_signext} channel word(s) did not look like sign-extended {args.bits_per_sample}-bit samples",
+            file=sys.stderr,
+        )
 
     return 0
 
