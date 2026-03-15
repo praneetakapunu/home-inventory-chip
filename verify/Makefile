@@ -252,6 +252,7 @@ $(REAL_ADC_OUT): $(REAL_ADC_TB) \
 	$(RTL_DIR)/home_inventory_event_detector.v \
 	$(RTL_DIR)/adc/adc_streaming_ingest.v \
 	$(RTL_DIR)/adc/adc_spi_frame_capture.v \
+	$(RTL_DIR)/adc/adc_soc_frame_unpack.v \
 	$(RTL_DIR)/adc/adc_frame_to_fifo.v \
 	$(RTL_DIR)/adc/adc_stream_fifo.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -DUSE_REAL_ADC_INGEST -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
@@ -296,6 +297,7 @@ $(WB_REAL_ADC_SMOKE_OUT): $(WB_REAL_ADC_SMOKE_TB) \
 	$(RTL_DIR)/home_inventory_event_detector.v \
 	$(RTL_DIR)/adc/adc_streaming_ingest.v \
 	$(RTL_DIR)/adc/adc_spi_frame_capture.v \
+	$(RTL_DIR)/adc/adc_soc_frame_unpack.v \
 	$(RTL_DIR)/adc/adc_frame_to_fifo.v \
 	$(RTL_DIR)/adc/adc_stream_fifo.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -DUSE_REAL_ADC_INGEST -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^

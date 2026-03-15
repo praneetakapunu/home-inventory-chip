@@ -268,16 +268,44 @@ wire adc_capture_busy;
 
 `ifdef USE_REAL_ADC_INGEST
     // Real ingest: drive the event detector from the captured frame tap.
-    // tap_words_packed layout: word0=STATUS, word1=CH0, ..., word8=CH7
+    // tap_words_packed layout: word0=STATUS, word1=CH0, ..., word8=CH7.
+    //
+    // Use the shared unpack helper so we don't duplicate slice math across the design.
+    wire [31:0] adc_tap_status_word;
+    wire [31:0] adc_tap_ch0;
+    wire [31:0] adc_tap_ch1;
+    wire [31:0] adc_tap_ch2;
+    wire [31:0] adc_tap_ch3;
+    wire [31:0] adc_tap_ch4;
+    wire [31:0] adc_tap_ch5;
+    wire [31:0] adc_tap_ch6;
+    wire [31:0] adc_tap_ch7;
+
+    adc_soc_frame_unpack #(
+        .BITS_PER_WORD(32),
+        .WORDS_PER_FRAME(9)
+    ) u_adc_tap_unpack (
+        .frame_words_packed(adc_tap_words_packed),
+        .status_word(adc_tap_status_word),
+        .ch0(adc_tap_ch0),
+        .ch1(adc_tap_ch1),
+        .ch2(adc_tap_ch2),
+        .ch3(adc_tap_ch3),
+        .ch4(adc_tap_ch4),
+        .ch5(adc_tap_ch5),
+        .ch6(adc_tap_ch6),
+        .ch7(adc_tap_ch7)
+    );
+
     wire        evt_sample_valid_stub = adc_tap_valid;
-    wire [31:0] evt_sample_ch0_stub   = adc_tap_words_packed[32*1 +: 32];
-    wire [31:0] evt_sample_ch1_stub   = adc_tap_words_packed[32*2 +: 32];
-    wire [31:0] evt_sample_ch2_stub   = adc_tap_words_packed[32*3 +: 32];
-    wire [31:0] evt_sample_ch3_stub   = adc_tap_words_packed[32*4 +: 32];
-    wire [31:0] evt_sample_ch4_stub   = adc_tap_words_packed[32*5 +: 32];
-    wire [31:0] evt_sample_ch5_stub   = adc_tap_words_packed[32*6 +: 32];
-    wire [31:0] evt_sample_ch6_stub   = adc_tap_words_packed[32*7 +: 32];
-    wire [31:0] evt_sample_ch7_stub   = adc_tap_words_packed[32*8 +: 32];
+    wire [31:0] evt_sample_ch0_stub   = adc_tap_ch0;
+    wire [31:0] evt_sample_ch1_stub   = adc_tap_ch1;
+    wire [31:0] evt_sample_ch2_stub   = adc_tap_ch2;
+    wire [31:0] evt_sample_ch3_stub   = adc_tap_ch3;
+    wire [31:0] evt_sample_ch4_stub   = adc_tap_ch4;
+    wire [31:0] evt_sample_ch5_stub   = adc_tap_ch5;
+    wire [31:0] evt_sample_ch6_stub   = adc_tap_ch6;
+    wire [31:0] evt_sample_ch7_stub   = adc_tap_ch7;
 `else
     // Stub SNAPSHOT path: deterministic ramp pattern.
     wire        evt_sample_valid_stub = adc_snapshot_fire;
@@ -667,14 +695,14 @@ wire adc_capture_busy;
             // tap_words_packed layout: word0=STATUS, word1=CH0, ..., word8=CH7.
             if (adc_tap_valid) begin
                 r_adc_snapshot_count <= r_adc_snapshot_count + 32'h1;
-                r_adc_raw[0] <= adc_tap_words_packed[32*1 +: 32];
-                r_adc_raw[1] <= adc_tap_words_packed[32*2 +: 32];
-                r_adc_raw[2] <= adc_tap_words_packed[32*3 +: 32];
-                r_adc_raw[3] <= adc_tap_words_packed[32*4 +: 32];
-                r_adc_raw[4] <= adc_tap_words_packed[32*5 +: 32];
-                r_adc_raw[5] <= adc_tap_words_packed[32*6 +: 32];
-                r_adc_raw[6] <= adc_tap_words_packed[32*7 +: 32];
-                r_adc_raw[7] <= adc_tap_words_packed[32*8 +: 32];
+                r_adc_raw[0] <= adc_tap_ch0;
+                r_adc_raw[1] <= adc_tap_ch1;
+                r_adc_raw[2] <= adc_tap_ch2;
+                r_adc_raw[3] <= adc_tap_ch3;
+                r_adc_raw[4] <= adc_tap_ch4;
+                r_adc_raw[5] <= adc_tap_ch5;
+                r_adc_raw[6] <= adc_tap_ch6;
+                r_adc_raw[7] <= adc_tap_ch7;
             end
 `else
             // Stub mode: on SNAPSHOT pulse, update regs so firmware can observe
