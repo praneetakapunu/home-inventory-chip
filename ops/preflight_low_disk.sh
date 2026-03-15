@@ -60,6 +60,11 @@ banner "Shuttle lock record (informational)"
 # shuttle is chosen, but it provides a clear log line in CI and local runs.
 bash ops/check_shuttle_lock_record.sh
 
+banner "Shuttle runway metrics (informational)"
+# Print runway numbers derived from docs/SHUTTLE_LOCK_RECORD.md.
+# Non-strict by default so it won't block work before the shuttle is confirmed.
+python3 ops/shuttle_runway.py || true
+
 banner "Regmap generation drift check"
 # Ensure committed derived artifacts match spec/regmap_v1.yaml.
 bash ops/regmap_check.sh
