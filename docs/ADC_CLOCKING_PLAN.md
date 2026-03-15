@@ -137,38 +137,25 @@ When confirmed, fill in the **Decision record** below with:
   - Is there a stable SoC clock that can be routed out?
 
 ### Last harness repo audit (evidence snapshot)
-**Audit date:** 2026-03-09 (UTC)
+**Audit date:** 2026-03-15 (UTC)
 
-As of this audit, the harness repo contains **only** a placeholder mention that we *might* add `adc_clkin` if we decide to drive ADS131M08 `CLKIN` from the SoC; there is **no locked routing/net/pad assignment** yet.
+As of this audit, the harness repo still has **no locked CLKIN routing/net/pad assignment** *and* **no committed frequency**. However, it now includes a dedicated “harness contract” doc that makes the decision tracking explicit (still **TBD**).
 
 **Evidence (harness repo):**
+- `docs/source/adc_clocking_plan.md`:
+  - explicitly defines allowed v1 options (A: board oscillator into `CLKIN`, B: SoC-driven `adc_clkin`)
+  - defines what “confirmed” means (evidence checklist)
+  - status remains `Decision: TBD` / `Expected CLKIN frequency (Hz): TBD`
 - `docs/source/adc_pinout_plan.md`:
-  - mentions optional `adc_clkin` (“if we decide to drive CLKIN from SoC”)
-  - explicitly calls out the open question: “will the board provide `CLKIN`, or do we need to synthesize/route one from Caravel?”
-- `docs/source/pinout.md`: mentions eventual need for external ADS131M08 GPIO routing (SPI + DRDY + reset)
-- `verilog/rtl/home_inventory_user_project.v`: contains a comment stub for the external ADS131M08 interface
+  - `adc_clkin` still listed as `io[??]` *(optional)*
+- `docs/source/pinout.md`: repeats that ADS131M08 `CLKIN` is required for real conversions.
 
 Run (from the IP repo root):
 ```bash
 tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
 ```
 
-**Observed output (2026-03-09, abridged):**
-```text
---- rg -n "adc_clkin" (docs verilog) ---
-docs/source/adc_pinout_plan.md:26:- `adc_clkin` (if we decide to drive CLKIN from SoC)
-
---- rg -n "ADC_CLKIN" (docs verilog) ---
-(no matches)
-
---- rg -n "ADS131" (docs verilog) ---
-docs/source/pinout.md:27:However, v1 will eventually need GPIO routing for the external ADS131M08 ADC (SPI + DRDY + reset).
-docs/source/adc_pinout_plan.md:1:# ADC (ADS131M08) GPIO Pinout Plan — v1 (DRAFT)
-verilog/rtl/home_inventory_user_project.v:67:    // external ADS131M08 interface.
-
---- rg -n "\\bCLKIN\\b" (docs/verilog, word-boundary) ---
-docs/source/adc_pinout_plan.md:60:- Clocking plan: will the board provide `CLKIN`, or do we need to synthesize/route one from Caravel?
-```
+Note: Update `decisions/011-adc-clkin-source-and-frequency.md` whenever the harness repo changes, so the blocker remains evidence-based.
 
 ## Decision record (to fill)
 When decided, add a short entry here and link the decision in `decisions/`.
