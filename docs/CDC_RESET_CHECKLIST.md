@@ -117,10 +117,15 @@ For each transfer, state the mechanism (FIFO, handshake, Gray counter, etc.).
   - Command: `bash ops/preflight_low_disk.sh`
   - Result summary: PASS (RTL elaborates in both stub + `USE_REAL_ADC_INGEST`; regmap gates pass; `make -C verify all` passes).
 
-- [ ] Lint/CDC tool run (optional; not yet run)
-  - Tool: TBD (e.g. Verilator lint, or a CDC tool if available)
-  - Command: TBD
-  - Result summary: TBD
+- [x] "Lint" evidence (tool-light, low-disk)
+  - Tool: Icarus Verilog warnings (`iverilog -Wall`)
+  - Command: `bash ops/rtl_compile_check.sh` (invoked by `bash ops/preflight_low_disk.sh`)
+  - Result summary: PASS (no compile/elaboration errors; warnings reviewed as part of this suite)
+
+- [ ] Dedicated CDC tool run (optional; not available on this host yet)
+  - Tool: (e.g. Verilator lint/CDC, commercial CDC)
+  - Command: (TBD)
+  - Result summary: (TBD)
 
 ## 8) Open items
 
