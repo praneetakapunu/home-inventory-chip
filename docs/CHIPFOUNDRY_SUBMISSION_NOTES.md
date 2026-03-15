@@ -14,6 +14,38 @@ Why this exists:
 ## Inputs we must obtain (hard blockers for final submission)
 Request/confirm these items from ChipFoundry docs/portal (or a program email) and paste links + excerpts here.
 
+To reduce thrash, use the email draft in:
+- `docs/CHIPFOUNDRY_INTAKE_EMAIL.md`
+
+### Intake record (fill this in as we learn facts)
+```yaml
+shuttle:
+  name: null
+  program: null            # chipIgnite / ChipFoundry / etc.
+  cutoff:
+    datetime: null         # ISO8601
+    tz: null
+    source_url: null
+pdk:
+  name: null               # sky130A/sky130B/...
+  version: null
+  source_url: null
+flow:
+  requires_openlane: null
+  openlane_version: null
+  openroad_version: null
+  docker_image: null
+  precheck:
+    required: null
+    instructions_url: null
+    pass_fail_gates: []
+deliverables:
+  artifact_format: null    # repo/tag/tarball/portal upload
+  required_views: []       # gds/lef/def/lib/spef/netlist/...
+  required_reports: []
+notes: []
+```
+
 ### 1) Required repository/layout
 - Do they require a specific top-level repo structure?
 - Do they accept a Caravel user project wrapper repo as-is?
