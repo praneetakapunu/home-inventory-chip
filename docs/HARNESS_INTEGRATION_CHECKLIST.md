@@ -109,6 +109,11 @@ Quick harness audit helper (from this repo root):
 tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
 ```
 
+One-shot audit runner (recommended):
+```bash
+tools/harness/harness_audit_all.sh ../home-inventory-chip-openmpw
+```
+
 Recommended content for pinout doc:
 - List of IOs used (digital only for now)
 - Direction, pull/tie behavior on reset
