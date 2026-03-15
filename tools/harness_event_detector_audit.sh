@@ -30,22 +30,35 @@ section() {
 
 section "Repo"
 say "harness: $(pwd)"
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  say "git: $(git rev-parse --short HEAD)"
+fi
 
 section "Find references to home_inventory_wb / event detector"
 # These checks are heuristic; absence does not guarantee missing integration.
 rg -n "home_inventory_wb" . || true
 rg -n "home_inventory_event_detector|u_evt|EVT_CFG|EVT_COUNT|EVT_THRESH" . || true
+rg -n "wishbone|wb_(adr|dat|we|sel|stb|cyc|ack)" . || true
 
 section "Filelists / includes"
 # Look for common filelist patterns.
 rg -n "home_inventory_(wb|event_detector)\.v" . || true
 rg -n "rtl/home_inventory_(wb|event_detector)\.v" . || true
+rg -n "home_inventory_top\.v" . || true
+
+section "Regmap visibility (best-effort)"
+# Try to locate where the harness pulls register definitions from.
+rg -n "regmap|REGISTER|EVT_" . || true
+rg -n "home_inventory.*reg(map)?" . || true
 
 section "Build targets (best-effort)"
 if [[ -f Makefile ]]; then
   # List likely targets without running toolchains.
-  say "Makefile present; listing targets containing: rtl, compile, sync"
-  make -nqp 2>/dev/null | rg -n "^[a-zA-Z0-9_.-]+:([^=]|$)" | rg -n "(rtl|compile|sync)" | head -n 80 || true
+  say "Makefile present; listing targets containing: rtl, compile, sync, regmap"
+  make -nqp 2>/dev/null \
+    | rg -n "^[a-zA-Z0-9_.-]+:([^=]|$)" \
+    | rg -n "(rtl|compile|sync|regmap)" \
+    | head -n 120 || true
 else
   say "No Makefile found at harness root. (This may be expected depending on layout.)"
 fi
@@ -55,7 +68,7 @@ cat <<'EOF'
 What you want to see before flipping the event-detector sample source to real ADC frames:
 - harness includes the IP RTL (home_inventory_wb.v + friends) in its filelist
 - EVT_* registers are visible via the same regmap include the harness uses
-- RTL compile-check target exists and can run in low disk conditions
+- a cheap RTL compile-check target exists and can run in low disk conditions
 
 If any grep above shows surprising absences, update docs/HARNESS_INTEGRATION.md
 and/or the harness repo's filelist rules.
