@@ -32,6 +32,11 @@ Before debugging RTL, lock these harness/PCB facts with a *source link or schema
 3) **SPI mode**
    - ADS131M08 requires **CPOL=0, CPHA=1** for the project baseline.
 
+4) **DRDY format (MODE.DRDY_FMT)**
+   - Strong v1 recommendation: keep **DRDY_FMT = 0** (level-style).
+   - If DRDY_FMT is configured as a pulse (DRDY_FMT = 1), missed reads can suppress pulses and make bring-up look “random”.
+   - Ensure the FW init sequence explicitly sets/keeps DRDY_FMT=0 (see `docs/ADC_FW_INIT_SEQUENCE.md`).
+
 Track the final decision in:
 - `decisions/011-adc-clkin-source-and-frequency.md`
 
@@ -91,6 +96,7 @@ Rule for first-silicon bring-up:
 Once the harness is wired and the SoC boots:
 
 1) **Enable streaming** via the Wishbone control register(s) defined in `spec/regmap.md`.
+   - First-silicon safety: drain **two full frames** (18 words) before you start validating cadence/STATUS flags.
 2) Poll FIFO level until non-zero.
 3) Drain FIFO and validate the 9-word grouping:
    - word[0] = STATUS
