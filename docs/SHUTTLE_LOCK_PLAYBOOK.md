@@ -9,6 +9,9 @@ End this process with:
 
 ## Step-by-step
 
+Tip: when you open the PR that locks the shuttle, use the copy/paste template:
+- `docs/SHUTTLE_LOCK_PR_TEMPLATE.md`
+
 ### 1) Find an official source
 Pick the most official thing you can.
 
