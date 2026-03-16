@@ -75,6 +75,14 @@ def main() -> int:
         help="Emit machine-readable JSON (still dependency-free).",
     )
     ap.add_argument(
+        "--write-derived",
+        action="store_true",
+        help=(
+            "Write the derived milestone dates back into the lock record (updates only the "
+            "'Derived deadlines (internal; compute from the cutoff)' bullet lines)."
+        ),
+    )
+    ap.add_argument(
         "--strict",
         action="store_true",
         help=(
@@ -178,6 +186,36 @@ def main() -> int:
 
     freeze_dt = deadline - dt.timedelta(days=freeze_days)
     final_integration_dt = deadline - dt.timedelta(days=final_integration_days)
+
+    if args.write_derived:
+        # Update only the derived milestone bullet lines in the record.
+        # This keeps the canonical cutoff fields human-authored while ensuring
+        # the planning dates don't drift.
+        freeze_date = freeze_dt.strftime("%Y-%m-%d")
+        final_integration_date = final_integration_dt.strftime("%Y-%m-%d")
+        freeze_tag = f"v1-freeze-{freeze_date.replace('-', '')}"
+
+        new_lines = []
+        for line in text.splitlines():
+            if line.startswith("- **Internal freeze tag (v1-freeze):**"):
+                new_lines.append(
+                    f"- **Internal freeze tag (v1-freeze):** {freeze_date} (tag: `{freeze_tag}`) *(derived)*"
+                )
+                continue
+            if line.startswith("- **Internal final-integration target:**"):
+                new_lines.append(
+                    f"- **Internal final-integration target:** {final_integration_date} *(derived; keep margin before internal safe deadline)*"
+                )
+                continue
+            new_lines.append(line)
+
+        new_text = "\n".join(new_lines) + "\n"
+        if new_text != text:
+            record_path.write_text(new_text, encoding="utf-8")
+            text = new_text
+            print(f"WROTE: updated derived milestone dates in {record_path}")
+        else:
+            print(f"OK: derived milestone dates already up to date in {record_path}")
 
     if args.json:
         payload = {

@@ -59,6 +59,8 @@ Once the shuttle is locked, derive these “internal” dates so we can plan bac
 Preferred workflow:
 - Update the **Internal safe deadline ... utc:** line above.
 - Run: `python3 ops/shuttle_runway.py`
+  - To auto-update the derived bullet dates below (freeze/final-integration):
+    - `python3 ops/shuttle_runway.py --write-derived`
   - Defaults: **freeze = deadline - 10d**, **final integration = deadline - 5d**
   - Override (if needed):
     - `python3 ops/shuttle_runway.py --freeze-days 14 --final-integration-days 7`
