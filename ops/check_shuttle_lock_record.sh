@@ -170,6 +170,11 @@ else
     echo "  Re-verify the official schedule link and refresh docs/SHUTTLE_LOCK_RECORD.md"
   fi
 
-  echo "Shuttle lock record status: OK (no 'TBD' placeholders found; Lock status: $LOCK_STATUS)"
+  if [[ "$LOCK_STATUS" == "LOCKED" ]]; then
+    echo "Shuttle lock record status: OK (LOCKED; no 'TBD' placeholders found)"
+  else
+    echo "Shuttle lock record status: INCOMPLETE (no 'TBD' placeholders, but Lock status is '$LOCK_STATUS')"
+    echo "  Tip: When Praneet confirms the shuttle, set: **Lock status:** LOCKED"
+  fi
   echo "  File: $RECORD"
 fi
