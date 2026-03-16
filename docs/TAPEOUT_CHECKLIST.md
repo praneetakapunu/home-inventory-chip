@@ -120,3 +120,16 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 - [ ] `docs/KNOWN_LIMITATIONS.md` (explicit list of v1 limitations + workarounds)
 - [ ] `spec/regmap.md` frozen + referenced by RTL
 - [ ] `docs/VERIFICATION_PLAN.md` updated with *what we actually ran*
+
+## 7) Evidence capture (so reviews don’t stall)
+For any “locked” decision or pass/fail gate above, capture evidence in a way that can be reviewed **without rerunning tools**:
+- [ ] Prefer **path:line** pointers into committed source when referencing harness facts.
+- [ ] Prefer **paste-ready command output** snippets (trimmed) for CI/precheck results.
+- [ ] Record one canonical “what we ran” note per gate in either:
+  - `docs/PRECHECK_LOG.md` (precheck-focused)
+  - `reports/YYYY-MM-DD.md` (everything else)
+
+Minimum standard for an evidence snippet:
+- Command line (exact)
+- Repo + commit hash
+- PASS/FAIL summary lines (or key warnings)
