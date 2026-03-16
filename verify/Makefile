@@ -56,6 +56,9 @@ UNPACK_OUT := adc_soc_frame_unpack_tb.out
 WB_ADC_OVERRIDE_TB  := wb_adc_fifo_override_tb.v
 WB_ADC_OVERRIDE_OUT := wb_adc_fifo_override_tb.out
 
+WB_ADC_SNAPSHOT_FRAME_TB  := wb_adc_snapshot_frame_tb.v
+WB_ADC_SNAPSHOT_FRAME_OUT := wb_adc_snapshot_frame_tb.out
+
 WB_REAL_ADC_SMOKE_TB  := wb_real_adc_ingest_smoke_tb.v
 WB_REAL_ADC_SMOKE_OUT := wb_real_adc_ingest_smoke_tb.out
 
@@ -68,7 +71,7 @@ WB_EVT_INTEGRATION_OUT := wb_evt_integration_tb.out
 WB_TIME_NOW_TB  := wb_time_now_tb.v
 WB_TIME_NOW_OUT := wb_time_now_tb.out
 
-.PHONY: help all sim top-sim real-adc-sim wb-real-adc-smoke-sim wb-evt-cfg-selmask-sim wb-evt-integration-sim wb-time-now-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim \
+.PHONY: help all sim top-sim real-adc-sim wb-real-adc-smoke-sim wb-evt-cfg-selmask-sim wb-evt-integration-sim wb-time-now-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim wb-adc-snapshot-frame-sim \
 	rtl-compile-check regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
@@ -95,10 +98,11 @@ help:
 	 && echo "  make -C verify overrun-sim         # adc_stream_overrun_tb" \
 	 && echo "  make -C verify unpack-sim          # adc_soc_frame_unpack_tb" \
 	 && echo "  make -C verify wb-adc-override-sim # wb_adc_fifo_override_tb" \
+	 && echo "  make -C verify wb-adc-snapshot-frame-sim # SNAPSHOT -> FIFO -> pop (contract/order)" \
 	 && echo "  make -C verify clean"
 
 # One command to run the whole smoke suite (what humans should run locally).
-all: regmap-check regmap-gen-check rtl-compile-check sim top-sim real-adc-sim wb-real-adc-smoke-sim wb-evt-cfg-selmask-sim wb-evt-integration-sim wb-time-now-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim
+all: regmap-check regmap-gen-check rtl-compile-check sim top-sim real-adc-sim wb-real-adc-smoke-sim wb-evt-cfg-selmask-sim wb-evt-integration-sim wb-time-now-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim wb-adc-snapshot-frame-sim
 
 # Compile full RTL filelist (no simulation). This is a closer approximation of
 # the harness compile-check than the per-testbench compile steps.
@@ -143,6 +147,9 @@ unpack-sim: $(UNPACK_OUT)
 
 wb-adc-override-sim: $(WB_ADC_OVERRIDE_OUT)
 	$(VVP) $(WB_ADC_OVERRIDE_OUT)
+
+wb-adc-snapshot-frame-sim: $(WB_ADC_SNAPSHOT_FRAME_OUT)
+	$(VVP) $(WB_ADC_SNAPSHOT_FRAME_OUT)
 
 wb-real-adc-smoke-sim: $(WB_REAL_ADC_SMOKE_OUT)
 	$(VVP) $(WB_REAL_ADC_SMOKE_OUT)
@@ -292,6 +299,10 @@ $(WB_ADC_OVERRIDE_OUT): $(WB_ADC_OVERRIDE_TB) $(RTL_DIR)/home_inventory_wb.v $(R
 	$(RTL_DIR)/adc/adc_stream_fifo.v $(RTL_DIR)/adc/adc_frame_to_fifo.v
 	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
+$(WB_ADC_SNAPSHOT_FRAME_OUT): $(WB_ADC_SNAPSHOT_FRAME_TB) $(RTL_DIR)/home_inventory_wb.v $(RTL_DIR)/home_inventory_event_detector.v \
+	$(RTL_DIR)/adc/adc_stream_fifo.v $(RTL_DIR)/adc/adc_frame_to_fifo.v $(RTL_DIR)/adc/adc_soc_frame_unpack.v
+	$(IVERILOG) $(IVERILOG_FLAGS) -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
+
 $(WB_REAL_ADC_SMOKE_OUT): $(WB_REAL_ADC_SMOKE_TB) \
 	$(RTL_DIR)/home_inventory_wb.v \
 	$(RTL_DIR)/home_inventory_event_detector.v \
@@ -303,5 +314,5 @@ $(WB_REAL_ADC_SMOKE_OUT): $(WB_REAL_ADC_SMOKE_TB) \
 	$(IVERILOG) $(IVERILOG_FLAGS) -DUSE_REAL_ADC_INGEST -I$(RTL_DIR) -I$(RTL_DIR)/include -o $@ $^
 
 clean:
-	rm -f $(OUT) $(TOP_OUT) $(REAL_ADC_OUT) $(WB_REAL_ADC_SMOKE_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT) $(PIPE_OUT) $(INGEST_OUT) $(OVERRUN_OUT) $(UNPACK_OUT) $(WB_ADC_OVERRIDE_OUT)
+	rm -f $(OUT) $(TOP_OUT) $(REAL_ADC_OUT) $(WB_REAL_ADC_SMOKE_OUT) $(FIFO_OUT) $(DRDY_OUT) $(SPI_OUT) $(EVT_OUT) $(F2F_OUT) $(PIPE_OUT) $(INGEST_OUT) $(OVERRUN_OUT) $(UNPACK_OUT) $(WB_ADC_OVERRIDE_OUT) $(WB_ADC_SNAPSHOT_FRAME_OUT)
 	rm -f *.vcd *.fst *.log *.dump

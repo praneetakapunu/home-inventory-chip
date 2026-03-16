@@ -116,7 +116,7 @@ Deliverable (implemented):
   - `verify/wb_real_adc_ingest_smoke_tb.v` (real-ingest build flag compile + minimal smoke)
 
 Suggested run:
-- `make -C verify wb_tb.out wb_adc_fifo_override_tb.out wb_real_adc_ingest_smoke_tb.out`
+- `make -C verify wb_tb.out wb_adc_fifo_override_tb.out wb_adc_snapshot_frame_tb.out wb_real_adc_ingest_smoke_tb.out`
 
 ---
 
