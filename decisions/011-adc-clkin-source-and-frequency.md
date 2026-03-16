@@ -89,8 +89,16 @@ Implication: we must still lock either Option A (board oscillator) or Option B (
 Use this when you *don’t* want to open schematics yet, and just want to find any already-committed assumptions.
 
 From `chip-inventory/`:
+
+1) Broad grep-style audit (fast):
 ```bash
 tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
+```
+
+2) Evidence snippet extractor (paste-ready excerpts with file:line):
+```bash
+python3 tools/harness_evidence_snip.py ../home-inventory-chip-openmpw \
+  --terms adc_clkin,CLKIN,frequency,oscillator,io\[\?\?\]
 ```
 
 If it finds a candidate mapping, capture the evidence in this decision in the format:
