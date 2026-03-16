@@ -27,6 +27,29 @@ Acceptance criteria for *streaming enabled* builds:
 
 ---
 
+## Phase 0 — Harness evidence (pinout + clocking) (low-disk)
+
+Do this early, before spending time on OpenLane/precheck. The goal is to replace ambiguity with **hard evidence** (actual nets + io[*] indices + frequency assumptions).
+
+Run these from the IP repo root:
+
+- Pinout audit (SPI + DRDY/RESET/optional CLKIN):
+  - `tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw`
+- Clocking audit (CLKIN source + explicit frequency clues):
+  - `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
+- Streaming integration audit (quick grep sweep for the streaming path):
+  - `tools/harness_adc_streaming_audit.sh ../home-inventory-chip-openmpw`
+
+**Record what you find** (copy/paste the concrete mapping into these docs):
+- `docs/ADC_PINOUT_CONTRACT.md` (exact `io[*]` → `adc_*` mapping; polarity notes)
+- `docs/ADC_CLOCKING_PLAN.md` (exact CLKIN source and **frequency**; evidence link/snippet)
+
+If any of these scripts come up empty (no `USE_REAL_ADC_INGEST`, no `adc_*` nets, no CLKIN evidence):
+- Treat it as a *tapeout risk*.
+- Either fix the harness wiring/defines, or keep it explicitly tracked under `docs/EXECUTION_PLAN.md → ## Blockers`.
+
+---
+
 ## Phase A — RTL wiring (compile + selectable data source)
 
 **Status:** implemented.
