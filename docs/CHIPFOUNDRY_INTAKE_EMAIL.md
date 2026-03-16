@@ -22,12 +22,15 @@ Could you please confirm/provide the following:
    - Required PDK name/version (e.g., sky130A/sky130B) and where to obtain it
    - Required OpenLane/OpenROAD versions (or required Docker images)
 
-3) **Deliverables**
+3) **Deliverables / submission type**
+   - Are you expecting a **full chip/top-level** submission, or a **macro/block** submission?
    - Required views (GDS/LEF/DEF/Liberty/SPEF/verilog netlist) and which blocks
    - Required reports (DRC/LVS/antenna/timing, etc.)
 
-4) **Top-level/padframe expectations**
+4) **Top-level/padframe expectations (wrapper compatibility)**
    - Do you provide a padframe/top-level harness, or do we provide a full top-level?
+   - We currently have a **Caravel-style user-project wrapper repo** for integration/testing.
+     Is a Caravel-style top-level acceptable for this program, or do you require a different wrapper/padframe?
    - IO voltage/ESD/pull requirements; clocking constraints
 
 5) **Precheck / signoff gates**
