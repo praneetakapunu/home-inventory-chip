@@ -168,3 +168,23 @@ Fill once accepted:
 - Source: (schematic / harness docs / committed pinout file)
 - Expected `CLKIN` frequency: (Hz)
 - Expected DRDY rate (at v1 defaults): (Hz)
+
+### Evidence snippet template (paste-ready)
+When you find the evidence in the harness repo, capture it in this exact format so it’s unambiguous and reviewable:
+
+```text
+ADC CLKIN decision evidence
+- Decision: Option A (board oscillator) | Option B (SoC clock-out)
+- Source: home-inventory-chip-openmpw/<path>:<line-range>
+- CLKIN route: <net name / io[*] index> → ADS131M08 CLKIN
+- Expected CLKIN frequency: <Hz>
+- Reset/power note: <is CLKIN present before FW runs?>
+- Scope point: <test point / pin / pad to probe>
+- Expected DRDY rate at v1 defaults: <Hz> (and which OSR/data-rate setting)
+```
+
+### Minimum “remote bring-up” measurement procedure
+Even without schematics, we should be able to answer *quickly* whether clocking is sane:
+1) **Scope:** measure `CLKIN` frequency and confirm it’s continuous.
+2) **FW timer:** measure DRDY edges over ~1s and report computed Hz.
+3) If DRDY is missing or frequency is inconsistent with the selected OSR/data-rate, stop and treat it as **clocking/config** (not RTL).
