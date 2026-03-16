@@ -116,6 +116,17 @@ if rg -n "${RG_EXCLUDES[@]}" -S "\\bCLKIN\\b" "${SEARCH_DIRS[@]}" 2>/dev/null; t
 fi
 
 echo
+echo "--- rg -n likely io[*] mapping near adc_clkin/CLKIN (tries to find explicit io[17] style evidence) ---"
+# We want hard evidence like: io[17] -> adc_clkin OR adc_clkin: io[17]
+# This is heuristic, but often catches pinout tables.
+if rg -n "${RG_EXCLUDES[@]}" -S -i "(adc[_-]?clkin|ADC_CLKIN|\\bCLKIN\\b)[^\n]{0,160}io\\[[0-9]+\\]" "${SEARCH_DIRS[@]}" 2>/dev/null; then
+  any_hit=1
+fi
+if rg -n "${RG_EXCLUDES[@]}" -S -i "io\\[[0-9]+\\][^\n]{0,160}(adc[_-]?clkin|ADC_CLKIN|\\bCLKIN\\b)" "${SEARCH_DIRS[@]}" 2>/dev/null; then
+  any_hit=1
+fi
+
+echo
 echo "--- rg -n frequency clues near CLKIN/adc_clkin (tries to find explicit MHz/kHz/Hz) ---"
 # This is intentionally heuristic: we're looking for any doc/RTL notes that mention a
 # clock net alongside an explicit frequency. This helps turn the 'CLKIN unknown' blocker
