@@ -45,7 +45,10 @@ For each clock domain above, document:
   - Yes: reset is sampled on `wb_clk_i`.
 
 Evidence (harness wiring):
-- The OpenMPW `user_project_wrapper` wires `.wb_rst_i(wb_rst_i)` into `home_inventory_user_project` (repo: `../home-inventory-chip-openmpw/verilog/rtl/user_project_wrapper.v`).
+- Run: `tools/harness_wb_wiring_audit.sh ../home-inventory-chip-openmpw`
+- Snapshot (harness commit `f6d7178`):
+  - `../home-inventory-chip-openmpw/verilog/rtl/user_project_wrapper.v:91` → `.wb_clk_i(wb_clk_i)`
+  - `../home-inventory-chip-openmpw/verilog/rtl/user_project_wrapper.v:92` → `.wb_rst_i(wb_rst_i)`
 
 Open item:
 - [ ] Confirm the **timing** of `wb_rst_i` deassertion from the harness/Caravel side (async vs sync). The IP RTL *treats* `wb_rst_i` as a synchronous reset (sampled on `wb_clk_i`). If Caravel deasserts it asynchronously, we should add a small synchronizer or document the assumption explicitly.
