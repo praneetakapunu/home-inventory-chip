@@ -24,11 +24,15 @@ Locked fields live in: `docs/SHUTTLE_LOCK_RECORD.md` (single source).
 Once locked, also fill in the **Derived deadlines** section in the lock record so the rest of this timeline can be planned backwards from the commitment date.
 
 ### M0 — v1 freeze tag (spec/regmap/tests stable)
-- Target: **2026-03-01** (baseline)
+- Target: **2026-03-08** *(derived from internal safe deadline in `docs/SHUTTLE_LOCK_RECORD.md`)*
 - Exit criteria:
   - regmap frozen for v1
   - `make -C verify all` green
   - tag created: `v1-freeze-YYYYMMDD`
+
+Note:
+- The old baseline target (2026-03-01) was superseded once the shuttle runway tightened.
+- If the shuttle commitment date changes, recompute derived milestones via `python3 ops/shuttle_runway.py --write-derived` and re-baseline this timeline.
 
 ### M1 — Submission/integration repo path confirmed (ChipFoundry)
 - Target: **2026-03-10**
