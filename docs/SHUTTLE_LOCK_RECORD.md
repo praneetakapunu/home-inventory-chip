@@ -10,7 +10,7 @@ Why this file exists:
 
 ## Locked fields (copy/paste from official source)
 
-- **Last verified (UTC):** 2026-03-13 20:30Z
+- **Last verified (UTC):** 2026-03-17 10:30Z
 - **Program / foundry / PDK:** ChipFoundry / chipIgnite reservations (PDK not stated on schedule page)
 - **Shuttle name/number:** CI2605 (May MPW Shuttle)
 - **Submission cutoff:** Commitment Date: 2026-03-18 (date-only on source; internal safe deadline is earlier)
@@ -78,6 +78,7 @@ If the official schedule changes, append a line here.
 
 - 2026-03-06 — proposed shuttle target: ChipFoundry CI2605 (date-only commitment deadline from schedule page).
 - 2026-03-13 — re-verified ChipFoundry schedule page; CI2605 dates unchanged.
+- 2026-03-17 — re-verified ChipFoundry schedule page; CI2605 dates unchanged (Commitment Date March 18, 2026; Tapeout Date May 13, 2026; Delivery Date October 28, 2026).
 
 ## Notes
 - If the official schedule changes, update this file and then re-baseline `docs/TIMELINE.md`.
