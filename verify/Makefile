@@ -71,13 +71,14 @@ WB_EVT_INTEGRATION_OUT := wb_evt_integration_tb.out
 WB_TIME_NOW_TB  := wb_time_now_tb.v
 WB_TIME_NOW_OUT := wb_time_now_tb.out
 
-.PHONY: help all sim top-sim real-adc-sim wb-real-adc-smoke-sim wb-evt-cfg-selmask-sim wb-evt-integration-sim wb-time-now-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim wb-adc-snapshot-frame-sim \
+.PHONY: help all quick sim top-sim real-adc-sim wb-real-adc-smoke-sim wb-evt-cfg-selmask-sim wb-evt-integration-sim wb-time-now-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim wb-adc-snapshot-frame-sim \
 	rtl-compile-check regmap-check regmap-gen regmap-gen-check regmap-sv-gen regmap-sv-gen-check \
 	regmap-vh-gen regmap-vh-gen-check clean
 
 help:
 	@echo "Targets:" \
 	 && echo "  make -C verify all                 # full smoke suite (recommended)" \
+	 && echo "  make -C verify quick               # faster preflight subset (recommended for tight loops)" \
 	 && echo "  make -C verify regmap-check        # YAML ↔ RTL consistency" \
 	 && echo "  make -C verify regmap-gen-check    # generated artifacts up-to-date" \
 	 && echo "  make -C verify rtl-compile-check   # compile full IP filelist" \
@@ -103,6 +104,15 @@ help:
 
 # One command to run the whole smoke suite (what humans should run locally).
 all: regmap-check regmap-gen-check rtl-compile-check sim top-sim real-adc-sim wb-real-adc-smoke-sim wb-evt-cfg-selmask-sim wb-evt-integration-sim wb-time-now-sim fifo-sim drdy-sim spi-sim evt-sim f2f-sim pipe-sim ingest-sim overrun-sim unpack-sim wb-adc-override-sim wb-adc-snapshot-frame-sim
+
+# Faster subset for tight iteration loops (still high-signal):
+# - regmap consistency
+# - full RTL filelist compile
+# - core WB smoke
+# - SNAPSHOT->FIFO packing order
+# - real-ADC build compiles + wb pop semantics smoke
+# - event detector integration + TIME_NOW
+quick: regmap-check regmap-gen-check rtl-compile-check sim real-adc-sim wb-adc-snapshot-frame-sim wb-real-adc-smoke-sim wb-evt-integration-sim wb-time-now-sim
 
 # Compile full RTL filelist (no simulation). This is a closer approximation of
 # the harness compile-check than the per-testbench compile steps.
