@@ -60,16 +60,70 @@ If CI/submodules become painful, use `git subtree` to vendor the RTL snapshot in
 ## Minimal submission readiness checklist
 These are “gate” items we should be able to do on demand.
 
-Canonical checklist (kept as a separate doc so it can be copy/pasted into issues/PRs):
-- `docs/HARNESS_INTEGRATION_CHECKLIST.md`
+Canonical checklists:
+- Harness integration: `docs/HARNESS_INTEGRATION_CHECKLIST.md`
+- Full tapeout: `docs/TAPEOUT_CHECKLIST.md`
 
-High-level gates:
+High-level gates (submission repo):
 
 1) **Harness repo boots:** `make setup` completes (downloads deps, builds env)
 2) **Wrapper compiles:** `user_project_wrapper.v` and filelists resolve all RTL
 3) **Pinout frozen:** `docs/pinout.md` (or equivalent) matches top module IO
 4) **OpenLane config exists:** `openlane/user_project_wrapper/config.tcl` (or equivalent) points at the correct filelists and constraints
 5) **Precheck runnable:** mpw-precheck can be invoked and produces a report artifact
+
+## Repeatable submission runbook (copy/paste)
+This is the practical, repeatable “what we do” sequence when cutting a submission candidate.
+
+### A) In the IP repo (`chip-inventory`)
+```bash
+cd chip-inventory
+
+# 1) confirm repo is clean and tests can run in a low-disk environment
+bash ops/preflight_low_disk.sh
+
+# 2) (optional but common) update any derived regmap artifacts
+# bash ops/regmap_update.sh
+# bash ops/regmap_check.sh
+
+git status -sb
+```
+
+If any of the above fails due to disk/toolchain constraints, **stop early** and record the blocker:
+- `docs/EXECUTION_PLAN.md` → `## Blockers` (include command + error + current free space)
+
+### B) In the harness repo (`home-inventory-chip-openmpw`)
+```bash
+cd ../home-inventory-chip-openmpw
+
+# 0) bring in latest IP snapshot
+# (submodule or subtree depending on strategy)
+
+git status -sb
+
+# 1) sync the wrapper-facing filelist(s)
+make sync-ip-filelist
+
+# 2) fast compile sanity checks (no PDK)
+make rtl-compile-check
+make rtl-compile-check-real-adc
+
+# 3) only now do heavy setup + precheck
+make setup
+make run-precheck
+```
+
+### C) Evidence + bookkeeping (don’t skip)
+- Record *exact* precheck invocation + summary + both repo commit hashes in:
+  - `chip-inventory/docs/PRECHECK_LOG.md`
+- If you updated IP/submodule pointers in the harness repo, include the IP commit hash in the harness commit message.
+
+### D) Submission PR “Definition of Done” (minimum)
+A submission candidate PR (in the harness repo) is considered reviewable when it includes:
+- A green `make rtl-compile-check` + `make rtl-compile-check-real-adc`
+- A recorded precheck result in `chip-inventory/docs/PRECHECK_LOG.md` (PASS/FAIL + warnings)
+- A linked baseline/freeze note (e.g., regmap v1 freeze) if the PR changes interfaces
+- Updated `docs/DASHBOARD.md` if schedule/deadline info changed
 
 ## Fast local loop (no PDK/OpenLane) — do this *first*
 Before downloading big toolchains, keep a tiny “does it compile?” loop that exercises the wrapper + filelists.
