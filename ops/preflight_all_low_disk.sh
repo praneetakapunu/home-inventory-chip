@@ -32,11 +32,19 @@ if [[ ! -d "$HARNESS_DIR" ]]; then
   exit 0
 fi
 
-banner "Harness repo: sync IP filelist + RTL compile-check"
+banner "Harness repo: sync IP filelist + RTL compile-check(s)"
 (
   cd "$HARNESS_DIR" || die "failed to cd to harness dir: $HARNESS_DIR"
   make sync-ip-filelist
   make rtl-compile-check
+
+  # Optional, but strongly preferred: compile-check the real ADC ingest build.
+  # Not all harness branches may have the target yet.
+  if make -q rtl-compile-check-real-adc >/dev/null 2>&1 || make -n rtl-compile-check-real-adc >/dev/null 2>&1; then
+    make rtl-compile-check-real-adc
+  else
+    banner "Harness repo: WARN (no make target rtl-compile-check-real-adc)"
+  fi
 )
 
 banner "Harness repo: lightweight grep-based audits (no toolchain)"
