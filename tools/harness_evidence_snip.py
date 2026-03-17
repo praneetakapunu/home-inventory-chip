@@ -21,6 +21,7 @@ Examples
   tools/harness_evidence_snip.py ../home-inventory-chip-openmpw
   tools/harness_evidence_snip.py ../home-inventory-chip-openmpw --terms adc_clkin,CLKIN,frequency
   tools/harness_evidence_snip.py ../home-inventory-chip-openmpw --terms "adc_clkin|CLKIN" --regex
+  tools/harness_evidence_snip.py ../home-inventory-chip-openmpw --markdown > /tmp/harness_snips.md
 
 Notes
 -----
@@ -127,6 +128,11 @@ def main(argv: List[str]) -> int:
     )
     ap.add_argument("--context", type=int, default=2, help="lines of context before/after")
     ap.add_argument("--max", type=int, default=120, help="max hits to print")
+    ap.add_argument(
+        "--markdown",
+        action="store_true",
+        help="print results in markdown (paste-ready) instead of plain text",
+    )
     args = ap.parse_args(argv)
 
     root = Path(args.harness_repo).resolve()
@@ -152,12 +158,20 @@ def main(argv: List[str]) -> int:
     # Sort by path then line
     all_hits.sort(key=lambda h: (str(h.path), h.line_no))
 
-    print(f"== Harness evidence snips ==")
-    print(f"Harness repo: {root}")
-    print(f"Dirs scanned: {', '.join(rel_dirs) if rel_dirs else '(none)'}")
-    print(f"Terms: {', '.join(terms)}")
-    print(f"Total hits: {len(all_hits)}")
-    print()
+    if args.markdown:
+        print("## Harness evidence snips")
+        print(f"- Harness repo: `{root}`")
+        print(f"- Dirs scanned: `{', '.join(rel_dirs) if rel_dirs else '(none)'}`")
+        print(f"- Terms: `{', '.join(terms)}`")
+        print(f"- Total hits: **{len(all_hits)}**")
+        print()
+    else:
+        print(f"== Harness evidence snips ==")
+        print(f"Harness repo: {root}")
+        print(f"Dirs scanned: {', '.join(rel_dirs) if rel_dirs else '(none)'}")
+        print(f"Terms: {', '.join(terms)}")
+        print(f"Total hits: {len(all_hits)}")
+        print()
 
     shown = 0
     last_key = None
@@ -173,14 +187,28 @@ def main(argv: List[str]) -> int:
 
         lo, hi, lines = excerpt(h.path, h.line_no, args.context)
         rel = h.path.relative_to(root)
-        print(f"--- Source: {rel}:{h.line_no} (showing {lo}-{hi}) ---")
-        for ln, txt in enumerate(lines, start=lo):
-            marker = ">" if ln == h.line_no else " "
-            print(f"{marker} {ln:4d}: {txt}")
-        print()
+
+        if args.markdown:
+            print(f"- Source: `{rel}:{h.line_no}` (showing {lo}-{hi})")
+            print("```text")
+            for ln, txt in enumerate(lines, start=lo):
+                marker = ">" if ln == h.line_no else " "
+                print(f"{marker} {ln:4d}: {txt}")
+            print("```")
+            print()
+        else:
+            print(f"--- Source: {rel}:{h.line_no} (showing {lo}-{hi}) ---")
+            for ln, txt in enumerate(lines, start=lo):
+                marker = ">" if ln == h.line_no else " "
+                print(f"{marker} {ln:4d}: {txt}")
+            print()
+
         shown += 1
 
-    print("Tip: paste the 'Source: path:line' plus the relevant excerpt into the decision record.")
+    if args.markdown:
+        print("Tip: paste a `Source: path:line` entry plus the excerpt into the decision record.")
+    else:
+        print("Tip: paste the 'Source: path:line' plus the relevant excerpt into the decision record.")
     return 0
 
 

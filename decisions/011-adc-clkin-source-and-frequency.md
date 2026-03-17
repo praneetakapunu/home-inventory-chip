@@ -101,6 +101,13 @@ python3 tools/harness_evidence_snip.py ../home-inventory-chip-openmpw \
   --terms adc_clkin,CLKIN,frequency,oscillator,io\[\?\?\]
 ```
 
+Markdown output (useful for pasting directly into this decision):
+```bash
+python3 tools/harness_evidence_snip.py ../home-inventory-chip-openmpw \
+  --terms adc_clkin,CLKIN,frequency,oscillator,io\[\?\?\] \
+  --markdown
+```
+
 If it finds a candidate mapping, capture the evidence in this decision in the format:
 - Source: `home-inventory-chip-openmpw/<path>:<line>`
 - CLKIN route: `io[*]` (or named net) → `ADC_CLKIN/CLKIN`
