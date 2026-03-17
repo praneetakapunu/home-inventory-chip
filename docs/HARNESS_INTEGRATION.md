@@ -98,6 +98,8 @@ Fast sanity checks:
 - Low-disk grep audits (no toolchain):
   - Pin exposure + io[*] mapping intent:
     - `../chip-inventory/tools/harness_adc_pinout_audit.sh .`
+  - Fail-fast check for placeholder io[*] indices (should fail until mapping is locked):
+    - `../chip-inventory/tools/harness_adc_pinout_placeholder_check.sh .`
   - Streaming/real-ingest wiring surfaces (make target + define + adc_* ports):
     - `../chip-inventory/tools/harness_adc_streaming_audit.sh .`
 

@@ -77,6 +77,15 @@ Pick *one* of these and land it as a small, reviewable commit:
        - Harness: RTL compile-check passes after wiring
 
 ## Blockers (must be explicit)
+- **ADC pin mapping (io[*] indices) is still placeholder in the harness wrapper.**
+  - `home-inventory-chip-openmpw/verilog/rtl/home_inventory_user_project.v` currently defaults:
+    - `ADC_SCLK_IO=0, ADC_CSN_IO=1, ADC_MOSI_IO=2, ADC_MISO_IO=3, ADC_DRDYN_IO=4, ADC_RSTN_IO=5`
+  - This is *not* a real pinout and must be replaced/overridden before tapeout.
+  - Canonical mapping location: `docs/ADC_PINOUT_CONTRACT.md`
+  - Audit/check helpers:
+    - `tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw`
+    - `tools/harness_adc_pinout_placeholder_check.sh ../home-inventory-chip-openmpw`
+
 - **ADS131M08 CLKIN source/frequency is not yet locked in the harness repo.**
   - Harness has only draft notes with `io[??]` and no frequency evidence.
   - Until we lock either (A) board oscillator → CLKIN, or (B) SoC clock-out → adc_clkin, plus frequency, real ADC bring-up is at risk.
