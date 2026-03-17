@@ -14,12 +14,13 @@ This script:
 
 Usage
 -----
-  tools/harness_evidence_snip.py [PATH_TO_HARNESS_REPO] [--terms t1,t2,...]
+  tools/harness_evidence_snip.py [PATH_TO_HARNESS_REPO] [--terms t1,t2,...] [--regex]
 
 Examples
 --------
   tools/harness_evidence_snip.py ../home-inventory-chip-openmpw
   tools/harness_evidence_snip.py ../home-inventory-chip-openmpw --terms adc_clkin,CLKIN,frequency
+  tools/harness_evidence_snip.py ../home-inventory-chip-openmpw --terms "adc_clkin|CLKIN" --regex
 
 Notes
 -----
@@ -117,7 +118,12 @@ def main(argv: List[str]) -> int:
     ap.add_argument(
         "--terms",
         default=",".join(DEFAULT_TERMS),
-        help="comma-separated terms (regex-safe literals except '[' and '?' are treated literally)",
+        help="comma-separated search terms (treated as literal strings unless --regex is set)",
+    )
+    ap.add_argument(
+        "--regex",
+        action="store_true",
+        help="treat --terms as regex patterns (case-insensitive); otherwise terms are literals",
     )
     ap.add_argument("--context", type=int, default=2, help="lines of context before/after")
     ap.add_argument("--max", type=int, default=120, help="max hits to print")
@@ -131,11 +137,10 @@ def main(argv: List[str]) -> int:
     rel_dirs = [d.strip() for d in args.dirs.split(",") if d.strip()]
     terms = [t.strip() for t in args.terms.split(",") if t.strip()]
 
-    # Treat terms as literals unless user supplied regex-y ones; keep it simple.
+    # By default treat terms as literals (fast, predictable). Use --regex for power users.
     patterns = []
     for t in terms:
-        # If the user included obvious regex metacharacters, keep as-is.
-        if any(ch in t for ch in ["(", ")", "|", ".*", "\\", "^", "$", "+"]):
+        if args.regex:
             patterns.append(re.compile(t, re.IGNORECASE))
         else:
             patterns.append(re.compile(re.escape(t), re.IGNORECASE))
