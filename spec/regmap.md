@@ -151,24 +151,24 @@ Address space for event/counter reporting. Formats are defined in `spec/fixed_po
 | 0x0000_0414 | `EVT_COUNT_CH5` | RO | — | Unsigned 32-bit saturating event count CH5. |
 | 0x0000_0418 | `EVT_COUNT_CH6` | RO | — | Unsigned 32-bit saturating event count CH6. |
 | 0x0000_041C | `EVT_COUNT_CH7` | RO | — | Unsigned 32-bit saturating event count CH7. |
-| 0x0000_0420 | `EVT_LAST_DELTA_CH0` | RO | — | Unsigned 32-bit delta (in sample ticks) for CH0. |
-| 0x0000_0424 | `EVT_LAST_DELTA_CH1` | RO | — | Unsigned 32-bit delta (in sample ticks) for CH1. |
-| 0x0000_0428 | `EVT_LAST_DELTA_CH2` | RO | — | Unsigned 32-bit delta (in sample ticks) for CH2. |
-| 0x0000_042C | `EVT_LAST_DELTA_CH3` | RO | — | Unsigned 32-bit delta (in sample ticks) for CH3. |
-| 0x0000_0430 | `EVT_LAST_DELTA_CH4` | RO | — | Unsigned 32-bit delta (in sample ticks) for CH4. |
-| 0x0000_0434 | `EVT_LAST_DELTA_CH5` | RO | — | Unsigned 32-bit delta (in sample ticks) for CH5. |
-| 0x0000_0438 | `EVT_LAST_DELTA_CH6` | RO | — | Unsigned 32-bit delta (in sample ticks) for CH6. |
-| 0x0000_043C | `EVT_LAST_DELTA_CH7` | RO | — | Unsigned 32-bit delta (in sample ticks) for CH7. |
-| 0x0000_0440 | `EVT_LAST_TS` | RO | — | Unsigned 32-bit timestamp (in sample ticks) of most recent event across any channel. |
+| 0x0000_0420 | `EVT_LAST_DELTA_CH0` | RO | — | Unsigned 32-bit delta (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) for CH0. |
+| 0x0000_0424 | `EVT_LAST_DELTA_CH1` | RO | — | Unsigned 32-bit delta (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) for CH1. |
+| 0x0000_0428 | `EVT_LAST_DELTA_CH2` | RO | — | Unsigned 32-bit delta (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) for CH2. |
+| 0x0000_042C | `EVT_LAST_DELTA_CH3` | RO | — | Unsigned 32-bit delta (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) for CH3. |
+| 0x0000_0430 | `EVT_LAST_DELTA_CH4` | RO | — | Unsigned 32-bit delta (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) for CH4. |
+| 0x0000_0434 | `EVT_LAST_DELTA_CH5` | RO | — | Unsigned 32-bit delta (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) for CH5. |
+| 0x0000_0438 | `EVT_LAST_DELTA_CH6` | RO | — | Unsigned 32-bit delta (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) for CH6. |
+| 0x0000_043C | `EVT_LAST_DELTA_CH7` | RO | — | Unsigned 32-bit delta (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) for CH7. |
+| 0x0000_0440 | `EVT_LAST_TS` | RO | — | Unsigned 32-bit timestamp (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) of most recent event across any channel. |
 | 0x0000_0444 | `EVT_CFG` | RW | 0x0 | Event detector config (`EVT_EN[7:0]`, plus W1P `CLEAR_COUNTS`/`CLEAR_HISTORY`). |
-| 0x0000_0448 | `EVT_LAST_TS_CH0` | RO | — | Unsigned 32-bit timestamp (in sample ticks) of most recent event on CH0. |
-| 0x0000_044C | `EVT_LAST_TS_CH1` | RO | — | Unsigned 32-bit timestamp (in sample ticks) of most recent event on CH1. |
-| 0x0000_0450 | `EVT_LAST_TS_CH2` | RO | — | Unsigned 32-bit timestamp (in sample ticks) of most recent event on CH2. |
-| 0x0000_0454 | `EVT_LAST_TS_CH3` | RO | — | Unsigned 32-bit timestamp (in sample ticks) of most recent event on CH3. |
-| 0x0000_0458 | `EVT_LAST_TS_CH4` | RO | — | Unsigned 32-bit timestamp (in sample ticks) of most recent event on CH4. |
-| 0x0000_045C | `EVT_LAST_TS_CH5` | RO | — | Unsigned 32-bit timestamp (in sample ticks) of most recent event on CH5. |
-| 0x0000_0460 | `EVT_LAST_TS_CH6` | RO | — | Unsigned 32-bit timestamp (in sample ticks) of most recent event on CH6. |
-| 0x0000_0464 | `EVT_LAST_TS_CH7` | RO | — | Unsigned 32-bit timestamp (in sample ticks) of most recent event on CH7. |
+| 0x0000_0448 | `EVT_LAST_TS_CH0` | RO | — | Unsigned 32-bit timestamp (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) of most recent event on CH0. |
+| 0x0000_044C | `EVT_LAST_TS_CH1` | RO | — | Unsigned 32-bit timestamp (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) of most recent event on CH1. |
+| 0x0000_0450 | `EVT_LAST_TS_CH2` | RO | — | Unsigned 32-bit timestamp (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) of most recent event on CH2. |
+| 0x0000_0454 | `EVT_LAST_TS_CH3` | RO | — | Unsigned 32-bit timestamp (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) of most recent event on CH3. |
+| 0x0000_0458 | `EVT_LAST_TS_CH4` | RO | — | Unsigned 32-bit timestamp (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) of most recent event on CH4. |
+| 0x0000_045C | `EVT_LAST_TS_CH5` | RO | — | Unsigned 32-bit timestamp (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) of most recent event on CH5. |
+| 0x0000_0460 | `EVT_LAST_TS_CH6` | RO | — | Unsigned 32-bit timestamp (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) of most recent event on CH6. |
+| 0x0000_0464 | `EVT_LAST_TS_CH7` | RO | — | Unsigned 32-bit timestamp (in `TIME_NOW` ticks, i.e. `wb_clk_i` cycles) of most recent event on CH7. |
 | 0x0000_0480 | `EVT_THRESH_CH0` | RW | 0x0 | Signed 32-bit threshold for CH0 in raw ADC LSBs (after sign-extension to 32b). |
 | 0x0000_0484 | `EVT_THRESH_CH1` | RW | 0x0 | Signed 32-bit threshold for CH1. |
 | 0x0000_0488 | `EVT_THRESH_CH2` | RW | 0x0 | Signed 32-bit threshold for CH2. |

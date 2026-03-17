@@ -13,12 +13,15 @@ Goal: provide a **very small** hardware feature that lets firmware detect "inter
 Non-goals for v1:
 - No hysteresis/debounce.
 - No programmable edge direction.
-- No timestamp in real time units; only sample ticks.
+- No timestamp in real time units.
+
+Timestamping for v1 is in a simple on-chip **timebase tick** (`TIME_NOW`), which increments once per `wb_clk_i` cycle.
 
 ## Definitions
 
-- `sample_tick`: a monotonically increasing tick associated with sample updates.
-  - In RTL this may be provided as a **global** `ts_now` that increments once per `sample_valid` update.
+- `time_tick`: a monotonically increasing tick used for timestamps.
+  - In v1 RTL this is `ts_now = TIME_NOW`, a free-running counter that increments once per `wb_clk_i` cycle.
+  - Note: this tick is *not* the ADC sample clock; it’s just a convenient, always-running cycle counter.
 - `event[ch]`: a single-cycle pulse indicating an event detection for channel `ch`.
 
 ## Proposed detection rule (v1)
@@ -41,20 +44,20 @@ Rationale: this is the simplest comparator. If we later need "crossing" semantic
 - Saturates at `0xFFFF_FFFF`.
 
 ### `EVT_LAST_DELTA_CHx` (RO)
-- On each `event[ch]`, updates to the delta (in sample ticks) since the last event on that channel:
+- On each `event[ch]`, updates to the delta (in `TIME_NOW` ticks / `wb_clk_i` cycles) since the last event on that channel:
 
 ```
-EVT_LAST_DELTA_CHx <= sample_tick[ch] - last_event_tick[ch]
+EVT_LAST_DELTA_CHx <= time_tick - last_event_tick[ch]
 ```
 
 - For the **first** event after reset (or after enabling `EVT_EN[ch]`), define `EVT_LAST_DELTA_CHx = 0`.
 
 ### `EVT_LAST_TS` (RO)
-- On any channel event, updates to the **global** sample tick at which the event occurred.
-- If multiple channels assert `event[ch]` in the same cycle, `EVT_LAST_TS` may reflect that shared tick (implementation-defined if different tick domains exist; for v1 we assume a single tick).
+- On any channel event, updates to the `TIME_NOW` tick at which the event occurred.
+- If multiple channels assert `event[ch]` in the same cycle, they naturally share the same `TIME_NOW` tick.
 
 ### `EVT_LAST_TS_CHx` (RO)
-- On each `event[ch]`, updates to the per-channel sample tick at which the event occurred.
+- On each `event[ch]`, updates to the `TIME_NOW` tick at which the event occurred.
 - Reset value is 0, but firmware must not treat 0 as a sentinel for "never" (the tick could legitimately be 0).
 - On `EVT_EN[ch]` 0→1, per-channel timestamp history is cleared; the next event sets `EVT_LAST_TS_CHx` to the current tick.
 
