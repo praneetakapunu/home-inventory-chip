@@ -61,6 +61,10 @@ This fails fast on:
 Sanity commands (harness repo):
 
 ```bash
+# Optional: fail-fast audit that the harness provides the expected make targets.
+# Run from the IP repo root:
+#   tools/harness/harness_make_targets_audit.sh ../home-inventory-chip-openmpw
+
 # Keep the harness filelist synced with the IP repo.
 make sync-ip-filelist
 
