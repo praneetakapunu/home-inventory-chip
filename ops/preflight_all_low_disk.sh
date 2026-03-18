@@ -51,6 +51,16 @@ banner "Harness repo: lightweight grep-based audits (no toolchain)"
 # These are intentionally grep-based so they still work on low-disk / minimal setups.
 # They help catch integration drift early (pin names, clocking assumptions, wiring stubs).
 bash tools/harness_adc_clocking_audit.sh "$HARNESS_DIR"
+# Placeholder clocking markers are a tapeout-risk item.
+# Keep this as a WARN by default so we can still run integration checks while the clock source/freq is pending.
+# To make it a hard failure, set: REQUIRE_NO_ADC_CLOCKING_PLACEHOLDERS=1
+if ! bash tools/harness_adc_clocking_placeholder_check.sh "$HARNESS_DIR"; then
+  if [[ "${REQUIRE_NO_ADC_CLOCKING_PLACEHOLDERS:-0}" == "1" ]]; then
+    die "ADC clocking placeholders still present in harness"
+  fi
+  banner "Harness repo: WARN (ADC clocking placeholders detected; see output above)"
+fi
+
 bash tools/harness_adc_pinout_audit.sh "$HARNESS_DIR"
 # Placeholder io[*] indices are a tapeout-risk item.
 # Keep this as a WARN by default so we can still run integration checks while the mapping is pending.
@@ -61,7 +71,18 @@ if ! bash tools/harness_adc_pinout_placeholder_check.sh "$HARNESS_DIR"; then
   fi
   banner "Harness repo: WARN (ADC pinout placeholders detected; see output above)"
 fi
+
 bash tools/harness_adc_streaming_audit.sh "$HARNESS_DIR"
+# Placeholder streaming markers are a tapeout-risk item.
+# Keep this as a WARN by default so the suite still runs before wiring is finalized.
+# To make it a hard failure, set: REQUIRE_NO_ADC_STREAMING_PLACEHOLDERS=1
+if ! bash tools/harness_adc_streaming_placeholder_check.sh "$HARNESS_DIR"; then
+  if [[ "${REQUIRE_NO_ADC_STREAMING_PLACEHOLDERS:-0}" == "1" ]]; then
+    die "ADC streaming placeholders still present in harness"
+  fi
+  banner "Harness repo: WARN (ADC streaming placeholders detected; see output above)"
+fi
+
 bash tools/harness_event_detector_audit.sh "$HARNESS_DIR"
 bash tools/harness_wb_wiring_audit.sh "$HARNESS_DIR"
 
