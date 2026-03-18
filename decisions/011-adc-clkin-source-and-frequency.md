@@ -90,6 +90,11 @@ Use this when you *don’t* want to open schematics yet, and just want to find a
 
 From `chip-inventory/`:
 
+0) (Optional) Write a timestamped audit snapshot to `reports/` (paste-able into PRs/issues):
+```bash
+tools/harness_audit_snapshot.sh ../home-inventory-chip-openmpw
+```
+
 1) Broad grep-style audit (fast):
 ```bash
 tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw

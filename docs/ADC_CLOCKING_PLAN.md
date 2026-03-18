@@ -107,6 +107,13 @@ The fastest way to find any existing decisions/assumptions is to grep the harnes
 
 ### One-liner helper (preferred)
 From the IP repo root:
+
+Write a timestamped audit snapshot (recommended for sharing / PR context):
+```bash
+tools/harness_audit_snapshot.sh ../home-inventory-chip-openmpw
+```
+
+Or just print to stdout:
 ```bash
 tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
 ```
