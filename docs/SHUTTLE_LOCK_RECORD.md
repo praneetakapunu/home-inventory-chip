@@ -10,16 +10,16 @@ Why this file exists:
 
 ## Locked fields (copy/paste from official source)
 
-- **Last verified (UTC):** 2026-03-17 10:30Z
+- **Last verified (UTC):** 2026-03-18 04:30Z
 - **Program / foundry / PDK:** ChipFoundry / chipIgnite reservations (PDK not stated on schedule page)
-- **Shuttle name/number:** CI2605 (May MPW Shuttle)
-- **Submission cutoff:** Commitment Date: 2026-03-18 (date-only on source; internal safe deadline is earlier)
-- **Tapeout date (official, if published):** Tapeout Date: 2026-05-13 (per schedule)
+- **Shuttle name/number:** CI2609 (next available after CI2605)
+- **Submission cutoff:** Commitment Date: 2026-07-18 (date-only on source; internal safe deadline is earlier)
+- **Tapeout date (official, if published):** Tapeout Date: 2026-09-16 (per schedule)
 - **Precheck deadline (if different):** Not specified (ChipFoundry flow; see notes)
-- **Expected silicon delivery window:** Delivery Date: 2026-10-28 (per schedule)
+- **Expected silicon delivery window:** Delivery Date: 2027-03-03 (per schedule)
 - **Source link (official schedule / announcement):** https://chipfoundry.io/#schedule
 - **Source excerpt (copy/paste):**
-  "CI2605 … Commitment Date March 18, 2026 … Tapeout Date May 13, 2026 … Delivery Date October 28, 2026"
+  "CI2609 … Commitment Date July 18, 2026 … Tapeout Date September 16, 2026 … Delivery Date March 3, 2027"
 
 ### Canonical formatting (use this structure when locking)
 
@@ -39,10 +39,10 @@ Official tapeout date (if published):
   official utc: not specified
 
 Internal safe deadline (assume safest):
-  date: 2026-03-17
+  date: 2026-07-17
   time: 23:59
   timezone: PT
-  utc: 2026-03-18 06:59Z
+  utc: 2026-07-18 06:59Z
 
 Precheck deadline (if different):
   date: not specified
@@ -68,9 +68,9 @@ Preferred workflow:
   - To fail if the deadline is stale: `python3 ops/shuttle_runway.py --strict`
 - Copy the “Suggested internal milestones” dates into this section.
 
-- **Internal freeze tag (v1-freeze):** 2026-03-08 (tag: `v1-freeze-20260308`) *(derived)*
+- **Internal freeze tag (v1-freeze):** 2026-07-08 (tag: `v1-freeze-20260708`) *(derived)*
 - **Internal precheck-clean target:** not applicable (ChipFoundry requirements not yet provided; no OpenMPW mpw-precheck assumed)
-- **Internal final-integration target:** 2026-03-13 *(derived; keep margin before internal safe deadline)*
+- **Internal final-integration target:** 2026-07-13 *(derived; keep margin before internal safe deadline)*
 
 ## Change log
 
@@ -79,6 +79,7 @@ If the official schedule changes, append a line here.
 - 2026-03-06 — proposed shuttle target: ChipFoundry CI2605 (date-only commitment deadline from schedule page).
 - 2026-03-13 — re-verified ChipFoundry schedule page; CI2605 dates unchanged.
 - 2026-03-17 — re-verified ChipFoundry schedule page; CI2605 dates unchanged (Commitment Date March 18, 2026; Tapeout Date May 13, 2026; Delivery Date October 28, 2026).
+- 2026-03-18 — re-verified schedule; CI2605 commitment date is imminent/passed; updated **proposed** target to CI2609 (Commitment Date July 18, 2026; Tapeout Date September 16, 2026; Delivery Date March 3, 2027).
 
 ## Notes
 - If the official schedule changes, update this file and then re-baseline `docs/TIMELINE.md`.
