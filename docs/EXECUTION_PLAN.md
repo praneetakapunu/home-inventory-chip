@@ -35,6 +35,7 @@ Pick *one* of these and land it as a small, reviewable commit:
      - `tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw`
      - `tools/harness_adc_pinout_placeholder_check.sh ../home-inventory-chip-openmpw` (fail-fast)
      - `tools/harness_adc_streaming_audit.sh ../home-inventory-chip-openmpw`
+     - `tools/harness_adc_streaming_placeholder_check.sh ../home-inventory-chip-openmpw` (fail-fast)
      - `tools/harness_event_detector_audit.sh ../home-inventory-chip-openmpw`
      - `tools/harness_wb_wiring_audit.sh ../home-inventory-chip-openmpw`
    - Notes/checklist: `docs/HARNESS_INTEGRATION.md`
