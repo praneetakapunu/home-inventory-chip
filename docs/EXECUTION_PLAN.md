@@ -31,6 +31,7 @@ Pick *one* of these and land it as a small, reviewable commit:
    - Harness repo (manual): `make sync-ip-filelist` + `make rtl-compile-check`
    - Quick harness audit helpers (grep-based, no toolchain):
      - `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
+     - `tools/harness_adc_clocking_placeholder_check.sh ../home-inventory-chip-openmpw` (fail-fast)
      - `tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw`
      - `tools/harness_adc_pinout_placeholder_check.sh ../home-inventory-chip-openmpw` (fail-fast)
      - `tools/harness_adc_streaming_audit.sh ../home-inventory-chip-openmpw`
