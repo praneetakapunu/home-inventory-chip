@@ -129,6 +129,9 @@ module wb_evt_cfg_selmask_tb;
     // Test
     // -------------------------
     reg [31:0] rdata;
+    reg [31:0] ts_global;
+    reg [31:0] ts_ch0;
+    reg [31:0] delta_ch0;
 
     initial begin
         $display("[TB] wb_evt_cfg_selmask_tb starting");
@@ -158,6 +161,21 @@ module wb_evt_cfg_selmask_tb;
             $finish;
         end
 
+        // Snapshot timestamp state after the event
+        wb_read32(ADR_EVT_LAST_TS, ts_global);
+        wb_read32(ADR_EVT_LAST_TS_CH0, ts_ch0);
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, delta_ch0);
+
+        // Basic sanity: timestamps should be known, and CH0 should match global
+        if (^ts_global === 1'bX || ^ts_ch0 === 1'bX) begin
+            $display("[TB] FAIL: EVT_LAST_TS/CH0 contains X");
+            $finish;
+        end
+        if (ts_global !== ts_ch0) begin
+            $display("[TB] FAIL: expected EVT_LAST_TS == EVT_LAST_TS_CH0; got global=%h ch0=%h", ts_global, ts_ch0);
+            $finish;
+        end
+
         // Attempt CLEAR_COUNTS with WRONG byte-lane select (bit8 is in lane1)
         wb_write32_sel(ADR_EVT_CFG, (32'h1 << 8), 4'h1); // sel lane0 only
         repeat (2) @(negedge clk);
@@ -175,6 +193,43 @@ module wb_evt_cfg_selmask_tb;
         wb_read32(ADR_EVT_COUNT_CH0, rdata);
         if (rdata !== 32'h0000_0000) begin
             $display("[TB] FAIL: expected EVT_COUNT_CH0=0 after CLEAR_COUNTS, got %h", rdata);
+            $finish;
+        end
+
+        // CLEAR_COUNTS must NOT clear timestamp history
+        wb_read32(ADR_EVT_LAST_TS, rdata);
+        if (rdata !== ts_global) begin
+            $display("[TB] FAIL: CLEAR_COUNTS should not change EVT_LAST_TS; before=%h after=%h", ts_global, rdata);
+            $finish;
+        end
+
+        // Attempt CLEAR_HISTORY with WRONG byte-lane select (bit9 is in lane1)
+        wb_write32_sel(ADR_EVT_CFG, (32'h1 << 9), 4'h1); // sel lane0 only
+        repeat (2) @(negedge clk);
+
+        wb_read32(ADR_EVT_LAST_TS, rdata);
+        if (rdata !== ts_global) begin
+            $display("[TB] FAIL: CLEAR_HISTORY should be masked when sel[1]=0; before=%h after=%h", ts_global, rdata);
+            $finish;
+        end
+
+        // Now CLEAR_HISTORY with correct byte-lane select (lane1)
+        wb_write32_sel(ADR_EVT_CFG, (32'h1 << 9), 4'h2);
+        repeat (2) @(negedge clk);
+
+        wb_read32(ADR_EVT_LAST_TS, rdata);
+        if (rdata !== 32'h0000_0000) begin
+            $display("[TB] FAIL: expected EVT_LAST_TS=0 after CLEAR_HISTORY, got %h", rdata);
+            $finish;
+        end
+        wb_read32(ADR_EVT_LAST_TS_CH0, rdata);
+        if (rdata !== 32'h0000_0000) begin
+            $display("[TB] FAIL: expected EVT_LAST_TS_CH0=0 after CLEAR_HISTORY, got %h", rdata);
+            $finish;
+        end
+        wb_read32(ADR_EVT_LAST_DELTA_CH0, rdata);
+        if (rdata !== 32'h0000_0000) begin
+            $display("[TB] FAIL: expected EVT_LAST_DELTA_CH0=0 after CLEAR_HISTORY, got %h", rdata);
             $finish;
         end
 
