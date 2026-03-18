@@ -30,6 +30,7 @@ Pick *one* of these and land it as a small, reviewable commit:
    - Cross-repo (preferred): `bash ops/preflight_all_low_disk.sh` (IP preflight + harness compile-check)
    - Harness repo (manual): `make sync-ip-filelist` + `make rtl-compile-check`
    - Quick harness audit helpers (grep-based, no toolchain):
+     - `tools/harness_placeholder_suite.sh ../home-inventory-chip-openmpw` (runs all placeholder checks)
      - `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
      - `tools/harness_adc_clocking_placeholder_check.sh ../home-inventory-chip-openmpw` (fail-fast)
      - `tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw`
