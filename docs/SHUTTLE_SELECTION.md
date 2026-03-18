@@ -124,6 +124,8 @@ If any item above is blocked (disk, missing dependency, broken script), record i
 Put one file per candidate shuttle under `docs/shuttle_scores/`.
 
 - ChipFoundry CI2605 (May MPW Shuttle): `docs/shuttle_scores/CI2605_chipfoundry.md`
+- ChipFoundry CI2609: `docs/shuttle_scores/CI2609_chipfoundry.md`
+- ChipFoundry CI2612: `docs/shuttle_scores/CI2612_chipfoundry.md`
 
 ## Quick helper: compute runway from the lock record
 
