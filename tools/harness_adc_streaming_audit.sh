@@ -36,10 +36,31 @@ done
 if [[ ${#SEARCH_PATHS[@]} -eq 0 ]]; then
   echo "WARN: No standard search paths found (Makefile/verilog/etc)."
 elif grep -RIn --exclude-dir=.git -E "USE_REAL_ADC_INGEST" "${SEARCH_PATHS[@]}" >/dev/null 2>&1; then
+  echo "OK: Found references to USE_REAL_ADC_INGEST (showing up to 20 lines):"
   grep -RIn --exclude-dir=.git -E "USE_REAL_ADC_INGEST" "${SEARCH_PATHS[@]}" 2>/dev/null | head -n 20 || true
-  echo "OK: Found references to USE_REAL_ADC_INGEST (showing up to 20 lines above)"
 else
   echo "WARN: No references to USE_REAL_ADC_INGEST found in common build locations"
+fi
+
+echo
+
+echo "-- 1b) Filelist / source inclusion (real-ingest should pull adc_streaming_ingest)"
+# We can't know the exact harness filelist naming, so we just grep common RTL/filelist locations.
+FILELIST_PATHS=()
+for p in verilog/rtl verilog/dv verilog/includes verilog; do
+  [[ -d "$p" ]] && FILELIST_PATHS+=("$p")
+done
+
+if [[ ${#FILELIST_PATHS[@]} -eq 0 ]]; then
+  echo "WARN: Could not find verilog/* directories to scan for filelists"
+else
+  if grep -RIn --exclude-dir=.git -E "adc_streaming_ingest\.v" "${FILELIST_PATHS[@]}" >/dev/null 2>&1; then
+    echo "OK: Found mention of adc_streaming_ingest.v (showing up to 20 lines):"
+    grep -RIn --exclude-dir=.git -E "adc_streaming_ingest\.v" "${FILELIST_PATHS[@]}" 2>/dev/null | head -n 20 || true
+  else
+    echo "WARN: Did not find adc_streaming_ingest.v referenced in verilog/* locations"
+    echo "      (If the harness relies on an IP filelist sync step, this may be OK; otherwise it's a risk.)"
+  fi
 fi
 
 echo
