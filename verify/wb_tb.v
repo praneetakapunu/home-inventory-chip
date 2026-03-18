@@ -246,6 +246,32 @@ module wb_tb;
             $fatal(1);
         end
 
+        // START must be masked by byte lane 0 (bit[1] lives in lane 0).
+        // Writing START with sel that excludes lane 0 must NOT generate a pulse.
+        wb_write32_sel(ADR_CTRL, 32'h0000_0002, 4'b0010); // wrong lane
+        begin : start_pulse_lane_mask_check
+            integer seen2;
+            integer k2;
+            seen2 = 0;
+            for (k2 = 0; k2 < 4; k2 = k2 + 1) begin
+                @(posedge clk);
+                if (ctrl_start === 1'b1) seen2 = 1;
+            end
+            if (seen2 != 0) begin
+                $display("[tb] ERROR: ctrl_start pulsed despite wrong byte lane mask");
+                $fatal(1);
+            end
+        end
+
+        // CTRL reserved bits must read as 0 / ignore writes.
+        // (ENABLE is the only sticky bit; START is W1P and reads back 0.)
+        wb_write32(ADR_CTRL, 32'hFFFF_FFFF);
+        wb_read32(ADR_CTRL, rdata);
+        if (rdata !== 32'h0000_0001) begin
+            $display("[tb] ERROR: CTRL reserved-bit mask mismatch: got 0x%08x", rdata);
+            $fatal(1);
+        end
+
         // IRQ_EN reserved bits must read as 0 / ignore writes.
         wb_write32(ADR_IRQ_EN, 32'hFFFF_FFFF);
         wb_read32(ADR_IRQ_EN, rdata);
@@ -315,6 +341,17 @@ module wb_tb;
         if (rdata !== 32'h0000_0000) begin
             $display("[tb] ERROR: ADC_CMD readback mismatch: got 0x%08x", rdata);
             $fatal(1);
+        end
+
+        // SNAPSHOT must be masked by byte lane 0 (bit[0] lives in lane 0).
+        // Attempting to write SNAPSHOT using a non-lane0 strobe must not change ADC_RAW.
+        wb_write32_sel(ADR_ADC_CMD, 32'h0000_0001, 4'b0010); // wrong lane
+        for (ch = 0; ch < 8; ch = ch + 1) begin
+            wb_read32(adr_adc_raw[ch], rdata);
+            if (rdata !== 32'h0000_0000) begin
+                $display("[tb] ERROR: ADC_RAW_CH%0d changed despite wrong-lane SNAPSHOT: got 0x%08x", ch, rdata);
+                $fatal(1);
+            end
         end
 
         // SNAPSHOT should update raw regs with a deterministic stub pattern.
