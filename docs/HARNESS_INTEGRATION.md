@@ -32,6 +32,21 @@ make sync-ip-filelist
 ```
 This copies the IP filelist from the submodule into the harness `verilog/rtl/` tree.
 
+## Regmap drift check (IP ↔ harness submodule)
+The harness includes the IP repo as a submodule under `ip/home-inventory-chip/`.
+It’s easy for the harness submodule pointer to lag behind the IP repo (or for
+regenerated artifacts to drift).
+
+From `chip-inventory/` you can run a fast, tool-light diff against the harness:
+```bash
+tools/harness_regmap_drift_check.sh ../home-inventory-chip-openmpw
+```
+This compares:
+- `spec/regmap_v1.yaml` (source-of-truth)
+- derived artifacts used by firmware/RTL (`regmap_params.vh`, regmap pkg, C header, table)
+
+If it reports drift, update/commit the harness submodule SHA in the harness repo.
+
 ## Fast checks (recommended every change)
 If you want a single command that checks **both** repos (IP + harness) without running OpenLane:
 ```bash
