@@ -86,4 +86,16 @@ fi
 bash tools/harness_event_detector_audit.sh "$HARNESS_DIR"
 bash tools/harness_wb_wiring_audit.sh "$HARNESS_DIR"
 
+banner "Harness repo: placeholder suite (fail-fast placeholders)"
+# This suite is a concentrated signal on tapeout-critical unknowns.
+# By default it is a WARN so we can keep running integration checks while
+# pinout/clocking are still being finalized. To make it a hard failure:
+#   REQUIRE_NO_HARNESS_PLACEHOLDERS=1
+if ! bash tools/harness_placeholder_suite.sh "$HARNESS_DIR"; then
+  if [[ "${REQUIRE_NO_HARNESS_PLACEHOLDERS:-0}" == "1" ]]; then
+    die "Harness placeholders still present (see output above)"
+  fi
+  banner "Harness repo: WARN (placeholders detected; see output above)"
+fi
+
 banner "DONE: cross-repo low-disk preflight checks passed"
