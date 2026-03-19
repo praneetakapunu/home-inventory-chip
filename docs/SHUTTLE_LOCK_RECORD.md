@@ -27,13 +27,13 @@ Keep this structure even after locking so the cutoff is unambiguous.
 
 ```text
 Submission cutoff (ChipFoundry commitment date):
-  official date: 2026-03-18
+  official date: 2026-07-18
   official time: not specified (date-only on source)
   official timezone: not specified (source does not state TZ)
   official utc: not specified
 
 Official tapeout date (if published):
-  official date: 2026-05-13
+  official date: 2026-09-16
   official time: not specified
   official timezone: not specified
   official utc: not specified
