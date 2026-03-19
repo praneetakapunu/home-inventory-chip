@@ -85,9 +85,15 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
     - [ ] `CLEAR_COUNTS` and `CLEAR_HISTORY` work (W1P, byte-lane masked)
     - [ ] DV-only sample injection path still works (`sim_evt_*` override; see `docs/EVENT_DETECTOR_INTEGRATION_PLAN.md`)
 
-- [ ] ADC streaming contract (see `docs/ADC_STREAM_CONTRACT.md`):
+- [ ] ADC streaming contract (see `docs/ADC_STREAM_CONTRACT.md` and `docs/ADC_STREAMING_INTEGRATION_CHECKLIST.md`):
   - [ ] One capture produces **9 FIFO words** (STATUS + CH0..CH7) in-order
   - [ ] Overrun behavior matches v1 policy (16-depth FIFO, drop-on-full, sticky OVERRUN W1C)
+  - [ ] Regmap pop semantics proven via DV (Wishbone reads):
+    - [ ] `make -C verify wb_adc_snapshot_frame_tb.out` (stub SNAPSHOT → FIFO push → 9 pops)
+    - [ ] `make -C verify wb_adc_fifo_override_tb.out` (empty reads return 0; pop decrements by 1)
+    - [ ] `make -C verify wb_real_adc_ingest_smoke_tb.out` (compile + minimal smoke for `USE_REAL_ADC_INGEST` build)
+  - [ ] Bring-up scriptable sequence exists for firmware (copy/paste register pokes) in:
+    - [ ] `docs/ADC_STREAMING_BRINGUP_CHECKLIST.md`
 
 - [ ] Known limitations listed in `docs/KNOWN_LIMITATIONS.md` (and match reality)
 
