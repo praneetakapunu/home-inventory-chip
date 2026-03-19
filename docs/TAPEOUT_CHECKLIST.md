@@ -54,7 +54,7 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
     - [ ] `docs/ADC_CLOCKING_PLAN.md`
 - [ ] Wishbone integration verified:
   - [ ] Reads/writes work for a representative reg set
-  - [ ] Byte enables handled (or explicitly unsupported + documented)
+  - [ ] Byte enable policy is locked and matches RTL: `docs/WISHBONE_BYTE_ENABLE_POLICY.md`
   - [ ] `ack` behavior meets expectations (no deadlocks)
 
 ## 3) Verification gates

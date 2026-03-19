@@ -42,7 +42,7 @@ This is the top-level architecture snapshot for the v1 tapeout.
 - Address map: `spec/regmap.md` (generated YAML: `spec/regmap_v1.yaml`)
 - Policy notes:
   - `ack` behavior: must not deadlock.
-  - Byte enables: document supported policy (see `docs/CDC_RESET_CHECKLIST.md`).
+  - Byte enables: see `docs/WISHBONE_BYTE_ENABLE_POLICY.md`.
 
 ### ADC SPI (ADS131M08)
 - Interface contract: `spec/ads131m08_interface.md`
