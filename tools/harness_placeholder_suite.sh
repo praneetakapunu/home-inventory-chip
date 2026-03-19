@@ -28,6 +28,7 @@ checks=(
   "${here}/harness_adc_pinout_placeholder_check.sh"
   "${here}/harness_adc_clocking_placeholder_check.sh"
   "${here}/harness_adc_streaming_placeholder_check.sh"
+  "${here}/harness_event_detector_placeholder_check.sh"
   "${here}/harness_wb_wiring_placeholder_check.sh"
 )
 
