@@ -90,9 +90,13 @@ These are the integrations that tend to drift or get “half-wired”. Make them
 - [ ] Any event-related Wishbone registers are visible via the harness regmap include path
 - [ ] Compile-check still passes with the event detector enabled by default
 
-Quick harness audit helper (from this repo root):
+Quick harness helpers (from this repo root):
 ```bash
+# Broad audit (heuristics)
 tools/harness_event_detector_audit.sh ../home-inventory-chip-openmpw
+
+# Fail-fast placeholder check (grep-only)
+tools/harness_event_detector_placeholder_check.sh ../home-inventory-chip-openmpw
 ```
 
 ## D) Pinout + interface freeze artifacts
