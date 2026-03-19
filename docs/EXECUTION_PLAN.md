@@ -6,8 +6,8 @@ This file is the actionable plan to finish ASAP. Keep it short and current.
 **OpenMPW tapeout path lock → harness/repo integration → RTL baseline**
 
 Runway note:
-- `python3 ops/shuttle_runway.py` currently reports **~0.4 weeks** to the internal safe deadline in `docs/SHUTTLE_LOCK_RECORD.md`.
-- Treat this as **scope-freeze time**: only land changes that reduce risk or are directly required for tapeout.
+- `python3 ops/shuttle_runway.py` currently reports **~17.1 weeks** to the internal safe deadline in `docs/SHUTTLE_LOCK_RECORD.md`.
+- Treat this as **planning runway**: still avoid churn, but we can prioritize tooling + integration risk-reduction before scope work.
 
 ## Next 2 hours (progress-tick target)
 Pick *one* of these and land it as a small, reviewable commit:
@@ -21,6 +21,8 @@ Pick *one* of these and land it as a small, reviewable commit:
    - Made the `CLKIN` unknown actionable by documenting an explicit confirmation procedure.
    - Added/confirmed a low-disk grep helper script:
      - `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
+4) **Add a strict "cutoff gate" preflight script** ✅
+   - New: `bash ops/preflight_cutoff_gate.sh` (runs low-disk suite + strict shuttle lock/runway gates)
 
 ## Next 48 hours (Madhuri)
 1) Submission mechanics: keep harness repo integrated and green on **low-disk** checks
