@@ -81,6 +81,7 @@ Contract:
   - `-DUSE_REAL_ADC_INGEST` (real SPI pin exposure)
 
 Fast checks:
+- IP repo: `bash ops/check_adc_pinout_contract.sh --strict`
 - IP repo: `bash ops/rtl_compile_check.sh`
 - Harness repo: `make rtl-compile-check` and `make rtl-compile-check-real-adc`
 - Harness polarity/name audit (grep-only):

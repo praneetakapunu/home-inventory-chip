@@ -23,6 +23,8 @@ Pick *one* of these and land it as a small, reviewable commit:
      - `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
 4) **Add a strict "cutoff gate" preflight script** ✅
    - New: `bash ops/preflight_cutoff_gate.sh` (runs low-disk suite + strict shuttle lock/runway gates)
+5) **Add a strict ADC pinout contract gate (fail on placeholders)** ✅
+   - New: `bash ops/check_adc_pinout_contract.sh --strict`
 
 ## Next 48 hours (Madhuri)
 1) Submission mechanics: keep harness repo integrated and green on **low-disk** checks
