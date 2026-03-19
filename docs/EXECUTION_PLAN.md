@@ -95,6 +95,7 @@ Pick *one* of these and land it as a small, reviewable commit:
   - Audit/check helpers:
     - `tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw`
     - `tools/harness_adc_pinout_placeholder_check.sh ../home-inventory-chip-openmpw`
+    - `tools/harness_adc_drdy_audit.sh ../home-inventory-chip-openmpw` (naming/polarity evidence)
 
 - **ADS131M08 CLKIN source/frequency is not yet locked in the harness repo.**
   - Harness has only draft notes with `io[??]` and no frequency evidence.

@@ -83,6 +83,8 @@ Contract:
 Fast checks:
 - IP repo: `bash ops/rtl_compile_check.sh`
 - Harness repo: `make rtl-compile-check` and `make rtl-compile-check-real-adc`
+- Harness polarity/name audit (grep-only):
+  - `tools/harness_adc_drdy_audit.sh ../home-inventory-chip-openmpw`
 
 ---
 
