@@ -1,6 +1,6 @@
 # Home Inventory Chip — Project Dashboard
 
-**Last updated:** 2026-03-17 (UTC)
+**Last updated:** 2026-03-19 (UTC)
 
 ## Objective
 Deliver a taped-out **digital** chip (open-source tools) + a demo system that demonstrates a practical **home inventory management** path.
@@ -10,7 +10,7 @@ Deliver a taped-out **digital** chip (open-source tools) + a demo system that de
 ## Current status (as of this commit)
 - Phase: **RTL baseline + regmap + harness integration (low-disk green)**
 - Budget target: **<$5k**
-- Tapeout path: **ChipFoundry / chipIgnite (CI2605 reservation shuttle)**
+- Tapeout path: **ChipFoundry / chipIgnite (CI2609 proposed shuttle)**
 - ADC part (locked): **TI ADS131M08**
 - Effective resolution target (locked): **20 g**
 
@@ -30,7 +30,7 @@ These are the things we can run repeatedly without needing a full OpenLane setup
 Baseline dates: see `docs/TIMELINE.md` (baseline start 2026-02-25).
 
 ## Target shuttle (lock record)
-**Status:** PROPOSED: **ChipFoundry CI2605** (needs Praneet confirmation)
+**Status:** PROPOSED: **ChipFoundry CI2609** (needs Praneet confirmation)
 
 Single source-of-truth for the shuttle choice: `docs/SHUTTLE_LOCK_RECORD.md`
 Sanity check helper:
@@ -38,14 +38,14 @@ Sanity check helper:
 - `bash ops/check_shuttle_lock_record.sh --strict` (fails if not fully locked)
 
 ### Runway (auto-derived from lock record)
-As of 2026-03-17 10:30Z (from `python3 ops/shuttle_runway.py`):
-- Internal safe deadline (UTC): **2026-03-18 06:59Z**
-- Remaining: **0d 20h 28m (~0.0 weeks)**
-- Status: **extremely tight (<2 weeks) → freeze scope immediately**
-- Last verified in lock record: **2026-03-17 10:30Z**
+As of 2026-03-19 20:32Z (from `python3 ops/shuttle_runway.py`):
+- Internal safe deadline (UTC): **2026-07-18 06:59Z**
+- Remaining: **120d 10h 26m (~17.1 weeks)**
+- Status: **reasonable runway (>=4 weeks). Still avoid address-map churn.**
+- Last verified in lock record: **2026-03-18 04:30Z**
 - Suggested internal milestones (derived):
-  - Freeze tag target: **2026-03-08**
-  - Final integration target: **2026-03-13**
+  - Freeze tag target: **2026-07-08**
+  - Final integration target: **2026-07-13**
 
 Once chosen, **treat the commitment date as a fixed constraint** and re-baseline `docs/TIMELINE.md` + `docs/TAPEOUT_CHECKLIST.md` accordingly.
 
@@ -69,7 +69,7 @@ High level:
    - Keep harness compile-check + IP verify suite green as we iterate.
 
 ## What I need from Praneet
-- Confirm ChipFoundry CI2605 is the intended path (it’s now locked in `docs/SHUTTLE_LOCK_RECORD.md`) and share any ChipFoundry-specific checklists/requirements if they provide them (precheck equivalents, deliverable formats, etc.).
+- Confirm ChipFoundry CI2609 is the intended path (currently PROPOSED in `docs/SHUTTLE_LOCK_RECORD.md`) and share any ChipFoundry-specific checklists/requirements if they provide them (precheck equivalents, deliverable formats, etc.).
 
 ## Key decisions log
 - See: `decisions/` (one file per decision)
