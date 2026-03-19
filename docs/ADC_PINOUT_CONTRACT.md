@@ -84,8 +84,9 @@ Fast checks:
 - IP repo: `bash ops/check_adc_pinout_contract.sh --strict`
 - IP repo: `bash ops/rtl_compile_check.sh`
 - Harness repo: `make rtl-compile-check` and `make rtl-compile-check-real-adc`
-- Harness polarity/name audit (grep-only):
+- Harness DRDY polarity/name audit (grep-only):
   - `tools/harness_adc_drdy_audit.sh ../home-inventory-chip-openmpw`
+  - `tools/harness_adc_drdy_placeholder_check.sh ../home-inventory-chip-openmpw` (fail-fast)
 
 ---
 
