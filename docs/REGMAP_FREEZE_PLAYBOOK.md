@@ -31,12 +31,13 @@ From repo root (`chip-inventory/`):
 bash ops/regmap_update.sh
 ```
 
-3) Run consistency gates
+3) Run consistency gates (single entrypoint)
 
 ```bash
-make -C verify regmap-check
-make -C verify regmap-gen-check
+bash ops/preflight_regmap_gate.sh
 ```
+
+(Equivalent to running `ops/regmap_check.sh` + the `verify` regmap targets.)
 
 4) Commit as a single atomic change
 
@@ -62,11 +63,26 @@ If either gate fails, **do not** patch derived headers by hand; fix the YAML or 
 - **Changing reset values without updating RTL**: make sure RTL reset assignments match the YAML.
 - **Byte-lane/Wishbone confusion**: if a register uses W1C/W1P semantics, document lane masking behavior.
 
+## Cross-repo sync (harness)
+
+Once the freeze commit is on `main`, ensure the harness repo is pointing at the
+same IP commit SHA and that all derived artifacts match.
+
+Low-disk drift check:
+
+```bash
+bash ops/preflight_regmap_gate.sh --harness ../home-inventory-chip-openmpw
+```
+
+If it reports drift, update/commit the harness submodule pointer (in the harness
+repo) rather than trying to patch generated files by hand.
+
 ## “Frozen” definition
 
 Regmap is considered frozen when:
 
 - Addresses and reset values are stable.
-- Both gates are green.
+- The regmap gate is green (`bash ops/preflight_regmap_gate.sh`).
+- Harness drift check is green (if using the OpenMPW harness repo).
 - The freeze commit hash is recorded in `docs/BASELINES.md` (**Regmap v1 freeze**).
 - The tapeout checklist points at the same baseline.
