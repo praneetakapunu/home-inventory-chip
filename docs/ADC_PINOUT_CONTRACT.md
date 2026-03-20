@@ -47,13 +47,16 @@ For each logical ADC signal, record **exactly one** of:
 - explicit net name in the wrapper (`user_project_wrapper` / `home_inventory_user_project`)
 - "not connected" (with reason)
 
-### Current harness placeholders (DO NOT TAPEOUT AS-IS)
+### Tapeout-ready mapping (LOCKED) ✅ (this is what the checker enforces)
 
-As of today, the harness uses placeholder indices when its ADC GPIO routing block is enabled.
+When the mapping is final, fill in this block with **real** values (no placeholders).
 
-Record the final mapping here once confirmed:
+Notes:
+- This block is intentionally short + copy/pasteable into PRs.
+- `ops/check_adc_pinout_contract.sh` checks **only this block** in `--strict` mode.
 
 ```text
+# Tapeout-ready mapping (LOCKED)
 adc_sclk    -> io[?]   (TBD)
 adc_cs_n    -> io[?]   (TBD)
 adc_mosi    -> io[?]   (TBD)
@@ -63,6 +66,12 @@ adc_rst_n   -> io[?]   (TBD)
 adc_clkin   -> ??? (oscillator or SoC clock-out; see docs/ADC_CLOCKING_PLAN.md)
 adc_pwdn_n  -> (optional)
 ```
+
+### Current harness placeholders (DO NOT TAPEOUT AS-IS)
+
+As of today, the harness uses placeholder indices when its ADC GPIO routing block is enabled.
+
+This section is non-normative historical context; it may include placeholders.
 
 Notes:
 - If the harness currently names the reset net `adc_rst_n` (not `adc_reset_n`), **this document standardizes on `adc_rst_n`**.
