@@ -148,8 +148,12 @@ else
     require_nonempty() {
       local key="$1"
       local val
-      val=$(awk -F': ' -v k="$key" '
-        $0 ~ "^  "k":" {sub(/^  "k": */, "", $0); print $0; exit}
+      val=$(awk -v k="$key" '
+        $0 ~ "^  " k ":" {
+          sub("^  " k ": *", "", $0)
+          print $0
+          exit
+        }
       ' "$RECORD" || true)
 
       if [[ -z "$val" ]]; then
