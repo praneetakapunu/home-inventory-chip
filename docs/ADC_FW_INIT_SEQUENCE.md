@@ -23,6 +23,10 @@ Related specs:
 - The board provides the ADC clocking expected by the design (see TODO in `spec/ads131m08_interface.md`).
 - `adc_rst_n` is controllable (preferred) or at least well-behaved at power-up.
 
+Before debugging firmware/RTL, run the **scope checklist**:
+- `docs/ADC_SCOPE_CHECKLIST.md`
+  - This is the fastest way to confirm `CLKIN` exists and avoid chasing ghosts.
+
 ## Firmware sequence (recommended)
 
 ### 0) Basic sanity: ID/VERSION
