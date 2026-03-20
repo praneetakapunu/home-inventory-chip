@@ -5,7 +5,7 @@ set -euo pipefail
 #
 # Purpose:
 #   Fail-fast check that the canonical ADC pinout contract has been filled in
-#   (i.e., no placeholder mappings like io[?], ???, TBD) before tapeout/cutoff.
+#   (i.e., no placeholder mappings like io[?], io[*], ???, TBD) before tapeout/cutoff.
 #
 # Why:
 #   The harness wrapper historically used placeholder io indices.
@@ -28,26 +28,46 @@ if [[ ! -f "$DOC" ]]; then
   exit 2
 fi
 
+need_cmd() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "ERROR: missing required command: $1" >&2
+    exit 2
+  }
+}
+need_cmd grep
+need_cmd mktemp
+
 # Patterns that indicate the mapping section is not locked.
 # Keep this intentionally simple + text-based.
 PATTERNS=(
-  "io\\[\\?\\]"
-  "-> \\?\\?\\?"
-  "TBD"
+  "io\\[\\?\\]"   # explicit unknown index
+  "io\\[\\*\\]"   # wildcard placeholder like io[*]
+  "-> \\?\\?\\?" # unknown net/source
+  "TBD"           # generic placeholder
+  "tbd"           # lowercase variant
 )
+
+TMP_HITS=""
+cleanup() {
+  [[ -n "$TMP_HITS" ]] && rm -f "$TMP_HITS" || true
+}
+trap cleanup EXIT
 
 hits=0
 for pat in "${PATTERNS[@]}"; do
-  if grep -nE "$pat" "$DOC" >/tmp/adc_pinout_contract_hits.txt 2>/dev/null; then
-    true
-  fi
-  if [[ -s /tmp/adc_pinout_contract_hits.txt ]]; then
+  TMP_HITS=$(mktemp)
+  # grep returns 1 when no matches, so don't treat that as failure.
+  grep -nE "$pat" "$DOC" >"$TMP_HITS" 2>/dev/null || true
+
+  if [[ -s "$TMP_HITS" ]]; then
     echo
     echo "== Placeholder evidence for pattern: $pat =="
-    cat /tmp/adc_pinout_contract_hits.txt
+    cat "$TMP_HITS"
     hits=$((hits + 1))
   fi
-  rm -f /tmp/adc_pinout_contract_hits.txt
+
+  rm -f "$TMP_HITS"
+  TMP_HITS=""
 done
 
 if [[ $hits -eq 0 ]]; then
