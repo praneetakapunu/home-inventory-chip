@@ -70,7 +70,7 @@ To avoid endless ambiguity, we want the harness repo to contain **at least one**
 
 If the harness repo still contains `io[??]` placeholders, or talks about `adc_clkin` only as a future idea, then this decision remains **Proposed** and must stay listed as a tapeout blocker.
 
-### Current evidence snapshot (as of harness HEAD 9f37764)
+### Current evidence snapshot (as of harness HEAD f6d7178)
 Running:
 ```bash
 tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
@@ -78,9 +78,9 @@ tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
 Found **no explicit CLKIN net/pad mapping or frequency** in committed harness sources yet; the harness repo now contains an explicit *"harness contract"* doc that keeps the decision tracked as **TBD**.
 
 Evidence (harness repo):
-- Source: `home-inventory-chip-openmpw/docs/source/adc_clocking_plan.md:16-30` — defines the allowed v1 options (A: board oscillator, B: SoC-driven `adc_clkin`), and explicitly states under Option A that the SoC does **not** route `adc_clkin`.
-- Source: `home-inventory-chip-openmpw/docs/source/adc_clocking_plan.md:32-49` — defines the “confirmed” evidence checklist (decision, source, frequency, reset presence, scope point, etc.) and requires committed evidence.
-- Source: `home-inventory-chip-openmpw/docs/source/adc_clocking_plan.md:67-70` — status remains `Decision: TBD` / `Expected CLKIN frequency: TBD`.
+- Source: `home-inventory-chip-openmpw/docs/source/adc_clocking_plan.md:18-26` — defines the allowed v1 options (A: board oscillator, B: SoC-driven `adc_clkin`), and explicitly states under Option A that the SoC does **not** route `adc_clkin`.
+- Source: `home-inventory-chip-openmpw/docs/source/adc_clocking_plan.md:27-37` — defines the “confirmed” evidence checklist (decision, source, frequency, reset presence, scope point, etc.) and requires committed evidence.
+- Source: `home-inventory-chip-openmpw/docs/source/adc_clocking_plan.md:59-62` — status remains `Decision: TBD` / `Expected CLKIN frequency: TBD`.
 - Source: `home-inventory-chip-openmpw/docs/source/adc_pinout_plan.md:81` — still shows `adc_clkin` as `io[??]` *(optional)*.
 
 Implication: we must still lock either Option A (board oscillator) or Option B (SoC clock-out net), plus frequency, with real evidence before tapeout.

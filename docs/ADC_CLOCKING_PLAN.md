@@ -144,7 +144,8 @@ When confirmed, fill in the **Decision record** below with:
   - Is there a stable SoC clock that can be routed out?
 
 ### Last harness repo audit (evidence snapshot)
-**Audit date:** 2026-03-15 (UTC)
+**Audit date:** 2026-03-20 (UTC)
+**Harness git HEAD:** `f6d7178`
 
 As of this audit, the harness repo still has **no locked CLKIN routing/net/pad assignment** *and* **no committed frequency**. However, it now includes a dedicated “harness contract” doc that makes the decision tracking explicit (still **TBD**).
 
