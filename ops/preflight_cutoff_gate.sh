@@ -51,4 +51,10 @@ banner "Shuttle runway (STRICT)"
 # Fail if the deadline is in the past OR if the record is stale (see --stale-days).
 python3 ops/shuttle_runway.py --strict --stale-days "${STALE_DAYS:-7}"
 
+banner "ADC pinout contract (STRICT)"
+bash ops/check_adc_pinout_contract.sh --strict
+
+banner "ADC CLKIN contract (STRICT)"
+bash ops/check_adc_clkin_contract.sh --strict
+
 banner "DONE: cutoff gate passed"
