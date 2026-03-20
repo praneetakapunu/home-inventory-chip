@@ -83,8 +83,30 @@ echo "== Summary: candidate ADC nets found in verilog port lists =="
 rg -n "${RG_EXCLUDES[@]}" \
   "(input|output|inout)[[:space:]]+.*adc_(sclk|cs_n|mosi|miso|drdy(_n)?|rst_n|clkin)" \
   verilog 2>/dev/null \
-  | head -n 40 \
+  | head -n 60 \
   || true
+
+echo
+echo "== Focused snippet: wrapper wiring around adc_* (best-effort) =="
+# Print a small, high-signal excerpt if the harness has a wrapper file.
+WRAPPER_CANDIDATES=(
+  "verilog/rtl/home_inventory_user_project.v"
+  "verilog/rtl/user_project_wrapper.v"
+  "verilog/rtl/user_project.v"
+)
+for f in "${WRAPPER_CANDIDATES[@]}"; do
+  if [[ -f "$f" ]]; then
+    echo "-- File: $f --"
+    rg -n "${RG_EXCLUDES[@]}" -C 3 "adc_(sclk|cs_n|mosi|miso|drdy(_n)?|rst_n|clkin)" "$f" 2>/dev/null || true
+  fi
+done
+
+echo
+echo "== Heuristic: possible placeholder io[0..5] mapping near adc_* =="
+# The harness historically used 0..5 as placeholders for the ADC pins.
+# If you see adc_* tied to small consecutive io indices, treat it as "not yet locked"
+# until there is independent evidence (schematic / harness doc) that those are real.
+rg -n "${RG_EXCLUDES[@]}" -S -i "adc_(sclk|cs_n|mosi|miso|drdy(_n)?|rst_n|clkin)[^\n]{0,200}io\[[0-5]\]" "${SEARCH_DIRS[@]}" 2>/dev/null || true
 
 echo
 cat <<'EOF'
