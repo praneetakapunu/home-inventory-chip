@@ -29,6 +29,8 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 - [ ] Low-disk "sanity" suite is green (should run even when OpenLane is blocked by disk):
   - [ ] `bash ops/preflight_low_disk.sh` (IP repo)
   - [ ] `bash ops/preflight_all_low_disk.sh` (IP repo; includes cross-repo harness audits)
+- [ ] Cutoff/runway gate is green (forces the “are we actually locked?” question):
+  - [ ] `bash ops/preflight_cutoff_gate.sh`
 - [ ] `iverilog` (or equivalent) compile check is green for:
   - [ ] chip-inventory IP (`rtl/`) — `bash ops/rtl_compile_check.sh`
   - [ ] harness integration repo (Caravel user project)
@@ -47,8 +49,17 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
     - [ ] Locked: nominal CLKIN frequency (Hz)
     - [ ] Evidence points to committed harness source lines (`<path>:<line>`)
   - [ ] Run low-disk audits from IP repo:
-    - [ ] `tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw`
-    - [ ] `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
+    - [ ] One-shot suite (preferred): `tools/harness_placeholder_suite.sh ../home-inventory-chip-openmpw`
+    - [ ] Individual audits (produce human-readable summaries):
+      - [ ] `tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw`
+      - [ ] `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
+    - [ ] Individual fail-fast gates (must PASS before tapeout):
+      - [ ] `tools/harness_adc_pinout_placeholder_check.sh ../home-inventory-chip-openmpw`
+      - [ ] `tools/harness_adc_clocking_placeholder_check.sh ../home-inventory-chip-openmpw`
+      - [ ] `tools/harness_adc_drdy_placeholder_check.sh ../home-inventory-chip-openmpw`
+      - [ ] `tools/harness_adc_streaming_placeholder_check.sh ../home-inventory-chip-openmpw`
+      - [ ] `tools/harness_event_detector_placeholder_check.sh ../home-inventory-chip-openmpw`
+      - [ ] `tools/harness_wb_wiring_placeholder_check.sh ../home-inventory-chip-openmpw`
   - [ ] Record results in:
     - [ ] `docs/ADC_PINOUT_CONTRACT.md`
     - [ ] `docs/ADC_CLOCKING_PLAN.md`
