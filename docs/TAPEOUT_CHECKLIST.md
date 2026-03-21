@@ -143,7 +143,13 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 - [ ] `docs/VERIFICATION_PLAN.md` updated with *what we actually ran*
 
 ## 7) Evidence capture (so reviews don’t stall)
-For any “locked” decision or pass/fail gate above, capture evidence in a way that can be reviewed **without rerunning tools**:
+For any “locked” decision or pass/fail gate above, capture evidence in a way that can be reviewed **without rerunning tools**.
+
+Preferred: use the helper so evidence snippets are consistent:
+- [ ] `bash ops/capture_gate_evidence.sh "<label>" -- <command...>`
+  - Docs: `docs/EVIDENCE_CAPTURE.md`
+
+Guidelines:
 - [ ] Prefer **path:line** pointers into committed source when referencing harness facts.
 - [ ] Prefer **paste-ready command output** snippets (trimmed) for CI/precheck results.
 - [ ] Record one canonical “what we ran” note per gate in either:
