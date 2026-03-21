@@ -30,6 +30,14 @@ need_cmd python3
 banner "Regmap: validate + regenerate derived artifacts"
 bash ops/regmap_update.sh >/dev/null
 
+banner "Regmap: YAML  RTL address map consistency"
+# Ensure RTL decode constants match the YAML source-of-truth.
+# This catches cases where someone edits RTL decode addresses without updating
+# the YAML (or vice-versa) even if generated headers still look sane.
+python3 tools/regmap/check_regmap.py \
+  --yaml spec/regmap_v1.yaml \
+  --rtl  rtl/home_inventory_wb.v
+
 banner "Regmap: check for generation drift (git diff)"
 # Limit the diff check to derived artifacts to avoid false failures when other
 # files are dirty.
