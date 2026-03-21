@@ -26,6 +26,7 @@ Pick *one* of these and land it as a small, reviewable commit:
 5) **Add strict ADC contract gates (fail on placeholders)** ✅
    - Pinout: `bash ops/check_adc_pinout_contract.sh --strict`
    - CLKIN: `bash ops/check_adc_clkin_contract.sh --strict`
+   - Streaming: `bash ops/check_adc_streaming_contract.sh --strict`
 
 ## Next 48 hours (Madhuri)
 1) Submission mechanics: keep harness repo integrated and green on **low-disk** checks

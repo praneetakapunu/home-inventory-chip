@@ -62,4 +62,8 @@ banner "ADC CLKIN contract (STRICT)"
 # Also validate the harness repo has concrete CLKIN evidence (io[*] mapping or oscillator+freq).
 bash ops/check_adc_clkin_contract.sh --strict --harness "$HARNESS_REPO_PATH"
 
+banner "ADC streaming contract (STRICT)"
+# Validate the streaming contract doc has no placeholders and the harness isn't using stub wiring.
+bash ops/check_adc_streaming_contract.sh --strict --harness "$HARNESS_REPO_PATH"
+
 banner "DONE: cutoff gate passed"
