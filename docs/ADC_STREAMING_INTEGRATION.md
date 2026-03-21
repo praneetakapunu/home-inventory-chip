@@ -18,9 +18,12 @@ Scope:
 ### Default (stub / snapshot mode)
 When **`USE_REAL_ADC_INGEST` is NOT defined**:
 - `home_inventory_wb` does **not** expose ADC SPI pins.
-- A firmware write to `CTRL.START` generates a **snapshot** of synthetic ADC words (DV/bring-up path).
+- A firmware write to `ADC_CMD.SNAPSHOT=1` (W1P) generates a **snapshot** of synthetic ADC words (DV/bring-up path).
 
 This mode exists so firmware + Wishbone + regmap work can progress without real board IO.
+
+Note:
+- `CTRL.START` is reserved for the **real ingest** trigger path (see below).
 
 ### Real ingest (SPI capture → frame → FIFO)
 When compiling with **`-DUSE_REAL_ADC_INGEST`**:
@@ -97,7 +100,8 @@ The exact register names/addresses should be pulled from the generated headers.
 1) **Enable** the block (`CTRL.ENABLE=1`).
 2) Program any ADC configuration fields used in v1 (e.g. channel count, if applicable).
 3) Trigger capture:
-   - write `CTRL.START=1` (W1P)
+   - **Real ingest build (`-DUSE_REAL_ADC_INGEST`)**: write `CTRL.START=1` (W1P)
+   - **Stub/snapshot build (default)**: write `ADC_CMD.SNAPSHOT=1` (W1P)
 4) Poll for data:
    - read `ADC_FIFO_STATUS` until `level_words >= 9`
 5) Drain the FIFO:
