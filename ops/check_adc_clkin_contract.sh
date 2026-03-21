@@ -12,8 +12,10 @@ set -euo pipefail
 #   carried draft notes with unknown io indices, which is a real bring-up/tapeout risk.
 #
 # Usage:
-#   bash ops/check_adc_clkin_contract.sh            # non-strict: warn-only
-#   bash ops/check_adc_clkin_contract.sh --strict   # strict: fail on placeholders
+#   bash ops/check_adc_clkin_contract.sh                       # non-strict: warn-only
+#   bash ops/check_adc_clkin_contract.sh --strict              # strict: fail on placeholders
+#   bash ops/check_adc_clkin_contract.sh --harness ../home-inventory-chip-openmpw
+#   bash ops/check_adc_clkin_contract.sh --strict --harness ../home-inventory-chip-openmpw
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
@@ -23,9 +25,25 @@ DOCS=(
 )
 
 STRICT=0
-if [[ "${1:-}" == "--strict" ]]; then
-  STRICT=1
-fi
+HARNESS_REPO=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --strict)
+      STRICT=1
+      shift
+      ;;
+    --harness)
+      HARNESS_REPO="${2:-}"
+      [[ -z "$HARNESS_REPO" ]] && { echo "ERROR: --harness requires a path" >&2; exit 2; }
+      shift 2
+      ;;
+    *)
+      echo "ERROR: unknown arg: $1" >&2
+      exit 2
+      ;;
+  esac
+done
 
 need_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -35,6 +53,15 @@ need_cmd() {
 }
 need_cmd grep
 need_cmd mktemp
+
+HARNESS_CHECK_SCRIPT="$ROOT_DIR/tools/harness_adc_clocking_placeholder_check.sh"
+if [[ -n "$HARNESS_REPO" ]]; then
+  need_cmd rg
+  if [[ ! -x "$HARNESS_CHECK_SCRIPT" ]]; then
+    echo "ERROR: missing harness check script: $HARNESS_CHECK_SCRIPT" >&2
+    exit 2
+  fi
+fi
 
 # Patterns that indicate the clocking decision is not yet locked.
 # Keep it intentionally simple and text-based.
@@ -81,6 +108,21 @@ done
 
 if [[ $hits -eq 0 ]]; then
   echo "OK: ADC CLKIN contract appears locked (no placeholders detected)."
+
+  if [[ -n "$HARNESS_REPO" ]]; then
+    if "$HARNESS_CHECK_SCRIPT" "$HARNESS_REPO" >/dev/null; then
+      echo "OK: Harness ADC CLKIN evidence appears non-placeholder: $HARNESS_REPO"
+    else
+      if [[ $STRICT -eq 1 ]]; then
+        echo "ERROR: Harness ADC CLKIN evidence still appears placeholder: $HARNESS_REPO" >&2
+        echo "Run: $HARNESS_CHECK_SCRIPT '$HARNESS_REPO'" >&2
+        exit 1
+      fi
+      echo "WARN: Harness ADC CLKIN evidence still appears placeholder: $HARNESS_REPO" >&2
+      echo "Run: $HARNESS_CHECK_SCRIPT '$HARNESS_REPO'" >&2
+    fi
+  fi
+
   exit 0
 fi
 

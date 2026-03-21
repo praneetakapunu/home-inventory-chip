@@ -12,8 +12,10 @@ set -euo pipefail
 #   This script makes that risk visible in CI / preflight.
 #
 # Usage:
-#   bash ops/check_adc_pinout_contract.sh            # non-strict: warn-only
-#   bash ops/check_adc_pinout_contract.sh --strict   # strict: fail on placeholders
+#   bash ops/check_adc_pinout_contract.sh                       # non-strict: warn-only
+#   bash ops/check_adc_pinout_contract.sh --strict              # strict: fail on placeholders
+#   bash ops/check_adc_pinout_contract.sh --harness ../home-inventory-chip-openmpw
+#   bash ops/check_adc_pinout_contract.sh --strict --harness ../home-inventory-chip-openmpw
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 DOC="$ROOT_DIR/docs/ADC_PINOUT_CONTRACT.md"
@@ -24,9 +26,26 @@ DOC="$ROOT_DIR/docs/ADC_PINOUT_CONTRACT.md"
 LOCKED_START_STR='### Tapeout-ready mapping (LOCKED)'
 
 STRICT=0
-if [[ "${1:-}" == "--strict" ]]; then
-  STRICT=1
-fi
+HARNESS_REPO=""
+
+# Lightweight arg parsing.
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --strict)
+      STRICT=1
+      shift
+      ;;
+    --harness)
+      HARNESS_REPO="${2:-}"
+      [[ -z "$HARNESS_REPO" ]] && { echo "ERROR: --harness requires a path" >&2; exit 2; }
+      shift 2
+      ;;
+    *)
+      echo "ERROR: unknown arg: $1" >&2
+      exit 2
+      ;;
+  esac
+done
 
 if [[ ! -f "$DOC" ]]; then
   echo "ERROR: missing doc: $DOC" >&2
@@ -42,6 +61,16 @@ need_cmd() {
 need_cmd grep
 need_cmd mktemp
 need_cmd awk
+
+# Optional: also enforce that the *harness repo* has no placeholder pin mapping.
+# This is a stronger end-to-end check than docs-only.
+HARNESS_CHECK_SCRIPT="$ROOT_DIR/tools/harness_adc_pinout_placeholder_check.sh"
+if [[ -n "$HARNESS_REPO" ]]; then
+  if [[ ! -x "$HARNESS_CHECK_SCRIPT" ]]; then
+    echo "ERROR: missing harness check script: $HARNESS_CHECK_SCRIPT" >&2
+    exit 2
+  fi
+fi
 
 # Patterns that indicate the mapping is not locked.
 # Keep this intentionally simple + text-based.
@@ -116,6 +145,22 @@ if [[ $hits -eq 0 ]]; then
   else
     echo "OK: ADC pinout contract appears filled (no placeholders detected): $DOC"
   fi
+
+  # If requested, also check the harness repo's mapping is non-placeholder.
+  if [[ -n "$HARNESS_REPO" ]]; then
+    if "$HARNESS_CHECK_SCRIPT" "$HARNESS_REPO" >/dev/null; then
+      echo "OK: Harness ADC pinout mapping appears non-placeholder: $HARNESS_REPO"
+    else
+      if [[ $STRICT -eq 1 ]]; then
+        echo "ERROR: Harness ADC pinout mapping still appears placeholder: $HARNESS_REPO" >&2
+        echo "Run: $HARNESS_CHECK_SCRIPT '$HARNESS_REPO'" >&2
+        exit 1
+      fi
+      echo "WARN: Harness ADC pinout mapping still appears placeholder: $HARNESS_REPO" >&2
+      echo "Run: $HARNESS_CHECK_SCRIPT '$HARNESS_REPO'" >&2
+    fi
+  fi
+
   exit 0
 fi
 

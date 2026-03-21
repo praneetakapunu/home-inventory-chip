@@ -51,10 +51,15 @@ banner "Shuttle runway (STRICT)"
 # Fail if the deadline is in the past OR if the record is stale (see --stale-days).
 python3 ops/shuttle_runway.py --strict --stale-days "${STALE_DAYS:-7}"
 
+HARNESS_REPO_DEFAULT="../home-inventory-chip-openmpw"
+HARNESS_REPO_PATH="${HARNESS_REPO:-$HARNESS_REPO_DEFAULT}"
+
 banner "ADC pinout contract (STRICT)"
-bash ops/check_adc_pinout_contract.sh --strict
+# Also validate the harness repo isn't still using placeholder io[*] mappings.
+bash ops/check_adc_pinout_contract.sh --strict --harness "$HARNESS_REPO_PATH"
 
 banner "ADC CLKIN contract (STRICT)"
-bash ops/check_adc_clkin_contract.sh --strict
+# Also validate the harness repo has concrete CLKIN evidence (io[*] mapping or oscillator+freq).
+bash ops/check_adc_clkin_contract.sh --strict --harness "$HARNESS_REPO_PATH"
 
 banner "DONE: cutoff gate passed"
