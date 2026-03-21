@@ -48,6 +48,26 @@ run_section() {
   echo "- Timestamp (UTC): ${TS_UTC}"
   echo "- Harness repo: ${HARNESS_REPO}"
   echo "- Harness HEAD: ${HARNESS_HEAD} (${HARNESS_BRANCH})"
+
+  # Placeholder checks are a tapeout-critical fast gate. We include them in the
+  # snapshot, but we do NOT abort snapshot creation on failure.
+  set +e
+  PLACEHOLDER_OUT="$(tools/harness_placeholder_suite.sh "${HARNESS_REPO}" 2>&1)"
+  PLACEHOLDER_RC=$?
+  set -e
+
+  if [[ "${PLACEHOLDER_RC}" -eq 0 ]]; then
+    echo "- Placeholder suite: **PASS**"
+  else
+    echo "- Placeholder suite: **FAIL** (exit ${PLACEHOLDER_RC})"
+  fi
+  echo
+
+  echo "## harness_placeholder_suite.sh"
+  echo
+  echo "\`\`\`text"
+  echo "${PLACEHOLDER_OUT}"
+  echo "\`\`\`"
   echo
 
   run_section "harness_adc_pinout_audit.sh" tools/harness_adc_pinout_audit.sh "${HARNESS_REPO}"
