@@ -23,6 +23,8 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
     - [ ] `bash ops/regmap_check.sh`
     - [ ] `make -C verify regmap-check`
     - [ ] `make -C verify regmap-gen-check`
+  - [ ] Harness (OpenMPW repo) matches the frozen regmap (no drift):
+    - [ ] `tools/harness_regmap_drift_check.sh ../home-inventory-chip-openmpw`
 
 ## 1) Repo / build hygiene
 - [ ] Canonical RTL filelist exists and is used by CI
@@ -53,6 +55,7 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
     - [ ] Individual audits (produce human-readable summaries):
       - [ ] `tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw`
       - [ ] `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
+      - [ ] `tools/harness_regmap_drift_check.sh ../home-inventory-chip-openmpw` (must PASS after regmap freeze)
     - [ ] Individual fail-fast gates (must PASS before tapeout):
       - [ ] `tools/harness_adc_pinout_placeholder_check.sh ../home-inventory-chip-openmpw`
       - [ ] `tools/harness_adc_clocking_placeholder_check.sh ../home-inventory-chip-openmpw`
