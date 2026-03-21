@@ -28,6 +28,7 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 
 ## 1) Repo / build hygiene
 - [ ] Canonical RTL filelist exists and is used by CI
+- [ ] Integration gate playbook is current: `docs/INTEGRATION_GATES.md`
 - [ ] Low-disk "sanity" suite is green (should run even when OpenLane is blocked by disk):
   - [ ] `bash ops/preflight_low_disk.sh` (IP repo)
   - [ ] `bash ops/preflight_all_low_disk.sh` (IP repo; includes cross-repo harness audits)
