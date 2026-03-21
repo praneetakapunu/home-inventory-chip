@@ -45,10 +45,20 @@ bash ops/preflight_regmap_gate.sh
 git status
 # sanity: only regmap-related files changed
 
-git commit -am "regmap: freeze v1 (addrs/resets) + regen derived headers"
+git add \
+  spec/regmap_v1.yaml \
+  spec/regmap.md \
+  fw/include/home_inventory_regmap.h \
+  rtl/include/home_inventory_regmap_pkg.sv \
+  rtl/include/regmap_params.vh \
+  rtl/regmap_v1.h
+
+git commit -m "regmap: freeze v1 (addrs/resets) + regen derived headers"
 ```
 
-(Prefer an explicit `git add` if other files are in-flight.)
+Notes:
+- Avoid `git commit -am ...` here: it can silently omit newly-generated files.
+- If you touched RTL reset logic, stage those RTL changes in the same commit (or split into a clearly-related follow-up).
 
 ## What the gates mean (quick)
 
