@@ -111,10 +111,28 @@ These are the human-reviewed “contract” files.
 - [ ] Expected `CLKIN` frequency (Hz) is documented
 - [ ] Expected `DRDY` rate at v1 defaults is documented (order-of-magnitude is fine initially)
 - [ ] Evidence captured as a repo path/link in `chip-inventory/docs/ADC_CLOCKING_PLAN.md`
+- [ ] Harness wrapper **does not** use placeholder `io[*]` indices for ADC pins (pinout contract is real)
+- [ ] `DRDY` naming/polarity evidence is captured (don’t guess active-low vs edge)
 
-Quick harness audit helper (from this repo root):
+Quick harness audit helpers (from this repo root):
 ```bash
+# CLKIN source/frequency audit (grep-only)
 tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw
+
+# Pin mapping audit + fail-fast placeholder check
+tools/harness_adc_pinout_audit.sh ../home-inventory-chip-openmpw
+tools/harness_adc_pinout_placeholder_check.sh ../home-inventory-chip-openmpw
+
+# DRDY naming/polarity audit + fail-fast placeholder check
+tools/harness_adc_drdy_audit.sh ../home-inventory-chip-openmpw
+tools/harness_adc_drdy_placeholder_check.sh ../home-inventory-chip-openmpw
+```
+
+Optional strict “gate” scripts (fail CI on placeholders):
+```bash
+bash ops/check_adc_pinout_contract.sh --strict
+bash ops/check_adc_clkin_contract.sh --strict
+bash ops/check_adc_streaming_contract.sh --strict
 ```
 
 One-shot audit runner (recommended):
