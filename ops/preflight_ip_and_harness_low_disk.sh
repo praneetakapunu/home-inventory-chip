@@ -15,10 +15,45 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Allow override for non-standard layouts.
 HARNESS_REPO="${HARNESS_REPO:-${ROOT_DIR%/chip-inventory}/home-inventory-chip-openmpw}"
 
+STRICT=0
+
+usage() {
+  cat <<'EOF'
+Usage: bash ops/preflight_ip_and_harness_low_disk.sh [--strict]
+
+Runs low-disk preflight checks across BOTH repos:
+  - chip-inventory (IP)
+  - home-inventory-chip-openmpw (harness)
+
+Options:
+  --strict   Also run fail-fast placeholder checks against the harness repo
+             (e.g., ADC pinout/clocking placeholders).
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --strict)
+      STRICT=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "ERROR: unknown arg: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
 say() { printf "%s\n" "$*"; }
 
 say "[preflight] IP repo:      ${ROOT_DIR}"
 say "[preflight] Harness repo:  ${HARNESS_REPO}"
+say "[preflight] Strict mode:   ${STRICT}" 
 
 if [[ ! -d "${HARNESS_REPO}" ]]; then
   say "ERROR: harness repo not found at: ${HARNESS_REPO}"
@@ -80,6 +115,15 @@ say "[preflight] (2/2) home-inventory-chip-openmpw: sync filelist + verify drift
   bash "${ROOT_DIR}/tools/harness_adc_pinout_audit.sh" .
   bash "${ROOT_DIR}/tools/harness_adc_streaming_audit.sh" .
   bash "${ROOT_DIR}/tools/harness_event_detector_audit.sh" .
+
+  if [[ "${STRICT}" -eq 1 ]]; then
+    say "[preflight] Harness repo: strict placeholder checks (fail-fast)"
+    bash "${ROOT_DIR}/tools/harness_adc_clocking_placeholder_check.sh" .
+    bash "${ROOT_DIR}/tools/harness_adc_pinout_placeholder_check.sh" .
+    bash "${ROOT_DIR}/tools/harness_adc_streaming_placeholder_check.sh" .
+    bash "${ROOT_DIR}/tools/harness_event_detector_placeholder_check.sh" .
+    bash "${ROOT_DIR}/tools/harness_wb_wiring_placeholder_check.sh" .
+  fi
 )
 
 say "[preflight] OK: IP + harness low-disk readiness checks passed."
