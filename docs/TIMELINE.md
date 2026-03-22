@@ -10,7 +10,7 @@ This is a *working* schedule. If we drift by >3 days on any milestone, we should
 ## Milestones (v1)
 
 ### M-1 — Confirm & lock target shuttle (ChipFoundry)
-- Target (proposed): **CI2605** (Commitment Date: 2026-03-18; Tapeout: 2026-05-13; Delivery: 2026-10-28)
+- Target (proposed): **CI2609** (Commitment Date: 2026-07-18; Tapeout: 2026-09-16; Delivery: 2027-03-03)
 - Exit criteria:
   - `docs/SHUTTLE_LOCK_RECORD.md` filled (no TBDs) and includes:
     - **Last verified (UTC)**
@@ -24,44 +24,45 @@ Locked fields live in: `docs/SHUTTLE_LOCK_RECORD.md` (single source).
 Once locked, also fill in the **Derived deadlines** section in the lock record so the rest of this timeline can be planned backwards from the commitment date.
 
 ### M0 — v1 freeze tag (spec/regmap/tests stable)
-- Target: **2026-03-08** *(derived from internal safe deadline in `docs/SHUTTLE_LOCK_RECORD.md`)*
+- Target: **2026-07-08** *(derived from internal safe deadline in `docs/SHUTTLE_LOCK_RECORD.md`)*
 - Exit criteria:
   - regmap frozen for v1
   - `make -C verify all` green
   - tag created: `v1-freeze-YYYYMMDD`
 
 Note:
-- The old baseline target (2026-03-01) was superseded once the shuttle runway tightened.
-- If the shuttle commitment date changes, recompute derived milestones via `python3 ops/shuttle_runway.py --write-derived` and re-baseline this timeline.
+- This date is **derived**. If the shuttle commitment date changes, recompute derived milestones via:
+  - `python3 ops/shuttle_runway.py --write-derived`
+  - then re-baseline this timeline.
 
 ### M1 — Submission/integration repo path confirmed (ChipFoundry)
-- Target: **2026-03-10**
+- Target: **2026-06-15** *(working target; move earlier if ChipFoundry requires more lead time)*
 - Exit criteria:
   - ChipFoundry submission/integration repo identified (or their required submission mechanism documented)
   - If a wrapper/harness is required: wrapper wired (clock/reset/Wishbone/IO) and compile-check passes
   - Minimal sim sanity passes (at least RTL compile + smoke DV)
 
 ### M2 — Commitment deadline met (ChipFoundry reservation)
-- Target: **2026-03-18** (internal safe deadline: **2026-03-17 23:59 PT**)
+- Target: **2026-07-18** (internal safe deadline: **2026-07-17 23:59 PT**)
 - Exit criteria:
-  - Reservation/commitment submitted/confirmed for CI2605 (or documented why not)
+  - Reservation/commitment submitted/confirmed for **CI2609** (or documented why not)
   - `docs/PRECHECK_LOG.md` includes *any* ChipFoundry-required checks that were run (or notes that none are required at this stage)
   - `docs/PRECHECK_LOG.md` includes repo commit + summary
 
 ### M3 — PD signoff-quality run (OpenLane/OpenROAD) for integrated design
-- Target: **2026-04-15**
+- Target: **2026-08-15** *(placeholder — should be re-based once flow/tool availability is confirmed)*
 - Exit criteria:
   - timing closed (per chosen constraints)
   - DRC/LVS clean (per flow expectations)
   - reproducible run documented
 
-### M4 — Tapeout delivery (CI2605)
-- Target: **2026-05-13**
+### M4 — Tapeout (ChipFoundry)
+- Target: **2026-09-16** *(per CI2609 schedule)*
 - Exit criteria:
   - final tag + release notes
   - deliverables submitted/accepted per ChipFoundry requirements
 
 ## Post-tapeout (external lead times)
-- ChipFoundry schedule (per CI2605): **Delivery Date 2026-10-28**
+- ChipFoundry schedule (per CI2609): **Delivery Date 2027-03-03**
 - Packaging/shipping details: TBD (depends on ChipFoundry offering: QFN vs bare die, etc.)
 
