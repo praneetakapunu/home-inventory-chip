@@ -22,7 +22,11 @@ Pick *one* of these and land it as a small, reviewable commit:
    - Added/confirmed a low-disk grep helper script:
      - `tools/harness_adc_clocking_audit.sh ../home-inventory-chip-openmpw`
 4) **Add a strict "cutoff gate" preflight script** ✅
-   - New: `bash ops/preflight_cutoff_gate.sh` (runs low-disk suite + strict shuttle lock/runway + ADC contract gates)
+   - `bash ops/preflight_cutoff_gate.sh`
+     - runs low-disk suite + strict shuttle lock/runway
+     - strict decision-lock gate
+     - strict ADC contract gates
+     - **harness placeholder suite** (pinout/clocking/DRDY/streaming/event-detector/WB wiring)
 5) **Add strict ADC contract gates (fail on placeholders)** ✅
    - Pinout: `bash ops/check_adc_pinout_contract.sh --strict`
    - CLKIN: `bash ops/check_adc_clkin_contract.sh --strict`

@@ -67,4 +67,11 @@ banner "ADC contracts (STRICT)"
 # still using placeholder wiring.
 bash ops/check_adc_contracts.sh --strict --harness "$HARNESS_REPO_PATH"
 
+banner "Harness placeholder suite (STRICT)"
+# Additional tapeout-risk gate: ensure the harness wrapper doesn't still contain
+# placeholder wiring for any tapeout-critical integration points.
+#
+# This is grep-only (low-disk friendly).
+bash tools/harness_placeholder_suite.sh "$HARNESS_REPO_PATH"
+
 banner "DONE: cutoff gate passed"
