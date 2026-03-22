@@ -271,3 +271,42 @@ Once these are confirmed, update:
 - `docs/ADC_CLOCKING_PLAN.md`
 - `docs/HARNESS_INTEGRATION.md`
 - (if needed) `docs/EXECUTION_PLAN.md` “Blockers” / “Risks”
+
+## STATUS word: v1 “must-watch” bits (bring-up contract)
+During continuous streaming with NULL commands, the first word we capture per frame is the **STATUS register** (padded/aligned per word length).
+
+For v1 bring-up, we treat the STATUS word as a **health + alignment sentinel**. Firmware should log it during early testing; RTL may optionally expose lightweight counters.
+
+### What to look for (semantics)
+Firmware should at minimum be able to answer:
+1) **Are we aligned to frame boundaries?**
+   - STATUS values should be “reasonable” and change slowly relative to channel samples.
+   - If STATUS appears to be pseudo-random, you are likely **bit-shifted** (wrong CPHA/CPOL) or **word-length mismatched**.
+2) **Are we keeping up with conversions?**
+   - If the ADC’s internal sample buffer behavior is triggered (missed reads), you may observe STATUS behavior consistent with backlog (see “two frames after pause” guidance earlier).
+3) **Is DRDY behaving as expected?**
+   - If DRDY is configured as pulse (`DRDY_FMT=1`), it can be suppressed when reads overlap conversions; this can masquerade as “missing data” even when SPI is active.
+
+### Practical v1 debug checklist (logic analyzer friendly)
+When probing the bus (scope/LA):
+- Confirm **SCLK idles low** and data is sampled on the **falling edge** (CPOL=0, CPHA=1).
+- Confirm **CS_n stays low** for exactly **10 words** per conversion frame.
+- Confirm the total SCLK pulses per frame are exactly:
+  - 240 pulses (24-bit words) or
+  - 320 pulses (32-bit words)
+- Confirm DOUT word boundaries: first word should look like a STATUS-like value (often with repeated upper bits = 0 due to padding), followed by 8 channel-like words.
+
+## Optional RTL hooks (non-blocking, but strongly recommended)
+These are small, low-risk RTL observability features that make bring-up faster without changing the external pin contract.
+
+### Suggested counters/flags
+1) **Frame counter**: increments once per captured 10-word frame.
+2) **Bad-frame counter**: increments if the captured frame violates v1 expectations (e.g., wrong bitcount, wrong wordcount, or capture not started on DRDY edge).
+3) **Status history**: keep last STATUS word (already implied by FIFO push) and optionally a sticky flag if STATUS == 0 for “too long” (often indicates wiring/pull issues).
+4) **Overrun**: already present as FIFO overrun sticky; ensure it is W1C and test that it clears.
+
+### Minimal firmware-facing expectation
+Even if we do not implement extra RTL counters in v1, firmware should:
+- read and log STATUS for first N frames,
+- verify FIFO level behaves sensibly,
+- verify overrun never asserts during steady-state drain.
