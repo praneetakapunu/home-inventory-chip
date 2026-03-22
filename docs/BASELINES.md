@@ -16,7 +16,7 @@ Update policy:
 ## Regmap v1 freeze
 
 - Status: **NOT_FROZEN**
-- Freeze commit (chip-inventory): `TBD`
+- Freeze commit (chip-inventory): *(not frozen yet — fill with full hash when status becomes FROZEN)*
 - Notes:
   - Source of truth: `spec/regmap_v1.yaml`
   - Freeze playbook: `docs/REGMAP_FREEZE_PLAYBOOK.md`
