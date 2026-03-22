@@ -1,6 +1,6 @@
 # Home Inventory Chip — Project Dashboard
 
-**Last updated:** 2026-03-19 (UTC)
+**Last updated:** 2026-03-22 (UTC)
 
 ## Objective
 Deliver a taped-out **digital** chip (open-source tools) + a demo system that demonstrates a practical **home inventory management** path.
@@ -38,9 +38,9 @@ Sanity check helper:
 - `bash ops/check_shuttle_lock_record.sh --strict` (fails if not fully locked)
 
 ### Runway (auto-derived from lock record)
-As of 2026-03-19 20:32Z (from `python3 ops/shuttle_runway.py`):
+As of 2026-03-22 16:31Z (from `python3 ops/shuttle_runway.py`):
 - Internal safe deadline (UTC): **2026-07-18 06:59Z**
-- Remaining: **120d 10h 26m (~17.1 weeks)**
+- Remaining: **117d 14h 27m (~16.7 weeks)**
 - Status: **reasonable runway (>=4 weeks). Still avoid address-map churn.**
 - Last verified in lock record: **2026-03-18 04:30Z**
 - Suggested internal milestones (derived):
