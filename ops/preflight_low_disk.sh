@@ -55,6 +55,10 @@ fi
 banner "RTL compile/elaboration (iverilog)"
 bash ops/rtl_compile_check.sh
 
+banner "ADC framing params (grep gate)"
+# Fail fast if our ADS131M08 capture framing assumptions drift.
+bash ops/check_adc_framing_params.sh
+
 banner "Shuttle lock record (informational)"
 # This is intentionally non-strict: it should not block preflight before the
 # shuttle is chosen, but it provides a clear log line in CI and local runs.

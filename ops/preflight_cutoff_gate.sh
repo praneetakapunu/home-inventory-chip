@@ -44,6 +44,10 @@ need_cmd python3
 banner "Low-disk preflight (baseline)"
 bash ops/preflight_low_disk.sh
 
+banner "ADC framing params (strict sanity)"
+# Extra redundancy: this gate is cheap and catches accidental RTL contract drift.
+bash ops/check_adc_framing_params.sh
+
 banner "Shuttle lock record (STRICT)"
 bash ops/check_shuttle_lock_record.sh --strict
 
