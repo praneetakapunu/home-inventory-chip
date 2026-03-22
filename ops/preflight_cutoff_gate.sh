@@ -62,16 +62,9 @@ python3 ops/shuttle_runway.py --strict --stale-days "${STALE_DAYS:-7}"
 HARNESS_REPO_DEFAULT="../home-inventory-chip-openmpw"
 HARNESS_REPO_PATH="${HARNESS_REPO:-$HARNESS_REPO_DEFAULT}"
 
-banner "ADC pinout contract (STRICT)"
-# Also validate the harness repo isn't still using placeholder io[*] mappings.
-bash ops/check_adc_pinout_contract.sh --strict --harness "$HARNESS_REPO_PATH"
-
-banner "ADC CLKIN contract (STRICT)"
-# Also validate the harness repo has concrete CLKIN evidence (io[*] mapping or oscillator+freq).
-bash ops/check_adc_clkin_contract.sh --strict --harness "$HARNESS_REPO_PATH"
-
-banner "ADC streaming contract (STRICT)"
-# Validate the streaming contract doc has no placeholders and the harness isn't using stub wiring.
-bash ops/check_adc_streaming_contract.sh --strict --harness "$HARNESS_REPO_PATH"
+banner "ADC contracts (STRICT)"
+# Validate tapeout-critical ADC contracts are concrete AND the harness repo isn't
+# still using placeholder wiring.
+bash ops/check_adc_contracts.sh --strict --harness "$HARNESS_REPO_PATH"
 
 banner "DONE: cutoff gate passed"
