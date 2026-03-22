@@ -7,6 +7,7 @@ This checklist is meant to be *actionable* and short. Check items off as they ar
 ## 0) Decisions locked (pre-freeze)
 - [ ] Target shuttle + **commitment/cutoff date** chosen and recorded (`docs/SHUTTLE_LOCK_RECORD.md`; linked from `docs/DASHBOARD.md` + `docs/TIMELINE.md`)
   - [ ] Lock record is complete (strict): `bash ops/check_shuttle_lock_record.sh --strict`
+  - [ ] Tapeout-critical decision docs are marked locked (strict): `bash ops/check_required_decisions.sh --strict`
 - [ ] Top-level intent and boundaries clear (what v1 does / does not do)
 - [ ] External ADC part locked (done: ADS131M08)
 - [ ] SPI framing assumptions documented (DRDY, words-per-frame, CRC policy)

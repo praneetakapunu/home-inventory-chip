@@ -51,6 +51,10 @@ bash ops/check_adc_framing_params.sh
 banner "Shuttle lock record (STRICT)"
 bash ops/check_shuttle_lock_record.sh --strict
 
+banner "Required decisions are locked (STRICT)"
+# Ensure tapeout-critical decision docs are not still Proposed/TBD.
+bash ops/check_required_decisions.sh --strict
+
 banner "Shuttle runway (STRICT)"
 # Fail if the deadline is in the past OR if the record is stale (see --stale-days).
 python3 ops/shuttle_runway.py --strict --stale-days "${STALE_DAYS:-7}"
