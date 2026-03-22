@@ -41,7 +41,15 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Tapeout-critical decisions (extend this list as we add new must-lock items).
+#
+# Keep this list intentionally small and focused on decisions that, if left ambiguous,
+# will cause last-minute tapeout churn (interface contracts, timing/clocking, and
+# acceptance targets).
 DECISIONS=(
+  "decisions/007-effective-resolution-definition.md"
+  "decisions/008-adc-part-selection.md"
+  "decisions/009-ads131m08-word-length-and-crc.md"
+  "decisions/010-adc-fifo-depth-and-overrun-policy.md"
   "decisions/011-adc-clkin-source-and-frequency.md"
 )
 
@@ -57,8 +65,11 @@ LOCKED_STATUSES=(
 is_locked_status() {
   local s="$1"
   s="${s,,}"  # lowercase
+
+  # Many decision docs include clarifiers like "Accepted (v1 baseline)".
+  # Treat any status that *starts with* a known locked keyword as locked.
   for ok in "${LOCKED_STATUSES[@]}"; do
-    if [[ "$s" == "$ok" ]]; then
+    if [[ "$s" == "$ok" || "$s" == "$ok"* ]]; then
       return 0
     fi
   done
