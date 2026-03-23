@@ -55,6 +55,11 @@ banner "Required decisions are locked (STRICT)"
 # Ensure tapeout-critical decision docs are not still Proposed/TBD.
 bash ops/check_required_decisions.sh --strict
 
+banner "Decision 011 evidence fields (STRICT once locked)"
+# If/when Decision 011 is marked Accepted/Decided, ensure it contains the
+# minimum harness evidence fields (Source + route + frequency).
+bash ops/check_adc_clkin_decision_evidence.sh
+
 banner "Shuttle runway (STRICT)"
 # Fail if the deadline is in the past OR if the record is stale (see --stale-days).
 python3 ops/shuttle_runway.py --strict --stale-days "${STALE_DAYS:-7}"
