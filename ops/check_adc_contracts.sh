@@ -80,4 +80,11 @@ else
   bash ops/check_adc_streaming_contract.sh $strict_flag
 fi
 
+banner "ADC DRDY naming/polarity contract ${STRICT:+(STRICT)}"
+if [[ -n "$HARNESS_REPO" ]]; then
+  bash ops/check_adc_drdy_contract.sh $strict_flag --harness "$HARNESS_REPO"
+else
+  bash ops/check_adc_drdy_contract.sh $strict_flag
+fi
+
 banner "DONE: ADC contract checks passed"
