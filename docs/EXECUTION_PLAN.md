@@ -112,6 +112,9 @@ Pick *one* of these and land it as a small, reviewable commit:
 
 ## Notes / setup
 - DV toolchain notes: `docs/SIM_TOOLCHAIN.md`
+- One-page readiness snapshot (useful during crunch):
+  - `bash ops/gate_status_summary.sh` (non-strict summary)
+  - `bash ops/gate_status_summary.sh --strict` (fails on any missing/placeholder gate)
 
 ## Pending from Praneet
 - None.
