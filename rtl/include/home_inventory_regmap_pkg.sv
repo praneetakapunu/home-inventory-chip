@@ -9,6 +9,9 @@
 //   - Registers are 32-bit.
 
 package home_inventory_regmap_pkg;
+  // Explicit time units to avoid tool warnings in mixed-SV builds
+  timeunit 1ns;
+  timeprecision 1ps;
 
   // -----------------------------
   // Registers (byte addresses)
