@@ -111,6 +111,8 @@ Fast sanity checks:
 - Harness repo supports a matching compile-check with the define enabled:
   - `make rtl-compile-check-real-adc`
 - Low-disk grep audits (no toolchain):
+  - One-command summary (pinout + DRDY + clocking + streaming + WB):
+    - `../chip-inventory/tools/harness_contract_summary.sh .`
   - Pin exposure + io[*] mapping intent:
     - `../chip-inventory/tools/harness_adc_pinout_audit.sh .`
   - Fail-fast check for placeholder io[*] indices (should fail until mapping is locked):
