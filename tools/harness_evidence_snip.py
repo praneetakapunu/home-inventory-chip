@@ -63,7 +63,26 @@ DEFAULT_TERMS = [
 
 # Keep scan small and deterministic.
 SKIP_DIR_NAMES = {"lvs", ".git", "node_modules", "venv", "build"}
-SKIP_EXTS = {".spice", ".gds", ".lef", ".def", ".o", ".a"}
+
+# Skip known-binary or tool-generated artifacts to avoid noisy garbage excerpts.
+# (The harness docs sometimes include images under docs/source/_static/*.)
+SKIP_EXTS = {
+    ".spice",
+    ".gds",
+    ".lef",
+    ".def",
+    ".o",
+    ".a",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".pdf",
+    ".zip",
+    ".gz",
+    ".tgz",
+}
 
 
 @dataclass(frozen=True)
@@ -96,8 +115,25 @@ def iter_files(root: Path, rel_dirs: List[str]) -> Iterable[Path]:
                 yield p
 
 
+def _looks_binary(path: Path, sniff_bytes: int = 2048) -> bool:
+    """Best-effort binary detection.
+
+    We already skip many binary extensions, but this catches odd cases.
+    """
+    try:
+        with path.open("rb") as f:
+            chunk = f.read(sniff_bytes)
+        return b"\x00" in chunk
+    except Exception:
+        return True
+
+
 def find_hits(path: Path, patterns: List[re.Pattern]) -> List[Hit]:
     hits: List[Hit] = []
+
+    if _looks_binary(path):
+        return hits
+
     try:
         text = path.read_text(errors="replace")
     except Exception:
@@ -112,6 +148,8 @@ def find_hits(path: Path, patterns: List[re.Pattern]) -> List[Hit]:
 
 
 def read_lines(path: Path) -> List[str]:
+    if _looks_binary(path):
+        return []
     try:
         return path.read_text(errors="replace").splitlines()
     except Exception:
