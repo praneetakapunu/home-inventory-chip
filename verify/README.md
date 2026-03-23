@@ -69,6 +69,12 @@ This checks:
 - RO regs ignore writes (events block)
 - Event detector: threshold compare, per-channel enable edge semantics (first delta=0), multi-channel last_ts, and saturating counters
 
+## SIM-only override hooks
+For deterministic directed tests, the Wishbone block exposes a small set of
+**SIM-only** override signals (driven via hierarchical `force`/`release`).
+
+See: `docs/DV_SIM_HOOKS.md`.
+
 ## Next
 - Add negative tests for bad byte-strobes / reserved-bit masking.
 - Add deeper FIFO stress (wraparound) once FIFO depth becomes configurable.
