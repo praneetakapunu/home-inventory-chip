@@ -98,4 +98,21 @@ if ! bash tools/harness_placeholder_suite.sh "$HARNESS_DIR"; then
   banner "Harness repo: WARN (placeholders detected; see output above)"
 fi
 
+banner "Harness repo: regmap drift check (source + generated artifacts)"
+# This is a fast, low-disk diff between chip-inventory and the harness IP
+# submodule copy. By default this is a WARN so the suite still provides useful
+# signal when the harness submodule pointer is behind. To make it a hard failure:
+#   REQUIRE_NO_REGMAP_DRIFT=1
+if ! bash tools/harness_regmap_drift_check.sh "$HARNESS_DIR"; then
+  rc=$?
+  # If chip-inventory regmap_check failed, that's a local repo problem: hard fail.
+  if [[ "$rc" -eq 4 ]]; then
+    die "chip-inventory regmap_check failed; fix regmap artifacts before proceeding"
+  fi
+  if [[ "${REQUIRE_NO_REGMAP_DRIFT:-0}" == "1" ]]; then
+    die "regmap drift detected between chip-inventory and harness submodule"
+  fi
+  banner "Harness repo: WARN (regmap drift detected; see output above)"
+fi
+
 banner "DONE: cross-repo low-disk preflight checks passed"
